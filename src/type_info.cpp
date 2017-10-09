@@ -1,18 +1,20 @@
 #include <stdio.h>
 #include <cassert>
 #include "type_info.hpp"
+#include "eval.hpp"
+#include "object/objects.hpp"
 
 
 std::map<std::string, Type*> Type::defined_types;
 std::map<std::string, Type*> Type::undefined_types;
 
-static void insert_default_extensions(std::vector<Mal_Procedure> &vector)
+static void insert_default_methods(std::vector<Mal_Procedure> &vector)
 {
     vector.clear();
     vector.reserve(NUM_BUILTIN_METHODS);
 
 #define INSERT_DEF_METHOD(idx, str) vector[idx] = \
-    ([](Execution_Context&, Ast_Node*) -> Ast_Node* \
+        ([](Execution_Context&, Mal_Proc_Args) -> Mal_Object*   \
     { \
         puts("Default method '" str "' not implemented"); \
         return nullptr; \
@@ -52,7 +54,9 @@ Type::Type(const std::string &name)
     : m_is_defined(false)
     , m_name(name)
     , m_parent_type(nullptr)
-{ }
+{
+    insert_default_methods(m_methods);
+}
 
 
 bool Type::is_defined() const
@@ -67,12 +71,25 @@ Type *Type::parent_type()
 {
     return m_parent_type;
 }
-std::vector<Mal_Procedure> &Type::extensions()
+std::vector<Mal_Procedure> &Type::methods()
 {
-    return m_extensions;
+    return m_methods;
+}
+bool Type::equals(Type *other) const
+{
+    return this == other;
 }
 
-Type *Type::get_or_create_type(const std::string &name)
+void Type::initialize()
+{
+    static bool initialized = false;
+    if (initialized) { return; }
+    Mal_Object::register_type();
+    Mal_Integer::register_type();
+    initialized = true;
+}
+
+Type *Type::get_type(const std::string &name)
 {
     if (Type::undefined_types.count(name))
     {
@@ -81,6 +98,16 @@ Type *Type::get_or_create_type(const std::string &name)
     if (Type::defined_types.count(name))
     {
         return Type::defined_types[name];
+    }
+    return nullptr;
+}
+
+Type *Type::get_or_create_type(const std::string &name)
+{
+    auto existing = get_type(name);
+    if (existing)
+    {
+        return existing;
     }
     auto new_type = new Type(name);
     undefined_types[name] = new_type;
@@ -100,7 +127,6 @@ bool Type::define_type(Type *with_parent_type)
     assert(Type::undefined_types.count(m_name));
     Type::undefined_types.erase(m_name);
     m_parent_type = with_parent_type;
-    insert_default_extensions(m_extensions);
     m_is_defined = true;
     Type::defined_types[m_name] = this;
     return true;

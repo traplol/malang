@@ -16,10 +16,6 @@ std::string Assign_Node::to_string() const
     ss << lhs->to_string() << " = " << rhs->to_string();
     return ss.str();
 }
+
 AST_NODE_OVERRIDES_IMPL(Assign_Node)
-{
-    lhs->execute(ctx);
-    rhs->execute(ctx);
-    printf("Executed %s\n", node_name().c_str());
-    return nullptr;
-}
+

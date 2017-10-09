@@ -14,10 +14,7 @@ std::string Integer_Node::to_string() const
     return ss.str();
 }
 AST_NODE_OVERRIDES_IMPL(Integer_Node)
-{
-    printf("Executed %s (%ld)\n", node_name().c_str(), value);
-    return this;
-}
+
 
 
 
@@ -32,10 +29,7 @@ std::string Real_Node::to_string() const
     return ss.str();
 }
 AST_NODE_OVERRIDES_IMPL(Real_Node)
-{
-    printf("Executed %s (%f)\n", node_name().c_str(), value);
-    return this;
-}
+
 
 
 
@@ -50,10 +44,7 @@ std::string String_Node::to_string() const
     return ss.str();
 }
 AST_NODE_OVERRIDES_IMPL(String_Node)
-{
-    printf("Executed %s (%s)\n", node_name().c_str(), value.data());
-    return this;
-}
+
 
 
 
@@ -67,10 +58,7 @@ std::string Boolean_Node::to_string() const
     return value ? "true" : "false";
 }
 AST_NODE_OVERRIDES_IMPL(Boolean_Node)
-{
-    printf("Executed %s (%s)\n", node_name().c_str(), value ? "true" : "false");
-    return this;
-}
+
 
 
 
@@ -85,12 +73,4 @@ std::string Reference_Node::to_string() const
     return ss.str();
 }
 AST_NODE_OVERRIDES_IMPL(Reference_Node)
-{
-    Ast_Node *result = nullptr;
-    if (value)
-    {
-        result = value->execute(ctx);
-    }
-    printf("Executed %s (Ref->%p)\n", node_name().c_str(), value);
-    return result;
-}
+

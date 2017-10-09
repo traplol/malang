@@ -34,14 +34,13 @@ Source_Location Token::src_loc() const
     return m_src_loc;
 }
 
-std::string to_string(Token_Id tk_type)
+static const char *tk_type_map[NUM_TOKEN_TYPES];
+static void init_tk_type_map()
 {
-    static const char *tk_type_map[NUM_TOKEN_TYPES];
     static bool once = true;
     if (once)
     {
         once = false;
-        for (size_t i = 0; i < NUM_TOKEN_TYPES; ++i) { tk_type_map[i] = "NOT_SET"; }
 #define SET_TK_TYPE_MAP(a) tk_type_map[Token_Id::a] = #a
         SET_TK_TYPE_MAP(Invalid);
         SET_TK_TYPE_MAP(Integer);
@@ -89,18 +88,45 @@ std::string to_string(Token_Id tk_type)
         SET_TK_TYPE_MAP(K_return);
         SET_TK_TYPE_MAP(K_if);
         SET_TK_TYPE_MAP(K_else);
+        SET_TK_TYPE_MAP(K_fn);
 #undef SET_TK_TYPE_MAP
+        for (size_t i = 0; i < Token_Id::NUM_TOKEN_TYPES; ++i)
+        {
+            if (tk_type_map[i] == nullptr)
+            {
+                printf("forgot to set tk type map index = %li!!\n", i);
+            }
+        }
     }
+}
+
+std::string to_string(Token_Id tk_type)
+{
+    init_tk_type_map();
     if (tk_type >= Invalid && tk_type < NUM_TOKEN_TYPES)
     {
-        return tk_type_map[tk_type];
+        if (tk_type_map[tk_type])
+        {
+            return tk_type_map[tk_type];
+        }
+        return "NOT_SET";
     }
     return tk_type_map[Invalid];
 }
 
+void Lexer::dump()
+{
+    printf("=======lex dump=======\n");
+    for (auto &&tk : tokens)
+    {
+        printf("%s\n", tk.debug().c_str());
+    }
+    printf("======================\n");
+}
 
 bool Lexer::lex(Source_Code &src)
 {
+    init_tk_type_map();
     tokens.clear();
     while (src.peek() != src.end_of_file)
     {
@@ -164,6 +190,7 @@ bool Lexer::lex(Source_Code &src)
         PUSH_KEY_IDENT("for", K_for);
         PUSH_KEY_IDENT("while", K_while);
         PUSH_KEY_IDENT("return", K_return);
+        PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
         PUSH_KEY_IDENT("else", K_else);
         if (is_ident_start_char(src.peek()))
@@ -198,6 +225,8 @@ continue; \
         PUSH_TOKEN_2C("!=", Not_Equals);
         PUSH_TOKEN_2C("<=", Less_Equals);
         PUSH_TOKEN_2C(">=", Greater_Equals);
+        PUSH_TOKEN_2C("||", Log_Or);
+        PUSH_TOKEN_2C("&&", Log_And);
 
         PUSH_TOKEN_1C("<", Less);
         PUSH_TOKEN_1C(">", Greater);

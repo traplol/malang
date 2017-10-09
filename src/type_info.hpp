@@ -5,21 +5,30 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "procedure.hpp"
+
+struct Mal_Object;
+struct Execution_Context;
+using Mal_Proc_Args = const std::vector<Mal_Object*>&;
+using Mal_Procedure = Mal_Object* (*)(Execution_Context &ctx, Mal_Proc_Args args);
 
 struct Type
 {
     bool define_type(Type *with_parent_type);
-    static Type *get_or_create_type(const std::string &name);
     bool is_defined() const;
     const std::string &name() const;
     Type *parent_type();
-    std::vector<Mal_Procedure> &extensions();
+    std::vector<Mal_Procedure> &methods();
+
+    bool equals(Type *other) const;
+
+    static Type *get_or_create_type(const std::string &name);
+    static Type *get_type(const std::string &name);
+    static void initialize();
 private:
     bool m_is_defined;
     std::string m_name;
     Type *m_parent_type;
-    std::vector<Mal_Procedure> m_extensions;
+    std::vector<Mal_Procedure> m_methods;
 
     Type(const std::string &name);
     static std::map<std::string, Type*> defined_types;

@@ -53,6 +53,4 @@ DEF_PREFIX_AST_NODE(Positive_Node);
 DEF_PREFIX_AST_NODE(Not_Node);
 DEF_PREFIX_AST_NODE(Invert_Node);
 
-
-
 #endif /* MALANG_AST_OPERATOR_AST_HPP */

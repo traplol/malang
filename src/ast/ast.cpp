@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sstream>
 #include "ast.hpp"
 
 Node_Type_Id Ast_Node::num_node_types = 0;
@@ -14,7 +15,17 @@ std::string Ast_Node::to_string() const
 }
 
 AST_NODE_OVERRIDES_IMPL(Ast_Node)
+
+std::string Ast::to_string() const
 {
-    printf("Executed %s!\n", node_name().c_str());
-    return nullptr;
+    std::stringstream ss;
+    for (size_t i = 0; i < roots.size(); ++i)
+    {
+        ss << roots[i]->to_string();
+        if (i+1 < roots.size())
+        {
+            ss << std::endl;
+        }
+    }
+    return ss.str();
 }

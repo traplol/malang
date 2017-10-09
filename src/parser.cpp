@@ -19,12 +19,7 @@ Ast Parser::parse(const std::string &filename, const std::string &code)
     this->errors = 0;
     this->code = Source_Code(filename, code);
     this->lexer.lex(this->code);
-    printf("====lex dump====\n");
-    for (auto &&tk : this->lexer.tokens)
-    {
-        printf("%s\n", tk.debug().c_str());
-    }
-    printf("================\n");
+    //this->lexer.dump();
     this->lex_idx = 0;
     Ast ast;
     while (auto root = parse_top_level(*this))
@@ -71,22 +66,28 @@ bool Parser::accept(const std::vector<Token_Id> &ids)
     Token dummy;
     return accept(dummy, ids);
 }
-Token *Parser::expect(Token_Id id)
+bool Parser::expect(Token &out, Token_Id id)
 {
     if (lex_idx >= lexer.tokens.size())
     {
         auto &last_tk = lexer.tokens[lexer.tokens.size()-1];
         report_error(last_tk, "Expected token %s but there are no more tokens.\n", to_string(id).c_str());
-        return nullptr;
+        return false;
     }
     auto &cur_tk = lexer.tokens[lex_idx];
     if (id != cur_tk.id())
     {
         report_error(cur_tk, "Expected token %s but got %s.\n", to_string(id).c_str(), cur_tk.debug().c_str());
-        return nullptr;
+        return false;
     }
     ++lex_idx;
-    return &cur_tk;
+    out = cur_tk;
+    return true;
+}
+bool Parser::expect(Token_Id id)
+{
+    Token dummy;
+    return expect(dummy, id);
 }
 
 void Parser::report_error(const Token &token, const char *fmt, ...)
@@ -106,9 +107,8 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
     va_end(vargs);
 }
 
+// forward decls
 static uptr<Ast_Node> parse_assignment(Parser &parser);
-static uptr<Ast_Node> parse_call(Parser &parser);
-static uptr<Ast_Node> parse_definition(Parser &parser);
 static uptr<Ast_Node> parse_declaration(Parser &parser);
 static uptr<Ast_Node> parse_logical_or_exp(Parser &parser);
 static uptr<Ast_Node> parse_logical_and_exp(Parser &parser);
@@ -126,13 +126,16 @@ static uptr<Ast_Node> parse_primary(Parser &parser);
 static uptr<List_Node> parse_expression_list(Parser &parser);
 static uptr<Ast_Node> parse_expression(Parser &parser);
 static uptr<Ast_Node> parse_statement(Parser &parser);
+static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body);
+static uptr<Ast_Node> parse_fn(Parser &parser);
 
 #define SAVE auto _save_idx = parser.lex_idx
 #define RESTORE parser.lex_idx = _save_idx
 #define PARSE_FAIL {RESTORE; return nullptr;}
 #define ACCEPT_OR_FAIL(...) if (!parser.accept(__VA_ARGS__)) { PARSE_FAIL; }
 #define CHECK_OR_FAIL(check) if (!(check)) PARSE_FAIL;
-#define DEBUG(tk, ...) parser.report_debug(tk, __VA_ARGS__)
+//#define DEBUG(tk, ...) parser.report_debug(tk, __VA_ARGS__)
+#define DEBUG(tk, ...)
 
 static uptr<Ast_Node> parse_assignment(Parser &parser)
 {
@@ -145,18 +148,8 @@ static uptr<Ast_Node> parse_assignment(Parser &parser)
     }
     ACCEPT_OR_FAIL({ Token_Id::Equals });
     auto rhs = parse_expression(parser);
-    if (!rhs) { PARSE_FAIL; }
+    CHECK_OR_FAIL(rhs);
     return uptr<Assign_Node>(new Assign_Node(lhs.release(), rhs.release()));
-}
-static uptr<Ast_Node> parse_call(Parser &parser)
-{
-    SAVE;
-    PARSE_FAIL;
-}
-static uptr<Ast_Node> parse_definition(Parser &parser)
-{
-    SAVE;
-    PARSE_FAIL;
 }
 static uptr<Ast_Node> parse_declaration(Parser &parser)
 {
@@ -166,12 +159,8 @@ static uptr<Ast_Node> parse_declaration(Parser &parser)
     ACCEPT_OR_FAIL({ Token_Id::Colon });
     if (parser.accept(type_name, { Token_Id::Identifier }))
     {
-        if (parser.peek_id() == Token_Id::Semicolon || parser.peek_id() == Token_Id::Equals)
-        {   // x : int ;
-            // x : int =
-            auto type = Type::get_or_create_type(type_name.to_string());
-            return uptr<Decl_Node>(new Decl_Node(ident.to_string(), type));
-        }
+        auto type = Type::get_or_create_type(type_name.to_string());
+        return uptr<Decl_Node>(new Decl_Node(ident.to_string(), type));
     }
     if (parser.peek_id() == Token_Id::Equals)
     {   // x : = 
@@ -296,7 +285,7 @@ static uptr<Ast_Node> parse_equality_exp(Parser &parser)
         {
             lhs = uptr<Ast_Node>(new Equals_Node(lhs.release(), rhs.release()));
         }
-        else if (tok.id() == Token_Id::Equals_Equals)
+        else if (tok.id() == Token_Id::Not_Equals)
         {
             lhs = uptr<Ast_Node>(new Not_Equals_Node(lhs.release(), rhs.release()));
         }
@@ -496,7 +485,7 @@ static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
     if (parser.accept(tok, {Token_Id::Open_Paren}))
     {
         auto args = parse_expression_list(parser);
-        if (!parser.expect(Token_Id::Close_Paren))
+        if (!parser.expect(tok, Token_Id::Close_Paren))
         {
             PARSE_FAIL;
         }
@@ -505,7 +494,7 @@ static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
     if (parser.accept(tok, {Token_Id::Open_Square}))
     {
         auto args = parse_expression_list(parser);
-        if (!parser.expect(Token_Id::Close_Square))
+        if (!parser.expect(tok, Token_Id::Close_Square))
         {
             PARSE_FAIL;
         }
@@ -528,7 +517,7 @@ static uptr<Ast_Node> parse_primary(Parser &parser)
     if (parser.accept(token, { Token_Id::Open_Paren }))
     {
         auto expr = parse_expression(parser);
-        if (!parser.expect(Token_Id::Close_Paren))
+        if (!parser.expect(token, Token_Id::Close_Paren))
         {
             PARSE_FAIL;
         }
@@ -584,8 +573,55 @@ static uptr<List_Node> parse_expression_list(Parser &parser)
 }
 static uptr<Ast_Node> parse_expression(Parser &parser)
 {   // expression :=
+    //     function
     //     l_or
+    auto tk = parser.peek();
+    if (!tk)
+    {
+        return nullptr;
+    }
+    if (tk->id() == Token_Id::K_fn)
+    {
+        return parse_fn(parser);
+    }
     return parse_logical_or_exp(parser);
+}
+static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
+{
+    SAVE;
+    if (!parser.expect(Token_Id::Open_Curly))
+    {
+        RESTORE;
+        return false;
+    }
+    
+    while (true)
+    {
+        auto stmt = parse_statement(parser);
+        if (stmt)
+        {
+            body.push_back(stmt.release());
+        }
+        if (parser.accept({Token_Id::Close_Curly}))
+        {
+            return true;
+        }
+    }
+}
+static uptr<Ast_Node> parse_fn(Parser &parser)
+{   // function :=
+    //     fn ( ) -> identifier { body }
+    //     fn ( decl_list ) -> identifier { body }
+    SAVE;
+    ACCEPT_OR_FAIL({Token_Id::K_fn});
+    CHECK_OR_FAIL(parser.expect(Token_Id::Open_Paren));
+    CHECK_OR_FAIL(parser.expect(Token_Id::Close_Paren));
+    CHECK_OR_FAIL(parser.expect(Token_Id::Right_Arrow));
+    Token return_type;
+    CHECK_OR_FAIL(parser.expect(return_type, Token_Id::Identifier));
+    std::vector<Ast_Node*> body;
+    CHECK_OR_FAIL(parse_body(parser, body));
+    return uptr<Ast_Node>(new Fn_Node({}, new Variable_Node(return_type.to_string()), body));
 }
 static uptr<Ast_Node> parse_statement(Parser &parser)
 {   // statement :=
@@ -593,11 +629,30 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     //     assignment statement
     //     expression statement
     //     definition statement
+
+    //while (parser.accept({Token_Id::Semicolon}))
+    //{
+    //    // eat stray semicolons
+    //}
     SAVE;
-    if (auto stmt = parse_assignment(parser)) { return stmt; }
-    if (auto stmt = parse_declaration(parser)) { return stmt; }
-    if (auto stmt = parse_expression(parser)) { return stmt; }
-    if (auto stmt = parse_definition(parser)) { return stmt; }
+    if (auto stmt = parse_assignment(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return stmt;
+    }
+    if (auto stmt = parse_declaration(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return stmt;
+    }
+    if (auto stmt = parse_expression(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return stmt;
+    }
     PARSE_FAIL;
 }
 static Ast_Node *parse_top_level(Parser &parser)

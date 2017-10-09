@@ -46,6 +46,7 @@ enum Token_Id
     Invert,
     Not,
     Right_Arrow,
+
     K_b_op,
     K_u_op,
     K_proc,
@@ -54,6 +55,7 @@ enum Token_Id
     K_return,
     K_if,
     K_else,
+    K_fn,
 
     NUM_TOKEN_TYPES
 };
@@ -92,6 +94,7 @@ struct Lexer
     std::vector<Token> tokens;
 
     bool lex(Source_Code &code);
+    void dump();
     static bool match_ident(Source_Code &code, const std::string &ident);
     static bool is_ident_start_char(int c);
     static bool is_ident_char(int c);

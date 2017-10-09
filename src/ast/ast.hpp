@@ -16,23 +16,20 @@
 #define AST_NODE_OVERRIDES_IMPL(class_name)                             \
     NAME_FUNC(class_name)                                               \
     TYPE_ID_FUNC(class_name)                                            \
-    Ast_Node *class_name::execute(Execution_Context &ctx)
 
 #define AST_NODE_OVERRIDES                                      \
     virtual std::string node_name() const override;             \
     virtual std::string to_string() const override;             \
     virtual Node_Type_Id node_type_id() const override;         \
-    virtual Ast_Node *execute(Execution_Context &ctx) override; \
     static Node_Type_Id type_id()
 
+#if 0
 #define PRINT_DTOR printf("~%s();\n", node_name().c_str())
+#else
+#define PRINT_DTOR 
+#endif
 
 using Node_Type_Id = size_t;
-
-struct Execution_Context
-{
-    int a;
-};
 
 struct Ast_Node
 {
@@ -40,7 +37,6 @@ struct Ast_Node
     virtual std::string to_string() const;
     virtual std::string node_name() const;
     virtual Node_Type_Id node_type_id() const;
-    virtual Ast_Node *execute(Execution_Context &ctx);
 
     static Node_Type_Id type_id();
     static Node_Type_Id num_node_types;
@@ -49,6 +45,7 @@ struct Ast_Node
 struct Ast
 {
     std::vector<Ast_Node*> roots;
+    std::string to_string() const;
 };
 
 

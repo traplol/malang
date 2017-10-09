@@ -1,10 +1,11 @@
 .gitignore
 
 CC = g++
-CFLAGS += -g -O0 -std=c++1z
+CFLAGS += -g -O3 -std=c++1z
 LDFLAGS = 
 
 srcs = src/*.cpp
 srcs += src/ast/*.cpp
+srcs += src/object/*.cpp
 : foreach $(srcs) |> $(CC) $(CFLAGS) -c %f -o %o |> build/%B.o
 : build/*.o |> $(CC) $(LDFLAGS) %f -o %o |> mal

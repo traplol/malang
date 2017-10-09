@@ -23,8 +23,4 @@ std::string List_Node::to_string() const
     }
     return ss.str();
 }
-AST_NODE_OVERRIDES_IMPL(List_Node)
-{
-    printf("Executed %s [%s]\n", node_name().c_str(), to_string().c_str());
-    return this;
-}
+AST_NODE_OVERRIDES_IMPL(List_Node);

@@ -14,7 +14,8 @@ struct Parser
     const Token *peek(size_t n=0) const;
     bool accept(Token &out, const std::vector<Token_Id> &ids);
     bool accept(const std::vector<Token_Id> &ids);
-    Token *expect(Token_Id id);
+    bool expect(Token &out, Token_Id id);
+    bool expect(Token_Id id);
     void report_error(const Token &token, const char *fmt, ...);
     void report_debug(const Token &token, const char *fmt, ...) const;
 
