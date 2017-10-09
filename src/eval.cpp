@@ -6,12 +6,12 @@
 
 #define NOT_IMPL {printf("%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__); abort(); return nullptr;}
 
-#define DVISIT(ctx, node)                                                    \
-    (visitors[(node)->node_type_id()] == nullptr                           \
+#define DVISIT(ctx, node)                                               \
+    (visitors[(node)->type_id()] == nullptr                             \
      ? (printf("visitor not implemented for %s\n", (node)->node_name().c_str()), nullptr) \
-     : visitors[(node)->node_type_id()](ctx, node))
+     : visitors[(node)->type_id()](ctx, node))
 
-#define VISIT(ctx, node) (visitors[(node)->node_type_id()](ctx, node))
+#define VISIT(ctx, node) (visitors[(node)->type_id()](ctx, node))
 
 #define CALL_VISITOR DVISIT
 
@@ -306,7 +306,7 @@ void init_eval()
     if (once)
     {
         once = false;
-#define EMPLACE_VISITOR(class_name) visitors[class_name::type_id()] = (Visitor)static_cast<Mal_Object*(*)(Execution_Context&,class_name*)>(visit)
+#define EMPLACE_VISITOR(class_name) visitors[class_name::_type_id()] = (Visitor)static_cast<Mal_Object*(*)(Execution_Context&,class_name*)>(visit)
 
         EMPLACE_VISITOR(Variable_Node);
         EMPLACE_VISITOR(Assign_Node);

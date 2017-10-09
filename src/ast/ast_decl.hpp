@@ -16,7 +16,7 @@ struct Decl_Node : public Ast_Node
         , type(type)
     {}
 
-    AST_NODE_OVERRIDES;
+    METADATA_OVERRIDES;
 };
 
 

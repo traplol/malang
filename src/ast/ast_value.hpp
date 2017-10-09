@@ -12,7 +12,7 @@ struct class_name : public Ast_Node \
     value_type value; \
     ~class_name(); \
     class_name(value_type const &value) : value(value) {} \
-    AST_NODE_OVERRIDES; \
+    METADATA_OVERRIDES; \
 }
 
 DEF_VALUE_NODE(Integer_Node, int64_t);

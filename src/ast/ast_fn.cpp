@@ -40,6 +40,6 @@ std::string Fn_Node::to_string() const
     
     return ss.str();
 }
-AST_NODE_OVERRIDES_IMPL(Fn_Node);
+METADATA_OVERRIDES_IMPL(Fn_Node);
 
 

@@ -17,7 +17,7 @@ struct Fn_Node : Ast_Node
         , body(std::move(body))
         {}
     ~Fn_Node();
-    AST_NODE_OVERRIDES;
+    METADATA_OVERRIDES;
 };
 
 #endif /* MALANG_AST_AST_FN_HPP */

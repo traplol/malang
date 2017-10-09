@@ -13,7 +13,7 @@ struct Assign_Node : public Ast_Node
         , rhs(rhs)
     {}
 
-    AST_NODE_OVERRIDES;
+    METADATA_OVERRIDES;
 };
 
 
