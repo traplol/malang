@@ -22,6 +22,7 @@ void Ast_Pretty_Printer::do_indention()
 }
 void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
 {
+    // I don't think this will work for nested bodies?
     str << " {" << std::endl;
     indent();
     Ast_Pretty_Printer pp;

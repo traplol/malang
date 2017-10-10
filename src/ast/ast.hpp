@@ -14,7 +14,6 @@
 
 #define AST_NODE_OVERRIDES                                      \
     METADATA_OVERRIDES;                                         \
-    virtual std::string to_string() const override;             \
     virtual void accept(Ast_Visitor&) override;
 
 #define AST_NODE_OVERRIDES_IMPL(class_name)                             \

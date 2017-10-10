@@ -11,12 +11,12 @@ Assign_Node::~Assign_Node()
     PRINT_DTOR;
 }
 
-std::string Assign_Node::to_string() const
-{
-    std::stringstream ss;
-    ss << lhs->to_string() << " = " << rhs->to_string();
-    return ss.str();
-}
+//std::string Assign_Node::to_string() const
+//{
+//    std::stringstream ss;
+//    ss << lhs->to_string() << " = " << rhs->to_string();
+//    return ss.str();
+//}
 
 AST_NODE_OVERRIDES_IMPL(Assign_Node)
 
