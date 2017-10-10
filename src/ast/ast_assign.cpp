@@ -10,6 +10,7 @@ Assign_Node::~Assign_Node()
     rhs = nullptr;
     PRINT_DTOR;
 }
+
 std::string Assign_Node::to_string() const
 {
     std::stringstream ss;
@@ -17,5 +18,5 @@ std::string Assign_Node::to_string() const
     return ss.str();
 }
 
-METADATA_OVERRIDES_IMPL(Assign_Node)
+AST_NODE_OVERRIDES_IMPL(Assign_Node)
 

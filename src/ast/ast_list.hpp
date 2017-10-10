@@ -12,7 +12,7 @@ struct List_Node : public Ast_Node
         : contents(std::move(contents))
     {}
 
-    METADATA_OVERRIDES;
+    AST_NODE_OVERRIDES;
 };
 
 #endif /* MALANG_AST_AST_LIST_HPP */

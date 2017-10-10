@@ -34,14 +34,14 @@ Source_Location Token::src_loc() const
     return m_src_loc;
 }
 
-static const char *tk_type_map[NUM_TOKEN_TYPES];
+static const char *tk_type_map[static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES)];
 static void init_tk_type_map()
 {
     static bool once = true;
     if (once)
     {
         once = false;
-#define SET_TK_TYPE_MAP(a) tk_type_map[Token_Id::a] = #a
+#define SET_TK_TYPE_MAP(a) tk_type_map[static_cast<size_t>(Token_Id::a)] = #a
         SET_TK_TYPE_MAP(Invalid);
         SET_TK_TYPE_MAP(Integer);
         SET_TK_TYPE_MAP(Real);
@@ -90,7 +90,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_else);
         SET_TK_TYPE_MAP(K_fn);
 #undef SET_TK_TYPE_MAP
-        for (size_t i = 0; i < Token_Id::NUM_TOKEN_TYPES; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
         {
             if (tk_type_map[i] == nullptr)
             {
@@ -103,15 +103,15 @@ static void init_tk_type_map()
 std::string to_string(Token_Id tk_type)
 {
     init_tk_type_map();
-    if (tk_type >= Invalid && tk_type < NUM_TOKEN_TYPES)
+    if (tk_type >= Token_Id::Invalid && tk_type < Token_Id::NUM_TOKEN_TYPES)
     {
-        if (tk_type_map[tk_type])
+        if (tk_type_map[static_cast<size_t>(tk_type)])
         {
-            return tk_type_map[tk_type];
+            return tk_type_map[static_cast<size_t>(tk_type)];
         }
         return "NOT_SET";
     }
-    return tk_type_map[Invalid];
+    return tk_type_map[static_cast<size_t>(Token_Id::Invalid)];
 }
 
 void Lexer::dump()

@@ -6,7 +6,7 @@
 
 #include "source_code.hpp"
 
-enum Token_Id
+enum class Token_Id : size_t
 {
     Invalid,
     Integer,

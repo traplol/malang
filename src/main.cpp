@@ -6,10 +6,7 @@
 #include <iostream>
 
 #include "parser.hpp"
-#include "ast/ast_value.hpp"
-#include "type_info.hpp"
-
-#include "eval.hpp"
+#include "visitors/ast_pretty_printer.hpp"
 
 struct Parse_Test
 {
@@ -20,13 +17,28 @@ struct Parse_Test
 std::string get_parse_test_output(Parse_Test &test)
 {
     Parser parser;
-    auto ast = parser.parse("test.ma", test.input);
-    if (parser.errors)
+    try
     {
-        printf("there were parsing errors...\n");
-        return "";
+        auto ast = parser.parse("test.ma", test.input);
+        if (parser.errors)
+        {
+            printf("there were parsing errors...\n");
+            return "";
+        }
+        std::stringstream ss;
+        Ast_Pretty_Printer pp;
+        for (size_t i = 0; i < ast.roots.size(); ++i)
+        {
+            ss << pp.to_string(*ast.roots[i]);
+            if (i + 1 < ast.roots.size()) ss << std::endl;
+        }
+        return ss.str();
+        //return ast.to_string();
     }
-    return ast.to_string();
+    catch(...)
+    {
+        return "<exception thrown>";
+    }
 }
 
 void parse_tests()
@@ -141,9 +153,7 @@ void parse_tests()
 
 int main()
 {
-    Type::initialize();
-    init_eval();
-#if 0
+#if 1
     parse_tests();
 #else
     std::string m_code =
@@ -156,6 +166,8 @@ int main()
         //"fn () -> int { x := 1 + 2 };";
         "100 * 2.5;";
     Parser parser;
+    /*
+    Ast_Node_Evaluator evaluator;
     while (1)
     {
         std::string repl_code;
@@ -170,10 +182,11 @@ int main()
             printf("AST:\n%s\n", ast.to_string().c_str());
             for (auto &&it : ast.roots)
             {
-                printf("%s\n", eval(it)->to_string().c_str());
+                printf("%s\n", it->accept(evaluator)->to_string().c_str());
             }
         }
     }
+    */
 #endif
     return 0;
 }

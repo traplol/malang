@@ -4,19 +4,18 @@
 #include <string>
 
 #include "ast.hpp"
-#include "../type_info.hpp"
 
 struct Decl_Node : public Ast_Node
 {
     std::string variable_name;
-    Type *type;
+    std::string type;
     ~Decl_Node();
-    Decl_Node(const std::string &variable, Type *type)
+    Decl_Node(const std::string &variable, const std::string &type)
         : variable_name(variable)
         , type(type)
     {}
 
-    METADATA_OVERRIDES;
+    AST_NODE_OVERRIDES;
 };
 
 

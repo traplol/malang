@@ -7,11 +7,6 @@ Ast_Node::~Ast_Node()
     PRINT_DTOR;
 }
 
-std::string Ast_Node::to_string() const
-{
-    return "<BASE Ast_Node>";
-}
-
 METADATA_OVERRIDES_IMPL(Ast_Node)
 
 std::string Ast::to_string() const

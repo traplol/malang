@@ -9,7 +9,7 @@ struct Variable_Node : public Ast_Node
     Variable_Node(const std::string &name)
         : name(name)
     {}
-    METADATA_OVERRIDES;
+    AST_NODE_OVERRIDES;
 
     std::string name;
 };

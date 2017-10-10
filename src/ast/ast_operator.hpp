@@ -8,7 +8,7 @@
 struct class_name : public Binary_Holder { \
     ~class_name(); \
     class_name(Ast_Node *lhs, Ast_Node *rhs) {this->lhs = lhs; this->rhs = rhs;} \
-    METADATA_OVERRIDES; \
+    AST_NODE_OVERRIDES; \
 }
 
 #define DEF_PREFIX_AST_NODE(class_name) \
@@ -16,7 +16,7 @@ struct class_name : public Ast_Node { \
     Ast_Node *rhs; \
     ~class_name(); \
     class_name(Ast_Node *rhs) : rhs(rhs) {} \
-    METADATA_OVERRIDES; \
+    AST_NODE_OVERRIDES; \
 }
 
 struct Binary_Holder : public Ast_Node

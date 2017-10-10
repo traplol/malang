@@ -159,12 +159,12 @@ static uptr<Ast_Node> parse_declaration(Parser &parser)
     ACCEPT_OR_FAIL({ Token_Id::Colon });
     if (parser.accept(type_name, { Token_Id::Identifier }))
     {
-        auto type = Type::get_or_create_type(type_name.to_string());
-        return uptr<Decl_Node>(new Decl_Node(ident.to_string(), type));
+        //auto type = Type::get_or_create_type(type_name.to_string());
+        return uptr<Decl_Node>(new Decl_Node(ident.to_string(), type_name.to_string()));
     }
     if (parser.peek_id() == Token_Id::Equals)
     {   // x : = 
-        return uptr<Decl_Node>(new Decl_Node(ident.to_string(), nullptr));
+        return uptr<Decl_Node>(new Decl_Node(ident.to_string(), ""));
     }
     PARSE_FAIL;
 }

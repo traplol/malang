@@ -10,10 +10,10 @@ std::string Decl_Node::to_string() const
 {
     std::stringstream ss;
     ss << variable_name << " :";
-    if (type)
+    if (type.size() != 0)
     {
-        ss << " " << type->name();
+        ss << " " << type;
     }
     return ss.str();
 }
-METADATA_OVERRIDES_IMPL(Decl_Node);
+AST_NODE_OVERRIDES_IMPL(Decl_Node);

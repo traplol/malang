@@ -13,7 +13,7 @@ std::string Integer_Node::to_string() const
     ss << value;
     return ss.str();
 }
-METADATA_OVERRIDES_IMPL(Integer_Node)
+AST_NODE_OVERRIDES_IMPL(Integer_Node)
 
 
 
@@ -28,7 +28,7 @@ std::string Real_Node::to_string() const
     ss << value;
     return ss.str();
 }
-METADATA_OVERRIDES_IMPL(Real_Node)
+AST_NODE_OVERRIDES_IMPL(Real_Node)
 
 
 
@@ -43,7 +43,7 @@ std::string String_Node::to_string() const
     ss << "\"" << value << "\"";
     return ss.str();
 }
-METADATA_OVERRIDES_IMPL(String_Node)
+AST_NODE_OVERRIDES_IMPL(String_Node)
 
 
 
@@ -57,7 +57,7 @@ std::string Boolean_Node::to_string() const
 {
     return value ? "true" : "false";
 }
-METADATA_OVERRIDES_IMPL(Boolean_Node)
+AST_NODE_OVERRIDES_IMPL(Boolean_Node)
 
 
 
@@ -72,5 +72,5 @@ std::string Reference_Node::to_string() const
     ss << "Reference_To(" << value << ")";
     return ss.str();
 }
-METADATA_OVERRIDES_IMPL(Reference_Node)
+AST_NODE_OVERRIDES_IMPL(Reference_Node)
 

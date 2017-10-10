@@ -8,5 +8,5 @@ std::string Variable_Node::to_string() const
 {
     return name;
 }
-METADATA_OVERRIDES_IMPL(Variable_Node)
+AST_NODE_OVERRIDES_IMPL(Variable_Node)
 
