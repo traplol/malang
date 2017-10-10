@@ -3,6 +3,14 @@
 #include "../ast/nodes.hpp"
 
 
+std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
+{
+    indent_level = 0;
+    str.str(std::string());
+    str.clear();
+    n.accept(*this);
+    return str.str();
+}
 void Ast_Pretty_Printer::indent()
 {
     indent_level++;
@@ -33,14 +41,6 @@ void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
     }
     dedent();
     str << "}";
-}
-
-std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
-{
-    indent_level = 0;
-    str.str(std::string());
-    n.accept(*this);
-    return str.str();
 }
 
 void Ast_Pretty_Printer::visit(Variable_Node &n)
