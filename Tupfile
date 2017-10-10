@@ -7,5 +7,6 @@ LDFLAGS =
 srcs = src/*.cpp
 srcs += src/ast/*.cpp
 srcs += src/visitors/*.cpp
+srcs += src/vm/*.cpp
 : foreach $(srcs) |> $(CC) $(CFLAGS) -c %f -o %o |> build/%B.o
 : build/*.o |> $(CC) $(LDFLAGS) %f -o %o |> mal
