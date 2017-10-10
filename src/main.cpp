@@ -33,7 +33,6 @@ std::string get_parse_test_output(Parse_Test &test)
             if (i + 1 < ast.roots.size()) ss << std::endl;
         }
         return ss.str();
-        //return ast.to_string();
     }
     catch(...)
     {

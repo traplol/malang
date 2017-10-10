@@ -31,7 +31,6 @@ struct Ast_Node : public Metadata
 struct Ast
 {
     std::vector<Ast_Node*> roots;
-    std::string to_string() const;
 };
 
 
