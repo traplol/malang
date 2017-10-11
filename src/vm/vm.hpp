@@ -8,7 +8,7 @@ using byte = unsigned char;
 
 struct Malang_VM
 {
-    void load_code(std::vector<byte> code);
+    void load_code(const std::vector<byte> &code);
     void run();
 
     byte *ip;
@@ -16,7 +16,7 @@ struct Malang_VM
     std::vector<intptr_t> globals;
     std::vector<intptr_t> locals;
     std::vector<intptr_t> data_stack;
-    std::vector<byte**> return_stack;
+    std::vector<byte*> return_stack;
 };
 
 #endif /* MALANG_VM_VM_HPP */

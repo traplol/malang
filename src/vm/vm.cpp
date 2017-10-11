@@ -6,7 +6,7 @@
 #include "vm.hpp"
 #include "instruction.hpp"
 
-void Malang_VM::load_code(std::vector<byte> code)
+void Malang_VM::load_code(const std::vector<byte> &code)
 {
     this->code.clear();
     this->code.insert(this->code.begin(), code.begin(), code.end());
@@ -109,9 +109,9 @@ static inline void PUSH(std::vector<T> &v, T value)
     v.push_back(value);
 }
 
-#define NEXT8 vm.ip += 1
-#define NEXT16 vm.ip += 2
-#define NEXT32 vm.ip += 4
+#define NEXT8   vm.ip += sizeof(byte)
+#define NEXT16  vm.ip += sizeof(int16_t)
+#define NEXT32  vm.ip += sizeof(int32_t)
 #define NEXTINT vm.ip += sizeof(intptr_t)
 
 static inline void exec_Integer_Add(Malang_VM &vm)
@@ -311,7 +311,7 @@ static inline void exec_Leave(Malang_VM &vm)
 
 static inline void exec_Return(Malang_VM &vm)
 {
-    NOT_IMPL;
+    vm.ip = POP(vm.return_stack);
 }
 
 static inline void exec_Call(Malang_VM &vm)
