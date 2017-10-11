@@ -1,17 +1,17 @@
 #include <sstream>
 #include "disassm.hpp"
 
-static inline byte fetch1(byte *p)
+static inline byte fetch8(byte *p)
 {
     return *p;
 }
 
-static inline int16_t fetch2(byte *p)
+static inline int16_t fetch16(byte *p)
 {
     return *reinterpret_cast<int16_t*>(p);
 }
 
-static inline int32_t fetch4(byte *p)
+static inline int32_t fetch32(byte *p)
 {
     return *reinterpret_cast<int32_t*>(p);
 }
@@ -29,27 +29,27 @@ std::string Disassembler::dis(std::vector<byte> code)
     auto end = &code[code.size()];
     while (p != end)
     {
-        auto ins = static_cast<Instruction>(fetch1(p));
+        auto ins = static_cast<Instruction>(fetch8(p));
         auto ins_str = instruction_to_string(ins);
         ss << ins_str;
-        if (ins == Instruction::Literal_1)
+        if (ins == Instruction::Literal_8)
         {
             ++p;
-            auto n = fetch1(p);
+            auto n = fetch8(p);
             ss << "<" << n << ">";
             ++p;
         }
-        else if (ins == Instruction::Literal_2)
+        else if (ins == Instruction::Literal_16)
         {
             ++p;
-            auto n = fetch2(p);
+            auto n = fetch16(p);
             ss << "<" << n << ">";
             p += 2;
         }
-        else if (ins == Instruction::Literal_4)
+        else if (ins == Instruction::Literal_32)
         {
             ++p;
-            auto n = fetch4(p);
+            auto n = fetch32(p);
             ss << "<" << n << ">";
             p += 4;
         }

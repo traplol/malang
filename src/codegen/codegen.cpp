@@ -163,22 +163,22 @@ void Codegen::push_back_noop()
 {
     code.push_back(static_cast<byte>(Instruction::Noop));
 }
-void Codegen::push_back_literal_1(byte n)
+void Codegen::push_back_literal_8(byte n)
 {
-    code.push_back(static_cast<byte>(Instruction::Literal_1));
+    code.push_back(static_cast<byte>(Instruction::Literal_8));
     code.push_back(n);
 }
-void Codegen::push_back_literal_2(int16_t n)
+void Codegen::push_back_literal_16(int16_t n)
 {
-    code.push_back(static_cast<byte>(Instruction::Literal_2));
+    code.push_back(static_cast<byte>(Instruction::Literal_16));
     code.resize(code.size() + sizeof(n));
     auto end = code.data() + code.size();
     auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
     *slot = n;
 }
-void Codegen::push_back_literal_4(int32_t n)
+void Codegen::push_back_literal_32(int32_t n)
 {
-    code.push_back(static_cast<byte>(Instruction::Literal_4));
+    code.push_back(static_cast<byte>(Instruction::Literal_32));
     code.resize(code.size() + sizeof(n));
     auto end = code.data() + code.size();
     auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));

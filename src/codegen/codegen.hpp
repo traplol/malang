@@ -45,9 +45,9 @@ struct Codegen
 
     void push_back_noop();
 
-    void push_back_literal_1(byte n);
-    void push_back_literal_2(int16_t n);
-    void push_back_literal_4(int32_t n);
+    void push_back_literal_8(byte n);
+    void push_back_literal_16(int16_t n);
+    void push_back_literal_32(int32_t n);
     void push_back_literal_int(intptr_t n);
 
     /*

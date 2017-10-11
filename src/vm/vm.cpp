@@ -68,17 +68,17 @@ void trace_abort(Malang_VM &vm, const char *fmt, ...)
 
 #define NOT_IMPL {trace_abort(vm, "%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
 
-static inline byte fetch1(byte *p)
+static inline byte fetch8(byte *p)
 {
     return *p;
 }
 
-static inline int16_t fetch2(byte *p)
+static inline int16_t fetch16(byte *p)
 {
     return *reinterpret_cast<int16_t*>(p);
 }
 
-static inline int32_t fetch4(byte *p)
+static inline int32_t fetch32(byte *p)
 {
     return *reinterpret_cast<int32_t*>(p);
 }
@@ -227,26 +227,26 @@ static inline void exec_noop(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_literal_1(Malang_VM &vm)
+static inline void exec_literal_8(Malang_VM &vm)
 {
     NEXT1;
-    auto one = fetch1(vm.ip);
+    auto one = fetch8(vm.ip);
     vm.data_stack.push_back(static_cast<intptr_t>(one));
     NEXT1;
 }
 
-static inline void exec_literal_2(Malang_VM &vm)
+static inline void exec_literal_16(Malang_VM &vm)
 {
     NEXT1;
-    auto two = fetch2(vm.ip);
+    auto two = fetch16(vm.ip);
     vm.data_stack.push_back(static_cast<intptr_t>(two));
     NEXT2;
 }
 
-static inline void exec_literal_4(Malang_VM &vm)
+static inline void exec_literal_32(Malang_VM &vm)
 {
     NEXT1;
-    auto four = fetch4(vm.ip);
+    auto four = fetch32(vm.ip);
     vm.data_stack.push_back(static_cast<intptr_t>(four));
     NEXT4;
 }
@@ -401,7 +401,7 @@ static void run_code(Malang_VM &vm)
     auto end = &vm.code[vm.code.size()];
     while (vm.ip != end)
     {
-        auto ins = static_cast<Instruction>(fetch1(vm.ip));
+        auto ins = static_cast<Instruction>(fetch8(vm.ip));
         // We use continue instead of break so the compiler will warn us when
         // we forget to add an instruction to our dispatch and so an out-of-
         // range case will cause a trace_abort
@@ -458,14 +458,14 @@ static void run_code(Malang_VM &vm)
             case Instruction::Noop:
                 exec_noop(vm);
                 continue;
-            case Instruction::Literal_1:
-                exec_literal_1(vm);
+            case Instruction::Literal_8:
+                exec_literal_8(vm);
                 continue;
-            case Instruction::Literal_2:
-                exec_literal_2(vm);
+            case Instruction::Literal_16:
+                exec_literal_16(vm);
                 continue;
-            case Instruction::Literal_4:
-                exec_literal_4(vm);
+            case Instruction::Literal_32:
+                exec_literal_32(vm);
                 continue;
             case Instruction::Literal_int:
                 exec_literal_int(vm);

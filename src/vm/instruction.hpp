@@ -26,9 +26,9 @@ enum class Instruction : byte
 
     Noop,
 
-    Literal_1,
-    Literal_2,
-    Literal_4,
+    Literal_8,
+    Literal_16,
+    Literal_32,
     Literal_int,
 
     Get_Value,
@@ -85,9 +85,9 @@ constexpr const char *instruction_to_string(const Instruction i)
         case Instruction::Integer_Negate: return "Integer_Negate";
         case Instruction::Integer_Invert: return "Integer_Invert";
         case Instruction::Noop: return "Noop";
-        case Instruction::Literal_1: return "Literal_1:";
-        case Instruction::Literal_2: return "Literal_2:";
-        case Instruction::Literal_4: return "Literal_4:";
+        case Instruction::Literal_8: return "Literal_8:";
+        case Instruction::Literal_16: return "Literal_16:";
+        case Instruction::Literal_32: return "Literal_32:";
         case Instruction::Literal_int: return "Literal_int";
         case Instruction::Get_Value: return "Get_Value";
         case Instruction::Set_Value: return "Set_Value";
@@ -116,6 +116,7 @@ constexpr const char *instruction_to_string(const Instruction i)
         case Instruction::Call_Method_To_String: return "Call_Method_To_String";
         case Instruction::INSTRUCTION_ENUM_SIZE : return "INSTRUCTION_ENUM_SIZE";
     }
+    return "Out of range";
 }
 
 #endif /* MALANG_VM_INSTRUCTION_HPP */ 
