@@ -60,5 +60,11 @@ ITEM(Alloc_Globals, 55)
 ITEM(Alloc_Locals, 56)
 ITEM(Free_Globals, 57)
 ITEM(Free_Locals, 58)
+ITEM(Drop_1, 59)
+ITEM(Drop_2, 60)
+ITEM(Drop_3, 61)
+ITEM(Drop_4, 62)
+ITEM(Drop_5, 63)
+ITEM(Drop_N, 64)
 
 #undef ITEM

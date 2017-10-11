@@ -18,7 +18,7 @@
 
 #define AST_NODE_OVERRIDES_IMPL(class_name)                             \
     METADATA_OVERRIDES_IMPL(class_name)                                 \
-    void class_name::accept(Ast_Visitor &visitor) { return visitor.visit(*this); }
+    void class_name::accept(Ast_Visitor &visitor) { visitor.visit(*this); }
 
 struct Ast_Node : public Metadata
 {

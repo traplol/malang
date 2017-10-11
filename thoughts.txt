@@ -1,0 +1,28 @@
+IR:
+    Builtin primitives:
+      Integer
+      Single
+      Double
+      Char
+      String
+
+    Symbol
+    Call
+    Call method
+    Return
+    Label
+    Branch
+    Branch if true
+    Branch if false
+    Assignment
+    Binary operators:
+      + - * / % & | ^
+      << >> < > <= >=
+      ==
+
+    Unary operators:
+      ! ~ - +
+
+    Type
+    Allocate object
+    Deallocate object

@@ -163,15 +163,19 @@ int main()
     auto s = Disassembler::dis(cg.code);
     printf("%s", s.c_str());
 
+    cg.code.push_back(0xff);
+
     Malang_VM vm;
     vm.load_code(cg.code);
     vm.run();
-    auto x = vm.data_stack[0];
-    auto y = vm.data_stack[1];
-    auto z = vm.data_stack[2];
-    printf("x: %ld\n", x);
-    printf("y: %ld\n", y);
-    printf("z: %ld\n", z);
+    if (vm.data_stack[vm.data_top-1] == (42 + 5) * 999)
+    {
+        printf("good!\n");
+    }
+    else
+    {
+        printf("bad!\n");
+    }
     
 //#if 1
 //    parse_tests();
