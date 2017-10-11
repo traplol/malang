@@ -96,7 +96,7 @@ static inline intptr_t fetch_int(byte *p)
 #define NEXT4 vm.ip += 4
 #define NEXTPTR vm.ip += sizeof(intptr_t)
 
-static inline void exec_integer_add(Malang_VM &vm)
+static inline void exec_Integer_Add(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -104,7 +104,7 @@ static inline void exec_integer_add(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_subract(Malang_VM &vm)
+static inline void exec_Integer_Subtract(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -112,7 +112,7 @@ static inline void exec_integer_subract(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_multiply(Malang_VM &vm)
+static inline void exec_Integer_Multiply(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -120,7 +120,7 @@ static inline void exec_integer_multiply(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_divide(Malang_VM &vm)
+static inline void exec_Integer_Divide(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -128,7 +128,7 @@ static inline void exec_integer_divide(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_modulo(Malang_VM &vm)
+static inline void exec_Integer_Modulo(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -136,7 +136,7 @@ static inline void exec_integer_modulo(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_and(Malang_VM &vm)
+static inline void exec_Integer_And(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -144,7 +144,7 @@ static inline void exec_integer_and(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_or(Malang_VM &vm)
+static inline void exec_Integer_Or(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -152,7 +152,7 @@ static inline void exec_integer_or(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_xor(Malang_VM &vm)
+static inline void exec_Integer_Xor(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -160,7 +160,7 @@ static inline void exec_integer_xor(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_left_shift(Malang_VM &vm)
+static inline void exec_Integer_Left_Shift(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -168,7 +168,7 @@ static inline void exec_integer_left_shift(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_right_shift(Malang_VM &vm)
+static inline void exec_Integer_Right_Shift(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -176,7 +176,7 @@ static inline void exec_integer_right_shift(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_greater_than(Malang_VM &vm)
+static inline void exec_Integer_Greater_Than(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -184,7 +184,7 @@ static inline void exec_integer_greater_than(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_greater_than_equals(Malang_VM &vm)
+static inline void exec_Integer_Greater_Than_Equals(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -192,7 +192,7 @@ static inline void exec_integer_greater_than_equals(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_less_than(Malang_VM &vm)
+static inline void exec_Integer_Less_Than(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -200,7 +200,7 @@ static inline void exec_integer_less_than(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_less_than_equals(Malang_VM &vm)
+static inline void exec_Integer_Less_Than_Equals(Malang_VM &vm)
 {
     auto b = POP();
     auto a = POP();
@@ -208,26 +208,26 @@ static inline void exec_integer_less_than_equals(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_integer_negate(Malang_VM &vm)
+static inline void exec_Integer_Negate(Malang_VM &vm)
 {
     auto a = POP();
     PUSH(-a);
     NEXT1;
 }
 
-static inline void exec_integer_invert(Malang_VM &vm)
+static inline void exec_Integer_Invert(Malang_VM &vm)
 {
     auto a = POP();
     PUSH(~a);
     NEXT1;
 }
 
-static inline void exec_noop(Malang_VM &vm)
+static inline void exec_Noop(Malang_VM &vm)
 {
     NEXT1;
 }
 
-static inline void exec_literal_8(Malang_VM &vm)
+static inline void exec_Literal_8(Malang_VM &vm)
 {
     NEXT1;
     auto one = fetch8(vm.ip);
@@ -235,7 +235,7 @@ static inline void exec_literal_8(Malang_VM &vm)
     NEXT1;
 }
 
-static inline void exec_literal_16(Malang_VM &vm)
+static inline void exec_Literal_16(Malang_VM &vm)
 {
     NEXT1;
     auto two = fetch16(vm.ip);
@@ -243,7 +243,7 @@ static inline void exec_literal_16(Malang_VM &vm)
     NEXT2;
 }
 
-static inline void exec_literal_32(Malang_VM &vm)
+static inline void exec_Literal_32(Malang_VM &vm)
 {
     NEXT1;
     auto four = fetch32(vm.ip);
@@ -251,7 +251,7 @@ static inline void exec_literal_32(Malang_VM &vm)
     NEXT4;
 }
 
-static inline void exec_literal_int(Malang_VM &vm)
+static inline void exec_Literal_int(Malang_VM &vm)
 {
     NEXT1;
     auto ptr = fetch_int(vm.ip);
@@ -259,29 +259,19 @@ static inline void exec_literal_int(Malang_VM &vm)
     NEXTPTR;
 }
 
-static inline void exec_get_value(Malang_VM &vm)
+static inline void exec_Get_Type(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_set_value(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
-static inline void exec_get_type(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
-static inline void exec_branch(Malang_VM &vm)
+static inline void exec_Branch(Malang_VM &vm)
 {
     NEXT1;
     auto n = fetch_int(vm.ip);
     vm.ip += n; // XXX: n-1 to be relative to the branch instruction
 }
 
-static inline void exec_branch_if_zero(Malang_VM &vm)
+static inline void exec_Branch_If_Zero(Malang_VM &vm)
 {
     NEXT1;
     auto cond = POP();
@@ -296,102 +286,152 @@ static inline void exec_branch_if_zero(Malang_VM &vm)
     }
 }
 
-static inline void exec_call_method(Malang_VM &vm)
+static inline void exec_Leave(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_cast_to(Malang_VM &vm)
+static inline void exec_Return(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_add(Malang_VM &vm)
+static inline void exec_Call(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_subtract(Malang_VM &vm)
+static inline void exec_Call_Global(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_multiply(Malang_VM &vm)
+static inline void exec_Call_Method(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_divide(Malang_VM &vm)
+static inline void exec_Call_Method_Cast_To(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_modulo(Malang_VM &vm)
+static inline void exec_Call_Method_Add(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_and(Malang_VM &vm)
+static inline void exec_Call_Method_Subtract(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_or(Malang_VM &vm)
+static inline void exec_Call_Method_Multiply(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_xor(Malang_VM &vm)
+static inline void exec_Call_Method_Divide(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_left_shift(Malang_VM &vm)
+static inline void exec_Call_Method_Modulo(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_right_shift(Malang_VM &vm)
+static inline void exec_Call_Method_And(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_greater_than(Malang_VM &vm)
+static inline void exec_Call_Method_Or(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_greater_than_equals(Malang_VM &vm)
+static inline void exec_Call_Method_Xor(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_less_than(Malang_VM &vm)
+static inline void exec_Call_Method_Left_Shift(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_less_than_equals(Malang_VM &vm)
+static inline void exec_Call_Method_Right_Shift(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_negate(Malang_VM &vm)
+static inline void exec_Call_Method_Greater_Than(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_invert(Malang_VM &vm)
+static inline void exec_Call_Method_Greater_Than_Equals(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_not(Malang_VM &vm)
+static inline void exec_Call_Method_Less_Than(Malang_VM &vm)
 {
     NOT_IMPL;
 }
 
-static inline void exec_call_method_to_string(Malang_VM &vm)
+static inline void exec_Call_Method_Less_Than_Equals(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Call_Method_Negate(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Call_Method_Invert(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Call_Method_Not(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Call_Method_To_String(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Load_Global(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Load_Local(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Load_Field(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Store_Global(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Store_Local(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
+
+static inline void exec_Store_Field(Malang_VM &vm)
 {
     NOT_IMPL;
 }
@@ -402,149 +442,13 @@ static void run_code(Malang_VM &vm)
     while (vm.ip != end)
     {
         auto ins = static_cast<Instruction>(fetch8(vm.ip));
+        switch (ins)
+        {
         // We use continue instead of break so the compiler will warn us when
         // we forget to add an instruction to our dispatch and so an out-of-
         // range case will cause a trace_abort
-        switch (ins)
-        {
-            case Instruction::Integer_Add:
-                exec_integer_add(vm);
-                continue;
-            case Instruction::Integer_Subtract:
-                exec_integer_subract(vm);
-                continue;
-            case Instruction::Integer_Multiply:
-                exec_integer_multiply(vm);
-                continue;
-            case Instruction::Integer_Divide:
-                exec_integer_divide(vm);
-                continue;
-            case Instruction::Integer_Modulo:
-                exec_integer_modulo(vm);
-                continue;
-            case Instruction::Integer_And:
-                exec_integer_and(vm);
-                continue;
-            case Instruction::Integer_Or:
-                exec_integer_or(vm);
-                continue;
-            case Instruction::Integer_Xor:
-                exec_integer_xor(vm);
-                continue;
-            case Instruction::Integer_Left_Shift:
-                exec_integer_left_shift(vm);
-                continue;
-            case Instruction::Integer_Right_Shift:
-                exec_integer_right_shift(vm);
-                continue;
-            case Instruction::Integer_Greater_Than:
-                exec_integer_greater_than(vm);
-                continue;
-            case Instruction::Integer_Greater_Than_Equals:
-                exec_integer_greater_than_equals(vm);
-                continue;
-            case Instruction::Integer_Less_Than:
-                exec_integer_less_than(vm);
-                continue;
-            case Instruction::Integer_Less_Than_Equals:
-                exec_integer_less_than_equals(vm);
-                continue;
-            case Instruction::Integer_Negate:
-                exec_integer_negate(vm);
-                continue;
-            case Instruction::Integer_Invert:
-                exec_integer_invert(vm);
-                continue;
-            case Instruction::Noop:
-                exec_noop(vm);
-                continue;
-            case Instruction::Literal_8:
-                exec_literal_8(vm);
-                continue;
-            case Instruction::Literal_16:
-                exec_literal_16(vm);
-                continue;
-            case Instruction::Literal_32:
-                exec_literal_32(vm);
-                continue;
-            case Instruction::Literal_int:
-                exec_literal_int(vm);
-                continue;
-            case Instruction::Get_Value:
-                exec_get_value(vm);
-                continue;
-            case Instruction::Set_Value:
-                exec_set_value(vm);
-                continue;
-            case Instruction::Get_Type:
-                exec_get_type(vm);
-                continue;
-            case Instruction::Branch:
-                exec_branch(vm);
-                continue;
-            case Instruction::Branch_If_Zero:
-                exec_branch_if_zero(vm);
-                continue;
-            case Instruction::Call_Method:
-                exec_call_method(vm);
-                continue;
-            case Instruction::Call_Method_Cast_To:
-                exec_call_method_cast_to(vm);
-                continue;
-            case Instruction::Call_Method_Add:
-                exec_call_method_add(vm);
-                continue;
-            case Instruction::Call_Method_Subtract:
-                exec_call_method_subtract(vm);
-                continue;
-            case Instruction::Call_Method_Multiply:
-                exec_call_method_multiply(vm);
-                continue;
-            case Instruction::Call_Method_Divide:
-                exec_call_method_divide(vm);
-                continue;
-            case Instruction::Call_Method_Modulo:
-                exec_call_method_modulo(vm);
-                continue;
-            case Instruction::Call_Method_And:
-                exec_call_method_and(vm);
-                continue;
-            case Instruction::Call_Method_Or:
-                exec_call_method_or(vm);
-                continue;
-            case Instruction::Call_Method_Xor:
-                exec_call_method_xor(vm);
-                continue;
-            case Instruction::Call_Method_Left_Shift:
-                exec_call_method_left_shift(vm);
-                continue;
-            case Instruction::Call_Method_Right_Shift:
-                exec_call_method_right_shift(vm);
-                continue;
-            case Instruction::Call_Method_Greater_Than:
-                exec_call_method_greater_than(vm);
-                continue;
-            case Instruction::Call_Method_Greater_Than_Equals:
-                exec_call_method_greater_than_equals(vm);
-                continue;
-            case Instruction::Call_Method_Less_Than:
-                exec_call_method_less_than(vm);
-                continue;
-            case Instruction::Call_Method_Less_Than_Equals:
-                exec_call_method_less_than_equals(vm);
-                continue;
-            case Instruction::Call_Method_Negate:
-                exec_call_method_negate(vm);
-                continue;
-            case Instruction::Call_Method_Invert:
-                exec_call_method_invert(vm);
-                continue;
-            case Instruction::Call_Method_Not:
-                exec_call_method_not(vm);
-                continue;
-            case Instruction::Call_Method_To_String:
-                exec_call_method_to_string(vm);
-                continue;
+#define ITEM(X, Y) case Instruction::X: exec_##X(vm); continue;
+            #include "instruction.def"
             case Instruction::INSTRUCTION_ENUM_SIZE:
                 break;
         }

@@ -30,7 +30,7 @@ std::string Disassembler::dis(std::vector<byte> code)
     while (p != end)
     {
         auto ins = static_cast<Instruction>(fetch8(p));
-        auto ins_str = instruction_to_string(ins);
+        auto ins_str = to_string(ins);
         ss << ins_str;
         if (ins == Instruction::Literal_8)
         {
