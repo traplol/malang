@@ -402,148 +402,152 @@ static void run_code(Malang_VM &vm)
     while (vm.ip != end)
     {
         auto ins = static_cast<Instruction>(fetch1(vm.ip));
+        // We use continue instead of break so the compiler will warn us when
+        // we forget to add an instruction to our dispatch and so an out-of-
+        // range case will cause a trace_abort
         switch (ins)
         {
-            default:
-                trace_abort(vm, "Unknown instruction: %x\n", static_cast<int>(ins));
             case Instruction::Integer_Add:
                 exec_integer_add(vm);
-                break;
+                continue;
             case Instruction::Integer_Subtract:
                 exec_integer_subract(vm);
-                break;
+                continue;
             case Instruction::Integer_Multiply:
                 exec_integer_multiply(vm);
-                break;
+                continue;
             case Instruction::Integer_Divide:
                 exec_integer_divide(vm);
-                break;
+                continue;
             case Instruction::Integer_Modulo:
                 exec_integer_modulo(vm);
-                break;
+                continue;
             case Instruction::Integer_And:
                 exec_integer_and(vm);
-                break;
+                continue;
             case Instruction::Integer_Or:
                 exec_integer_or(vm);
-                break;
+                continue;
             case Instruction::Integer_Xor:
                 exec_integer_xor(vm);
-                break;
+                continue;
             case Instruction::Integer_Left_Shift:
                 exec_integer_left_shift(vm);
-                break;
+                continue;
             case Instruction::Integer_Right_Shift:
                 exec_integer_right_shift(vm);
-                break;
+                continue;
             case Instruction::Integer_Greater_Than:
                 exec_integer_greater_than(vm);
-                break;
+                continue;
             case Instruction::Integer_Greater_Than_Equals:
                 exec_integer_greater_than_equals(vm);
-                break;
+                continue;
             case Instruction::Integer_Less_Than:
                 exec_integer_less_than(vm);
-                break;
+                continue;
             case Instruction::Integer_Less_Than_Equals:
                 exec_integer_less_than_equals(vm);
-                break;
+                continue;
             case Instruction::Integer_Negate:
                 exec_integer_negate(vm);
-                break;
+                continue;
             case Instruction::Integer_Invert:
                 exec_integer_invert(vm);
-                break;
+                continue;
             case Instruction::Noop:
                 exec_noop(vm);
-                break;
+                continue;
             case Instruction::Literal_1:
                 exec_literal_1(vm);
-                break;
+                continue;
             case Instruction::Literal_2:
                 exec_literal_2(vm);
-                break;
+                continue;
             case Instruction::Literal_4:
                 exec_literal_4(vm);
-                break;
+                continue;
             case Instruction::Literal_int:
                 exec_literal_int(vm);
-                break;
+                continue;
             case Instruction::Get_Value:
                 exec_get_value(vm);
-                break;
+                continue;
             case Instruction::Set_Value:
                 exec_set_value(vm);
-                break;
+                continue;
             case Instruction::Get_Type:
                 exec_get_type(vm);
-                break;
+                continue;
             case Instruction::Branch:
                 exec_branch(vm);
-                break;
+                continue;
             case Instruction::Branch_If_Zero:
                 exec_branch_if_zero(vm);
-                break;
+                continue;
             case Instruction::Call_Method:
                 exec_call_method(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Cast_To:
                 exec_call_method_cast_to(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Add:
                 exec_call_method_add(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Subtract:
                 exec_call_method_subtract(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Multiply:
                 exec_call_method_multiply(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Divide:
                 exec_call_method_divide(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Modulo:
                 exec_call_method_modulo(vm);
-                break;
+                continue;
             case Instruction::Call_Method_And:
                 exec_call_method_and(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Or:
                 exec_call_method_or(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Xor:
                 exec_call_method_xor(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Left_Shift:
                 exec_call_method_left_shift(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Right_Shift:
                 exec_call_method_right_shift(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Greater_Than:
                 exec_call_method_greater_than(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Greater_Than_Equals:
                 exec_call_method_greater_than_equals(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Less_Than:
                 exec_call_method_less_than(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Less_Than_Equals:
                 exec_call_method_less_than_equals(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Negate:
                 exec_call_method_negate(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Invert:
                 exec_call_method_invert(vm);
-                break;
+                continue;
             case Instruction::Call_Method_Not:
                 exec_call_method_not(vm);
-                break;
+                continue;
             case Instruction::Call_Method_To_String:
                 exec_call_method_to_string(vm);
+                continue;
+            case Instruction::INSTRUCTION_ENUM_SIZE:
                 break;
         }
+        trace_abort(vm, "Unknown instruction: %x\n", static_cast<int>(ins));
     }
 }

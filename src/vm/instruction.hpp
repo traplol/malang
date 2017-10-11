@@ -68,7 +68,6 @@ constexpr const char *instruction_to_string(const Instruction i)
 {
     switch (i)
     {
-        default: return "Out of range";
         case Instruction::Integer_Add: return "Integer_Add";
         case Instruction::Integer_Subtract: return "Integer_Subtract";
         case Instruction::Integer_Multiply: return "Integer_Multiply";
@@ -115,6 +114,7 @@ constexpr const char *instruction_to_string(const Instruction i)
         case Instruction::Call_Method_Invert: return "Call_Method_Invert";
         case Instruction::Call_Method_Not: return "Call_Method_Not";
         case Instruction::Call_Method_To_String: return "Call_Method_To_String";
+        case Instruction::INSTRUCTION_ENUM_SIZE : return "INSTRUCTION_ENUM_SIZE";
     }
 }
 
