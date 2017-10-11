@@ -13,6 +13,8 @@ struct Malang_VM
 
     byte *ip;
     std::vector<byte> code;
+    std::vector<intptr_t> globals;
+    std::vector<intptr_t> locals;
     std::vector<intptr_t> data_stack;
     std::vector<byte**> return_stack;
 };

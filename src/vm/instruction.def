@@ -56,5 +56,9 @@ ITEM(Load_Field, 51)
 ITEM(Store_Global, 52)
 ITEM(Store_Local, 53)
 ITEM(Store_Field, 54)
+ITEM(Alloc_Globals, 55)
+ITEM(Alloc_Locals, 56)
+ITEM(Free_Globals, 57)
+ITEM(Free_Locals, 58)
 
 #undef ITEM
