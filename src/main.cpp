@@ -7,6 +7,9 @@
 
 #include "parser.hpp"
 #include "visitors/ast_pretty_printer.hpp"
+#include "vm/vm.hpp"
+#include "codegen/codegen.hpp"
+#include "codegen/disassm.hpp"
 
 struct Parse_Test
 {
@@ -152,40 +155,58 @@ void parse_tests()
 
 int main()
 {
-#if 1
-    parse_tests();
-#else
-    std::string m_code =
-        //R"(-(1 + 20) * (3 - 4 / 5);)";
-        //R"( ((~(+(-(4)))) + 4); )";
-        //R"( 4 % 5; )";
-        //R"(1 - 2 - 3 - 4 - 5;)";
-        //"print(1,2,3,4,5,6,7);";
-        //"x := 42;";
-        //"fn () -> int { x := 1 + 2 };";
-        "100 * 2.5;";
-    Parser parser;
-    /*
-    Ast_Node_Evaluator evaluator;
-    while (1)
-    {
-        std::string repl_code;
-        std::getline(std::cin, repl_code);
-        auto ast = parser.parse("repl.ma", repl_code);
-        if (parser.errors)
-        {
-            printf("there were errors...\n");
-        }
-        else
-        {
-            printf("AST:\n%s\n", ast.to_string().c_str());
-            for (auto &&it : ast.roots)
-            {
-                printf("%s\n", it->accept(evaluator)->to_string().c_str());
-            }
-        }
-    }
-    */
-#endif
-    return 0;
+    Codegen cg;
+    cg.push_back_integer_add(42, 5);
+    cg.push_back_literal_int(999);
+    cg.push_back_integer_multiply();
+
+    auto s = Disassembler::dis(cg.code);
+    printf("%s", s.c_str());
+
+    Malang_VM vm;
+    vm.load_code(cg.code);
+    vm.run();
+    auto x = vm.data_stack[0];
+    auto y = vm.data_stack[1];
+    auto z = vm.data_stack[2];
+    printf("x: %ld\n", x);
+    printf("y: %ld\n", y);
+    printf("z: %ld\n", z);
+    
+//#if 1
+//    parse_tests();
+//#else
+//    std::string m_code =
+//        //R"(-(1 + 20) * (3 - 4 / 5);)";
+//        //R"( ((~(+(-(4)))) + 4); )";
+//        //R"( 4 % 5; )";
+//        //R"(1 - 2 - 3 - 4 - 5;)";
+//        //"print(1,2,3,4,5,6,7);";
+//        //"x := 42;";
+//        //"fn () -> int { x := 1 + 2 };";
+//        "100 * 2.5;";
+//    Parser parser;
+//    /*
+//    Ast_Node_Evaluator evaluator;
+//    while (1)
+//    {
+//        std::string repl_code;
+//        std::getline(std::cin, repl_code);
+//        auto ast = parser.parse("repl.ma", repl_code);
+//        if (parser.errors)
+//        {
+//            printf("there were errors...\n");
+//        }
+//        else
+//        {
+//            printf("AST:\n%s\n", ast.to_string().c_str());
+//            for (auto &&it : ast.roots)
+//            {
+//                printf("%s\n", it->accept(evaluator)->to_string().c_str());
+//            }
+//        }
+//    }
+//    */
+//#endif
+//    return 0;
 }

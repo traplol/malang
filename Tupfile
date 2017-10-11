@@ -1,12 +1,13 @@
 .gitignore
 
 CC = g++
-CFLAGS += -D "DEBUG_MODE=1" -g -O0 -std=c++1z
+CFLAGS += -Wall -D "DEBUG_MODE=1" -g -O0 -std=c++1z
 LDFLAGS = 
 
 srcs = src/*.cpp
 srcs += src/ast/*.cpp
 srcs += src/visitors/*.cpp
 srcs += src/vm/*.cpp
+srcs += src/codegen/*.cpp
 : foreach $(srcs) |> $(CC) $(CFLAGS) -c %f -o %o |> build/%B.o
 : build/*.o |> $(CC) $(LDFLAGS) %f -o %o |> mal

@@ -83,7 +83,7 @@ static inline int32_t fetch4(byte *p)
     return *reinterpret_cast<int32_t*>(p);
 }
 
-static inline intptr_t fetch_ptr(byte *p)
+static inline intptr_t fetch_int(byte *p)
 {
     return *reinterpret_cast<intptr_t*>(p);
 }
@@ -251,10 +251,10 @@ static inline void exec_literal_4(Malang_VM &vm)
     NEXT4;
 }
 
-static inline void exec_literal_ptr(Malang_VM &vm)
+static inline void exec_literal_int(Malang_VM &vm)
 {
     NEXT1;
-    auto ptr = fetch_ptr(vm.ip);
+    auto ptr = fetch_int(vm.ip);
     vm.data_stack.push_back(ptr);
     NEXTPTR;
 }
@@ -277,7 +277,7 @@ static inline void exec_get_type(Malang_VM &vm)
 static inline void exec_branch(Malang_VM &vm)
 {
     NEXT1;
-    auto n = fetch_ptr(vm.ip);
+    auto n = fetch_int(vm.ip);
     vm.ip += n; // XXX: n-1 to be relative to the branch instruction
 }
 
@@ -287,7 +287,7 @@ static inline void exec_branch_if_zero(Malang_VM &vm)
     auto cond = POP();
     if (cond == 0)
     {
-        auto n = fetch_ptr(vm.ip);
+        auto n = fetch_int(vm.ip);
         vm.ip += n; // XXX: n-1 to be relative to the branch instruction
     }
     else
@@ -401,147 +401,147 @@ static void run_code(Malang_VM &vm)
     auto end = &vm.code[vm.code.size()];
     while (vm.ip != end)
     {
-        Instruction instru = static_cast<Instruction>(fetch1(vm.ip));
-        switch (instru)
+        auto ins = static_cast<Instruction>(fetch1(vm.ip));
+        switch (ins)
         {
             default:
-                trace_abort(vm, "Unknown instruction: %x\n", static_cast<int>(instru));
-            case Ins_Integer_Add:
+                trace_abort(vm, "Unknown instruction: %x\n", static_cast<int>(ins));
+            case Instruction::Integer_Add:
                 exec_integer_add(vm);
                 break;
-            case Ins_Integer_Subtract:
+            case Instruction::Integer_Subtract:
                 exec_integer_subract(vm);
                 break;
-            case Ins_Integer_Multiply:
+            case Instruction::Integer_Multiply:
                 exec_integer_multiply(vm);
                 break;
-            case Ins_Integer_Divide:
+            case Instruction::Integer_Divide:
                 exec_integer_divide(vm);
                 break;
-            case Ins_Integer_Modulo:
+            case Instruction::Integer_Modulo:
                 exec_integer_modulo(vm);
                 break;
-            case Ins_Integer_And:
+            case Instruction::Integer_And:
                 exec_integer_and(vm);
                 break;
-            case Ins_Integer_Or:
+            case Instruction::Integer_Or:
                 exec_integer_or(vm);
                 break;
-            case Ins_Integer_Xor:
+            case Instruction::Integer_Xor:
                 exec_integer_xor(vm);
                 break;
-            case Ins_Integer_Left_Shift:
+            case Instruction::Integer_Left_Shift:
                 exec_integer_left_shift(vm);
                 break;
-            case Ins_Integer_Right_Shift:
+            case Instruction::Integer_Right_Shift:
                 exec_integer_right_shift(vm);
                 break;
-            case Ins_Integer_Greater_Than:
+            case Instruction::Integer_Greater_Than:
                 exec_integer_greater_than(vm);
                 break;
-            case Ins_Integer_Greater_Than_Equals:
+            case Instruction::Integer_Greater_Than_Equals:
                 exec_integer_greater_than_equals(vm);
                 break;
-            case Ins_Integer_Less_Than:
+            case Instruction::Integer_Less_Than:
                 exec_integer_less_than(vm);
                 break;
-            case Ins_Integer_Less_Than_Equals:
+            case Instruction::Integer_Less_Than_Equals:
                 exec_integer_less_than_equals(vm);
                 break;
-            case Ins_Integer_Negate:
+            case Instruction::Integer_Negate:
                 exec_integer_negate(vm);
                 break;
-            case Ins_Integer_Invert:
+            case Instruction::Integer_Invert:
                 exec_integer_invert(vm);
                 break;
-            case Ins_Noop:
+            case Instruction::Noop:
                 exec_noop(vm);
                 break;
-            case Ins_Literal_1:
+            case Instruction::Literal_1:
                 exec_literal_1(vm);
                 break;
-            case Ins_Literal_2:
+            case Instruction::Literal_2:
                 exec_literal_2(vm);
                 break;
-            case Ins_Literal_4:
+            case Instruction::Literal_4:
                 exec_literal_4(vm);
                 break;
-            case Ins_Literal_ptr:
-                exec_literal_ptr(vm);
+            case Instruction::Literal_int:
+                exec_literal_int(vm);
                 break;
-            case Ins_Get_Value:
+            case Instruction::Get_Value:
                 exec_get_value(vm);
                 break;
-            case Ins_Set_Value:
+            case Instruction::Set_Value:
                 exec_set_value(vm);
                 break;
-            case Ins_Get_Type:
+            case Instruction::Get_Type:
                 exec_get_type(vm);
                 break;
-            case Ins_Branch:
+            case Instruction::Branch:
                 exec_branch(vm);
                 break;
-            case Ins_Branch_If_Zero:
+            case Instruction::Branch_If_Zero:
                 exec_branch_if_zero(vm);
                 break;
-            case Ins_Call_Method:
+            case Instruction::Call_Method:
                 exec_call_method(vm);
                 break;
-            case Ins_Call_Method_Cast_To:
+            case Instruction::Call_Method_Cast_To:
                 exec_call_method_cast_to(vm);
                 break;
-            case Ins_Call_Method_Add:
+            case Instruction::Call_Method_Add:
                 exec_call_method_add(vm);
                 break;
-            case Ins_Call_Method_Subtract:
+            case Instruction::Call_Method_Subtract:
                 exec_call_method_subtract(vm);
                 break;
-            case Ins_Call_Method_Multiply:
+            case Instruction::Call_Method_Multiply:
                 exec_call_method_multiply(vm);
                 break;
-            case Ins_Call_Method_Divide:
+            case Instruction::Call_Method_Divide:
                 exec_call_method_divide(vm);
                 break;
-            case Ins_Call_Method_Modulo:
+            case Instruction::Call_Method_Modulo:
                 exec_call_method_modulo(vm);
                 break;
-            case Ins_Call_Method_And:
+            case Instruction::Call_Method_And:
                 exec_call_method_and(vm);
                 break;
-            case Ins_Call_Method_Or:
+            case Instruction::Call_Method_Or:
                 exec_call_method_or(vm);
                 break;
-            case Ins_Call_Method_Xor:
+            case Instruction::Call_Method_Xor:
                 exec_call_method_xor(vm);
                 break;
-            case Ins_Call_Method_Left_Shift:
+            case Instruction::Call_Method_Left_Shift:
                 exec_call_method_left_shift(vm);
                 break;
-            case Ins_Call_Method_Right_Shift:
+            case Instruction::Call_Method_Right_Shift:
                 exec_call_method_right_shift(vm);
                 break;
-            case Ins_Call_Method_Greater_Than:
+            case Instruction::Call_Method_Greater_Than:
                 exec_call_method_greater_than(vm);
                 break;
-            case Ins_Call_Method_Greater_Than_Equals:
+            case Instruction::Call_Method_Greater_Than_Equals:
                 exec_call_method_greater_than_equals(vm);
                 break;
-            case Ins_Call_Method_Less_Than:
+            case Instruction::Call_Method_Less_Than:
                 exec_call_method_less_than(vm);
                 break;
-            case Ins_Call_Method_Less_Than_Equals:
+            case Instruction::Call_Method_Less_Than_Equals:
                 exec_call_method_less_than_equals(vm);
                 break;
-            case Ins_Call_Method_Negate:
+            case Instruction::Call_Method_Negate:
                 exec_call_method_negate(vm);
                 break;
-            case Ins_Call_Method_Invert:
+            case Instruction::Call_Method_Invert:
                 exec_call_method_invert(vm);
                 break;
-            case Ins_Call_Method_Not:
+            case Instruction::Call_Method_Not:
                 exec_call_method_not(vm);
                 break;
-            case Ins_Call_Method_To_String:
+            case Instruction::Call_Method_To_String:
                 exec_call_method_to_string(vm);
                 break;
         }
