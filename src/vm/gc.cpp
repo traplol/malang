@@ -81,13 +81,16 @@ void Malang_GC::construct(Malang_Object &obj, Type_Info *type)
     obj.allocator = this;
     obj.free = false;
     obj.type = type;
+    // don't want to immediately free this object...
+    obj.color = Malang_Object::grey;
     // TODO: reserve fields and such 
 }
 
 Malang_Object *Malang_GC::allocate(Type_Info *type)
 {
-    if (!m_is_paused && m_num_allocated > 5)
+    if (!m_is_paused && m_num_allocated > m_next_run)
     {
+        m_next_run += m_run_interval;
         printf("GC: automatic run triggered\n");
         mark_and_sweep();
     }

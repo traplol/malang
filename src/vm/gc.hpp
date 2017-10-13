@@ -24,10 +24,12 @@ struct GC_List
 
 struct Malang_GC
 {
-    Malang_GC(struct Malang_VM *vm)
+    Malang_GC(struct Malang_VM *vm, size_t run_interval)
         : m_is_paused(false)
         , m_vm(vm)
         , m_num_allocated(0)
+        , m_next_run(run_interval)
+        , m_run_interval(run_interval)
         {}
 
     void disable_automatic();
@@ -44,6 +46,8 @@ private:
     bool m_is_paused;
     struct Malang_VM *m_vm;
     size_t m_num_allocated;
+    size_t m_next_run;
+    size_t m_run_interval;
     GC_List m_allocated;
     GC_List m_free;
 };

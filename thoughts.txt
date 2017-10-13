@@ -53,11 +53,12 @@ IR:
     Builtin primitives:
         Boolean
         Char
-        Integer
+        Fixnum
         Single
         Double
         Array
         String
+        Callable
 
     Symbol
     Call
@@ -119,3 +120,10 @@ Oct 12, 2017:
         ? tagged pointers, integers go to 31 or 63 bits, some overhead
         ? maybe this is solvable with locals reordering or some analysis at compile time
     - Implemented a Value system using boxed nans, abusing 48 bit pointers and 32 bit fixnums
+
+Oct 13, 2017:
+    - Implemented basic tri-color GC, it needs to link better with the VM.
+      * GC needs lots of testing
+      * in the future, the GC could benefit from generations.
+      * currently, it only looks at how many objects are allocated and not how much space
+        an object occupies

@@ -154,7 +154,17 @@ void parse_tests()
     }
 }
 
+void codegen_stuff();
+void gc_stuff();
+void parse_stuff();
+
 int main()
+{
+    parse_stuff();
+    return 0;
+}
+
+void codegen_stuff()
 {
     Codegen cg;
     cg.push_back_fixnum_add(42, 5);
@@ -165,9 +175,15 @@ int main()
     printf("%s", s.c_str());
 
     cg.code.push_back(0xff);
-
     Malang_VM vm;
-    Malang_GC gc(&vm);
+    vm.load_code(cg.code);
+    vm.run();
+}
+
+void gc_stuff()
+{
+    Malang_VM vm;
+    Malang_GC gc(&vm, 5);
 
     Type_Info str;
     str.name = "string";
@@ -182,78 +198,22 @@ int main()
     vm.add_local(3.14159);
     vm.add_data(42.5);
     vm.add_global(696969);
-    auto a = gc.allocate(&str); vm.add_local(a);
-    auto b = gc.allocate(&str); vm.add_local(b);
-    auto c = gc.allocate(&str); vm.add_local(c);
-    auto d = gc.allocate(&str); vm.add_global(d);
-    auto e = gc.allocate(&str); vm.add_data(e);
-    auto f = gc.allocate(&str); vm.add_global(f);
-    auto g = gc.allocate(&str);
-    auto h = gc.allocate(&str); vm.add_global(h);
-    gc.disable_automatic();
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
-    gc.allocate(&str);
+    auto a = gc.allocate(&str); vm.add_local(a); printf("%p\n", a);
+    auto b = gc.allocate(&str); vm.add_local(b); printf("%p\n", b);
+    auto c = gc.allocate(&str); vm.add_local(c); printf("%p\n", c);
+    auto d = gc.allocate(&str); vm.add_global(d); printf("%p\n", d);
+    auto e = gc.allocate(&str); vm.add_data(e); printf("%p\n", e);
+    auto f = gc.allocate(&str); vm.add_global(f); printf("%p\n", f);
+    auto g = gc.allocate(&str); printf("%p\n", g);
+    auto h = gc.allocate(&str); vm.add_global(h); printf("%p\n", h);
+    for (int i = 0; i < 100; ++i)
+    {
+        printf("%p\n", gc.allocate(&str));
+    }
+    gc.manual_run();
+}
 
-    gc.manual_run();
-    gc.manual_run();
-    gc.manual_run();
-    gc.manual_run();
-
-    //vm.load_code(cg.code);
-    //vm.run();
-    //if (vm.data_stack[vm.data_top-1].as_fixnum() == (42 + 5) * 999)
-    //{
-    //    printf("good!\n");
-    //}
-    //else
-    //{
-    //    printf("bad!\n");
-    //}
-    
-//#if 1
-//    parse_tests();
-//#else
-//    std::string m_code =
-//        //R"(-(1 + 20) * (3 - 4 / 5);)";
-//        //R"( ((~(+(-(4)))) + 4); )";
-//        //R"( 4 % 5; )";
-//        //R"(1 - 2 - 3 - 4 - 5;)";
-//        //"print(1,2,3,4,5,6,7);";
-//        //"x := 42;";
-//        //"fn () -> int { x := 1 + 2 };";
-//        "100 * 2.5;";
-//    Parser parser;
-//    /*
-//    Ast_Node_Evaluator evaluator;
-//    while (1)
-//    {
-//        std::string repl_code;
-//        std::getline(std::cin, repl_code);
-//        auto ast = parser.parse("repl.ma", repl_code);
-//        if (parser.errors)
-//        {
-//            printf("there were errors...\n");
-//        }
-//        else
-//        {
-//            printf("AST:\n%s\n", ast.to_string().c_str());
-//            for (auto &&it : ast.roots)
-//            {
-//                printf("%s\n", it->accept(evaluator)->to_string().c_str());
-//            }
-//        }
-//    }
-//    */
-//#endif
-//    return 0;
+void parse_stuff()
+{
+    parse_tests();
 }
