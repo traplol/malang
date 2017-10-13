@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
-#include <stdint.h>
 #include <string.h>
 #include "vm.hpp"
 #include "instruction.hpp"
@@ -27,16 +26,16 @@ void Malang_VM::run()
 }
 
 
-static void vprint(const char *fmt, va_list vargs)
+static void vprptr(const char *fmt, va_list vargs)
 {
     vprintf(fmt, vargs);
 }
 
-static void print(const char *fmt, ...)
+static void prptr(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    vprint(fmt, args);
+    vprptr(fmt, args);
     va_end(args);
 }
 
@@ -54,14 +53,26 @@ static void trace(Malang_VM &vm)
         printf("%02x ", static_cast<int>(vm.code[p]));
         if (i % 40 == 0)
         {
-            print("\n");
+            prptr("\n");
         }
     }
     printf("\n\nDATA:\n");
     auto n = std::min(16ul, vm.data_top);
     for (auto i = vm.data_top - n; i < vm.data_top; ++i)
     {
-        printf("-%ld: %ld\n", i, vm.data_stack[i]);
+        auto &&e = vm.data_stack[i];
+        if (e.is_pointer())
+        {
+            printf("-%ld: POINTER: %p\n", i, e.as_pointer());
+        }
+        else if (e.is_double())
+        {
+            printf("-%ld: DOUBLE : %lf\n", i, e.as_double());
+        }
+        else if (e.is_fixnum())
+        {
+            printf("-%ld: FIXNUM : %d\n", i, e.as_fixnum());
+        }
     }
     printf("\n");
 }
@@ -70,7 +81,7 @@ void trace_abort(Malang_VM &vm, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    vprint(fmt, args);
+    vprptr(fmt, args);
     va_end(args);
     trace(vm);
     abort();
@@ -96,140 +107,139 @@ static inline int32_t fetch32(Malang_VM &vm)
     return *reinterpret_cast<int32_t*>(p);
 }
 
-static inline intptr_t fetch_int(Malang_VM &vm)
+static inline Malang_Value fetch_value(Malang_VM &vm)
 {
     auto p = &(vm.code[vm.ip]);
-    return *reinterpret_cast<intptr_t*>(p);
+    return *reinterpret_cast<Malang_Value*>(p);
 }
 
 #define NEXT8   vm.ip += sizeof(byte)
 #define NEXT16  vm.ip += sizeof(int16_t)
 #define NEXT32  vm.ip += sizeof(int32_t)
-#define NEXTINT vm.ip += sizeof(intptr_t)
 
-static inline void exec_Integer_Add(Malang_VM &vm)
+static inline void exec_Fixnum_Add(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a + b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() + b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Subtract(Malang_VM &vm)
+static inline void exec_Fixnum_Subtract(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a - b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() - b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Multiply(Malang_VM &vm)
+static inline void exec_Fixnum_Multiply(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a * b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() * b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Divide(Malang_VM &vm)
+static inline void exec_Fixnum_Divide(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a / b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() / b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Modulo(Malang_VM &vm)
+static inline void exec_Fixnum_Modulo(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a % b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() % b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_And(Malang_VM &vm)
+static inline void exec_Fixnum_And(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a & b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() & b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Or(Malang_VM &vm)
+static inline void exec_Fixnum_Or(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a | b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() | b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Xor(Malang_VM &vm)
+static inline void exec_Fixnum_Xor(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a ^ b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() ^ b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Left_Shift(Malang_VM &vm)
+static inline void exec_Fixnum_Left_Shift(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a << b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() << b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Right_Shift(Malang_VM &vm)
+static inline void exec_Fixnum_Right_Shift(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a >> b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() >> b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Greater_Than(Malang_VM &vm)
+static inline void exec_Fixnum_Greater_Than(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a > b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() > b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Greater_Than_Equals(Malang_VM &vm)
+static inline void exec_Fixnum_Greater_Than_Equals(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a >= b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() >= b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Less_Than(Malang_VM &vm)
+static inline void exec_Fixnum_Less_Than(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a < b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() < b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Less_Than_Equals(Malang_VM &vm)
+static inline void exec_Fixnum_Less_Than_Equals(Malang_VM &vm)
 {
     auto b = vm.data_stack[--vm.data_top];
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = a <= b;
+    vm.data_stack[vm.data_top++] = a.as_fixnum() <= b.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Negate(Malang_VM &vm)
+static inline void exec_Fixnum_Negate(Malang_VM &vm)
 {
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = -a;
+    vm.data_stack[vm.data_top++] = -a.as_fixnum();
     NEXT8;
 }
 
-static inline void exec_Integer_Invert(Malang_VM &vm)
+static inline void exec_Fixnum_Invert(Malang_VM &vm)
 {
     auto a = vm.data_stack[--vm.data_top];
-    vm.data_stack[vm.data_top++] = ~a;
+    vm.data_stack[vm.data_top++] = ~a.as_fixnum();
     NEXT8;
 }
 
@@ -242,7 +252,7 @@ static inline void exec_Literal_8(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch8(vm);
-    vm.data_stack[vm.data_top++] = static_cast<intptr_t>(n);
+    vm.data_stack[vm.data_top++] = n;
     NEXT8;
 }
 
@@ -250,7 +260,7 @@ static inline void exec_Literal_16(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch16(vm);
-    vm.data_stack[vm.data_top++] = static_cast<intptr_t>(n);
+    vm.data_stack[vm.data_top++] = n;
     NEXT16;
 }
 
@@ -258,16 +268,18 @@ static inline void exec_Literal_32(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch32(vm);
-    vm.data_stack[vm.data_top++] = static_cast<intptr_t>(n);
+    vm.data_stack[vm.data_top++] = n;
     NEXT32;
 }
 
-static inline void exec_Literal_int(Malang_VM &vm)
+static inline void exec_Literal_value(Malang_VM &vm)
 {
+    // @Audit: something feels off about this, why would there every be a literal pointer?
+    //         `Value`s might be in code by why would there be a pointer?
     NEXT8;
-    auto n = fetch_int(vm);
+    auto n = fetch_value(vm);
     vm.data_stack[vm.data_top++] = n;
-    NEXTINT;
+    vm.ip += sizeof(n);
 }
 
 static inline void exec_Get_Type(Malang_VM &vm)
@@ -278,7 +290,7 @@ static inline void exec_Get_Type(Malang_VM &vm)
 static inline void exec_Branch(Malang_VM &vm)
 {
     NEXT8;
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.ip += n; // XXX: n-1 to be relative to the branch instruction
 }
 
@@ -286,14 +298,15 @@ static inline void exec_Branch_If_Zero(Malang_VM &vm)
 {
     NEXT8;
     auto cond = vm.data_stack[--vm.data_top];
-    if (cond == 0)
+    // TODO: should probably have `true', `false', and `nil' value constants?
+    if (cond.bits() == 0)
     {
-        auto n = fetch_int(vm);
+        auto n = fetch32(vm);
         vm.ip += n; // XXX: n-1 to be relative to the branch instruction
     }
     else
     { // need to skip the offset
-        NEXTINT;
+        NEXT32;
     }
 }
 
@@ -419,18 +432,18 @@ static inline void exec_Call_Method_To_String(Malang_VM &vm)
 
 static inline void exec_Load_Global(Malang_VM &vm)
 {
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.data_stack[vm.data_top++] = vm.globals[n];
 }
 
 static inline void exec_Load_Local(Malang_VM &vm)
 {
     NEXT8;
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     auto this_frame = vm.locals_frames[vm.locals_frames_top-1];
     auto local = vm.locals[this_frame + n];
     vm.data_stack[vm.data_top++] = local;
-    NEXTINT;
+    NEXT32;
 }
 
 static inline void exec_Load_Field(Malang_VM &vm)
@@ -447,7 +460,7 @@ static inline void exec_Store_Local(Malang_VM &vm)
 {
     NEXT8;
     auto value = vm.data_stack[--vm.data_top];
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     auto this_frame = vm.locals_frames[vm.locals_frames_top-1];
     vm.locals[this_frame + n] = value;
     vm.ip += sizeof(n);
@@ -462,18 +475,18 @@ static inline void exec_Alloc_Globals(Malang_VM &vm)
 {
     NEXT8;
     auto value = vm.data_stack[--vm.data_top];
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.globals[n] = value;
-    NEXTINT;
+    NEXT32;
 }
 
 static inline void exec_Alloc_Locals(Malang_VM &vm)
 {
     NEXT8;
     vm.locals_frames[vm.locals_frames_top++] = vm.locals_top;
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.locals_top += n;
-    NEXTINT;
+    NEXT32;
 }
 
 static inline void exec_Free_Globals(Malang_VM &vm)
@@ -484,9 +497,9 @@ static inline void exec_Free_Globals(Malang_VM &vm)
 static inline void exec_Free_Locals(Malang_VM &vm)
 {
     NEXT8;
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.locals_top -= n;
-    NEXTINT;
+    NEXT32;
 }
 
 static inline void exec_Drop_1(Malang_VM &vm)
@@ -522,9 +535,9 @@ static inline void exec_Drop_5(Malang_VM &vm)
 static inline void exec_Drop_N(Malang_VM &vm)
 {
     NEXT8;
-    auto n = fetch_int(vm);
+    auto n = fetch32(vm);
     vm.data_top -= n;
-    NEXTINT;
+    NEXT32;
 }
 
 

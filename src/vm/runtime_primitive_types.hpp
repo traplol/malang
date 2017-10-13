@@ -2,16 +2,16 @@
 #define MALANG_RUNTIME_PRIMITIVE_TYPES_HPP
 
 #include <stdint.h>
+#include "nun_boxing.hpp"
 
-using Integer = int64_t;
+using Fixnum = int32_t;
 using Double = double;
-using Single = float;
 using Char = char;
 
 template<typename T>
 struct Array
 {
-    Integer length;
+    Fixnum length;
     const T *data;
 };
 

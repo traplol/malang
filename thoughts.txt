@@ -1,28 +1,121 @@
+==============================================================================================
+TODO:
+    + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
+    front by a variable/command line argument
+
+    + Implement the IR tree structs
+    + Implement the Ast to IR visitor
+    + Implement Object + Type system
+    + Write tests for every VM instruction
+    + Write tests for every Codegen function
+
+
+
+==============================================================================================
+Object Representation:
+    color:
+        0 = white: it's not reachable
+        1 = grey:  it's reachable
+        2 = black: we've marked all sub-references grey
+    struct Object
+    {
+        Type_Info *type_info;
+        char free : 1;
+        char color : 2;
+        uinptr_t *fields;
+
+        void mark();
+    };
+
+==============================================================================================
+Garbage Collection:
+    visit everything:
+        VM::globals
+        VM::locals
+        VM::data_stack
+
+        0. if it's not a pointer, skip
+        1. if it's already black, skip
+        2. mark object grey
+        3. for each object this object references go to 2
+        4. mark this object black
+        5. visit all objects in the global object store
+        6. if it's black, mark it white for the next run, and skip
+        7. if it's grey, throw an error, there should be no grey objects while freeing
+        8. if it's white, mark it as free
+
+==============================================================================================
 IR:
+    Symbol table to map symbols to globals/locals/fields
+    Label table to backfill branches
+    
+
     Builtin primitives:
-      Integer
-      Single
-      Double
-      Char
-      String
+        Boolean
+        Char
+        Integer
+        Single
+        Double
+        Array
+        String
 
     Symbol
     Call
     Call method
     Return
     Label
+    Named block
     Branch
     Branch if true
     Branch if false
     Assignment
     Binary operators:
-      + - * / % & | ^
-      << >> < > <= >=
-      ==
+        + - * / % & | ^
+        << >> < > <= >=
+        ==
 
     Unary operators:
-      ! ~ - +
+        ! ~ - +
 
     Type
     Allocate object
     Deallocate object
+
+
+==============================================================================================
+Logical Conditions with Short-Circuiting:
+    Note:
+      These all end with a jump_if_false(alternative) because if we get that far and fail
+      then the condition was not met.
+
+    `if (x || y) { A: ... } B:`
+    Represented as:
+    do_x                              ; pushes a bool to stack
+    jump_if_true(A)                   ; pop 1, jump if true
+    do_y                              ; pushes a bool to stack
+    jump_if_false(B)                  ; pop 1, jump if false
+    A:
+        ...
+    B:
+        ...
+
+    `if (x && y) { A: ... } B:`
+    Represented as:
+    do_x                              ; pushes a bool to stack
+    jump_if_false(B)                  ; pop 1, jump if false
+    do_y                              ; pushes a bool to stack
+    jump_if_false(B)                  ; pop 1, jump if false
+    A:
+        ...
+    B:
+        ...
+
+==============================================================================================
+DONE:
+
+Oct 12, 2017:
+    + Figure out how to store floats/doubles
+        ? no primitive floating point types, box them all?
+        ? tagged pointers, integers go to 31 or 63 bits, some overhead
+        ? maybe this is solvable with locals reordering or some analysis at compile time
+    - Implemented a Value system using boxed nans, abusing 48 bit pointers and 32 bit fixnums

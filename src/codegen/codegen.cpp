@@ -1,163 +1,167 @@
 #include <string.h>
 #include "codegen.hpp"
 
-void Codegen::push_back_integer_add()
+void Codegen::push_back_instruction(Instruction instruction)
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Add));
+    code.push_back(static_cast<byte>(instruction));
 }
-void Codegen::push_back_integer_subtract()
+void Codegen::push_back_fixnum_add()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Subtract));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Add));
 }
-void Codegen::push_back_integer_multiply()
+void Codegen::push_back_fixnum_subtract()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Multiply));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Subtract));
 }
-void Codegen::push_back_integer_divide()
+void Codegen::push_back_fixnum_multiply()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Divide));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Multiply));
 }
-void Codegen::push_back_integer_modulo()
+void Codegen::push_back_fixnum_divide()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Modulo));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Divide));
 }
-void Codegen::push_back_integer_and()
+void Codegen::push_back_fixnum_modulo()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_And));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Modulo));
 }
-void Codegen::push_back_integer_or()
+void Codegen::push_back_fixnum_and()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Or));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_And));
 }
-void Codegen::push_back_integer_xor()
+void Codegen::push_back_fixnum_or()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Xor));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Or));
 }
-void Codegen::push_back_integer_left_shift()
+void Codegen::push_back_fixnum_xor()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Left_Shift));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Xor));
 }
-void Codegen::push_back_integer_right_shift()
+void Codegen::push_back_fixnum_left_shift()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Right_Shift));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Left_Shift));
 }
-void Codegen::push_back_integer_greater_than()
+void Codegen::push_back_fixnum_right_shift()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Greater_Than));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Right_Shift));
 }
-void Codegen::push_back_integer_greater_than_equals()
+void Codegen::push_back_fixnum_greater_than()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Greater_Than_Equals));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Greater_Than));
 }
-void Codegen::push_back_integer_less_than()
+void Codegen::push_back_fixnum_greater_than_equals()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Less_Than_Equals));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Greater_Than_Equals));
 }
-void Codegen::push_back_integer_less_than_equals()
+void Codegen::push_back_fixnum_less_than()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Less_Than_Equals));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Less_Than_Equals));
 }
-void Codegen::push_back_integer_negate()
+void Codegen::push_back_fixnum_less_than_equals()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Negate));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Less_Than_Equals));
 }
-void Codegen::push_back_integer_invert()
+void Codegen::push_back_fixnum_negate()
 {
-    code.push_back(static_cast<byte>(Instruction::Integer_Invert));
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Negate));
 }
-void Codegen::push_back_integer_add(Integer a, Integer b)
+void Codegen::push_back_fixnum_invert()
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_add();
+    code.push_back(static_cast<byte>(Instruction::Fixnum_Invert));
 }
-void Codegen::push_back_integer_subtract(Integer a, Integer b)
+void Codegen::push_back_fixnum_add(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_subtract();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_add();
 }
-void Codegen::push_back_integer_multiply(Integer a, Integer b)
+void Codegen::push_back_fixnum_subtract(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_multiply();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_subtract();
 }
-void Codegen::push_back_integer_divide(Integer a, Integer b)
+void Codegen::push_back_fixnum_multiply(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_multiply();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_multiply();
 }
-void Codegen::push_back_integer_modulo(Integer a, Integer b)
+void Codegen::push_back_fixnum_divide(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_modulo();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_multiply();
 }
-void Codegen::push_back_integer_and(Integer a, Integer b)
+void Codegen::push_back_fixnum_modulo(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_and();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_modulo();
 }
-void Codegen::push_back_integer_or(Integer a, Integer b)
+void Codegen::push_back_fixnum_and(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_or();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_and();
 }
-void Codegen::push_back_integer_xor(Integer a, Integer b)
+void Codegen::push_back_fixnum_or(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_xor();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_or();
 }
-void Codegen::push_back_integer_left_shift(Integer a, Integer b)
+void Codegen::push_back_fixnum_xor(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_left_shift();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_xor();
 }
-void Codegen::push_back_integer_right_shift(Integer a, Integer b)
+void Codegen::push_back_fixnum_left_shift(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_right_shift();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_left_shift();
 }
-void Codegen::push_back_integer_greater_than(Integer a, Integer b)
+void Codegen::push_back_fixnum_right_shift(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_greater_than();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_right_shift();
 }
-void Codegen::push_back_integer_greater_than_equals(Integer a, Integer b)
+void Codegen::push_back_fixnum_greater_than(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_greater_than_equals();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_greater_than();
 }
-void Codegen::push_back_integer_less_than(Integer a, Integer b)
+void Codegen::push_back_fixnum_greater_than_equals(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_less_than();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_greater_than_equals();
 }
-void Codegen::push_back_integer_less_than_equals(Integer a, Integer b)
+void Codegen::push_back_fixnum_less_than(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(a);
-    push_back_literal_int(b);
-    push_back_integer_less_than_equals();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_less_than();
 }
-void Codegen::push_back_integer_negate(Integer n)
+void Codegen::push_back_fixnum_less_than_equals(Fixnum a, Fixnum b)
 {
-    push_back_literal_int(n);
-    push_back_integer_negate();
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_less_than_equals();
 }
-void Codegen::push_back_integer_invert(Integer n)
+void Codegen::push_back_fixnum_negate(Fixnum n)
 {
-    push_back_literal_int(n);
-    push_back_integer_invert();
+    push_back_literal_value(n);
+    push_back_fixnum_negate();
+}
+void Codegen::push_back_fixnum_invert(Fixnum n)
+{
+    push_back_literal_value(n);
+    push_back_fixnum_invert();
 }
 void Codegen::push_back_noop()
 {
@@ -184,11 +188,11 @@ void Codegen::push_back_literal_32(int32_t n)
     auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
     *slot = n;
 }
-void Codegen::push_back_literal_int(intptr_t n)
+void Codegen::push_back_literal_value(Malang_Value value)
 {
-    code.push_back(static_cast<byte>(Instruction::Literal_int));
-    code.resize(code.size() + sizeof(n));
+    code.push_back(static_cast<byte>(Instruction::Literal_value));
+    code.resize(code.size() + sizeof(value));
     auto end = code.data() + code.size();
-    auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
-    *slot = n;
+    auto slot = reinterpret_cast<decltype(value)*>(end - sizeof(value));
+    *slot = value;
 }

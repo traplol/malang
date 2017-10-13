@@ -156,9 +156,9 @@ void parse_tests()
 int main()
 {
     Codegen cg;
-    cg.push_back_integer_add(42, 5);
-    cg.push_back_literal_int(999);
-    cg.push_back_integer_multiply();
+    cg.push_back_fixnum_add(42, 5);
+    cg.push_back_literal_value(999);
+    cg.push_back_fixnum_multiply();
 
     auto s = Disassembler::dis(cg.code);
     printf("%s", s.c_str());
@@ -168,7 +168,7 @@ int main()
     Malang_VM vm;
     vm.load_code(cg.code);
     vm.run();
-    if (vm.data_stack[vm.data_top-1] == (42 + 5) * 999)
+    if (vm.data_stack[vm.data_top-1].as_fixnum() == (42 + 5) * 999)
     {
         printf("good!\n");
     }

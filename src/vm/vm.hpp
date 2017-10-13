@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <stdint.h>
+#include "nun_boxing.hpp"
 
 using byte = unsigned char;
+
+using Malang_Value = Value<>;
 
 struct Malang_VM
 {
@@ -23,9 +26,9 @@ struct Malang_VM
     uintptr_t locals_frames_top;
     uintptr_t locals_frames[256];
 
-    intptr_t globals[16000];
-    intptr_t locals[16000];
-    intptr_t data_stack[16000];
+    Malang_Value globals[16000];
+    Malang_Value locals[16000];
+    Malang_Value data_stack[16000];
     uintptr_t return_stack[16000];
 
 };

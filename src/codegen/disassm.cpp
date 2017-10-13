@@ -1,4 +1,5 @@
 #include <sstream>
+#include "../vm/vm.hpp"
 #include "disassm.hpp"
 
 static inline byte fetch8(byte *p)
@@ -16,9 +17,9 @@ static inline int32_t fetch32(byte *p)
     return *reinterpret_cast<int32_t*>(p);
 }
 
-static inline intptr_t fetch_int(byte *p)
+static inline Malang_Value fetch_value(byte *p)
 {
-    return *reinterpret_cast<intptr_t*>(p);
+    return *reinterpret_cast<Malang_Value*>(p);
 }
 
 std::string Disassembler::dis(std::vector<byte> code)
@@ -36,41 +37,44 @@ std::string Disassembler::dis(std::vector<byte> code)
         {
             ++p;
             auto n = fetch8(p);
-            ss << "<" << n << ">";
+            ss << " <" << n << ">";
             ++p;
         }
         else if (ins == Instruction::Literal_16)
         {
             ++p;
             auto n = fetch16(p);
-            ss << "<" << n << ">";
+            ss << " <" << n << ">";
             p += 2;
         }
         else if (ins == Instruction::Literal_32)
         {
             ++p;
             auto n = fetch32(p);
-            ss << "<" << n << ">";
+            ss << " <" << n << ">";
             p += 4;
         }
-        else if (ins == Instruction::Literal_int)
+        else if (ins == Instruction::Literal_value)
         {
             ++p;
-            auto n = fetch_int(p);
-            ss << "<" << n << ">";
+            auto n = fetch_value(p);
+            if (n.is_pointer())     {ss << " pointer:<" << n.as_pointer();}
+            else if (n.is_double()) {ss << " double:<" << n.as_double();}
+            else if (n.is_fixnum()) {ss << " fixnum:<" << n.as_fixnum();}
+            ss << ">";
             p += sizeof(n);
         }
         else if (ins == Instruction::Branch)
         {
             ++p;
-            auto n = fetch_int(p);
+            auto n = fetch32(p);
             ss << "<" << n << ">";
             p += sizeof(n);
         }
         else if (ins == Instruction::Branch_If_Zero)
         {
             ++p;
-            auto n = fetch_int(p);
+            auto n = fetch32(p);
             ss << "<" << n << ">";
             p += sizeof(n);
         }
