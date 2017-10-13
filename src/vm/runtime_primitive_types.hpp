@@ -16,5 +16,7 @@ struct Array
 };
 
 using String = Array<Char>;
+using Malang_Value = Value<struct Malang_Object>;
+
 
 #endif

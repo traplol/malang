@@ -87,6 +87,19 @@ void trace_abort(Malang_VM &vm, const char *fmt, ...)
     abort();
 }
 
+void Malang_VM::add_local(Malang_Value value)
+{
+    locals[locals_top++] = value;
+}
+void Malang_VM::add_global(Malang_Value value)
+{
+    globals[globals_top++] = value;
+}
+void Malang_VM::add_data(Malang_Value value)
+{
+    data_stack[data_top++] = value;
+}
+
 #define NOT_IMPL {trace_abort(vm, "%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
 
 static inline byte fetch8(Malang_VM &vm)
