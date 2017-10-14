@@ -1,4 +1,6 @@
 #include <cassert>
+#include "ir_symbol.hpp"
+#include "ir_type.hpp"
 #include "symbol_map.hpp"
 
 IR_Symbol *Symbol_Map::make_symbol(const std::string &name, IR_Type *type)

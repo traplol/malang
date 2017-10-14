@@ -552,6 +552,17 @@ static inline void exec_Drop_N(Malang_VM &vm)
     vm.data_top -= n;
     NEXT32;
 }
+static inline void exec_Fixnum_Equals(Malang_VM &vm)
+{
+    auto b = vm.data_stack[--vm.data_top];
+    auto a = vm.data_stack[--vm.data_top];
+    vm.data_stack[vm.data_top++] = a.as_fixnum() == b.as_fixnum();
+    NEXT8;
+}
+static inline void exec_Call_Method_Equals(Malang_VM &vm)
+{
+    NOT_IMPL;
+}
 
 
 static void run_code(Malang_VM &vm)

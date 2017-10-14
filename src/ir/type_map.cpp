@@ -1,4 +1,5 @@
 #include <cassert>
+#include "ir_type.hpp"
 #include "type_map.hpp"
 
 IR_Type *Type_Map::make_type(const std::string &name, IR_Type *parent)

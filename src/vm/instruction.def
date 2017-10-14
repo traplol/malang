@@ -66,5 +66,7 @@ ITEM(Drop_3, 61)
 ITEM(Drop_4, 62)
 ITEM(Drop_5, 63)
 ITEM(Drop_N, 64)
+ITEM(Fixnum_Equals, 65)
+ITEM(Call_Method_Equals, 66)
 
 #undef ITEM

@@ -1,4 +1,5 @@
 #include <cassert>
+#include "ir_label.hpp"
 #include "label_map.hpp"
 
 IR_Label *Label_Map::make_label(const std::string &name)

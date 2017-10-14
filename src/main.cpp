@@ -11,6 +11,8 @@
 #include "vm/gc.hpp"
 #include "codegen/codegen.hpp"
 #include "codegen/disassm.hpp"
+#include "codegen/ir_to_code.hpp"
+#include "ir/ast_to_ir.hpp"
 
 struct Parse_Test
 {
@@ -157,10 +159,11 @@ void parse_tests()
 void codegen_stuff();
 void gc_stuff();
 void parse_stuff();
+void parse_to_code();
 
 int main()
 {
-    parse_stuff();
+    parse_to_code();
     return 0;
 }
 
@@ -216,4 +219,23 @@ void gc_stuff()
 void parse_stuff()
 {
     parse_tests();
+}
+
+void parse_to_code()
+{
+    Parser parser;
+    auto ast = parser.parse("test.ma", "1 + 2");
+    if (parser.errors)
+    {
+        printf("there were parsing errors...\n");
+    }
+    else
+    {
+        Ast_To_IR ast_to_ir;
+        auto ir = ast_to_ir.convert(*ast.roots[0]);
+        IR_To_Code ir_to_code;
+        auto cg = ir_to_code.convert(*ir);
+        auto disassembly = Disassembler::dis(cg->code);
+        printf("%s\n", disassembly.c_str());
+    }
 }
