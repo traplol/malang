@@ -8,6 +8,7 @@ struct IR_Symbol : IR_Node
 {
     struct IR_Type *type;
     std::string symbol;
+    size_t index;
 
     IR_NODE_OVERRIDES;
 };

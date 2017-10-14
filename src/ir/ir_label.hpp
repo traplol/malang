@@ -17,7 +17,7 @@ struct IR_Label : IR_Node
 struct IR_Named_Block : IR_Label
 {
     std::vector<IR_Node*> body;
-    int32_t local_end_address;
+    IR_Label *end;
 
     IR_NODE_OVERRIDES;
 };

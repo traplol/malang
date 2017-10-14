@@ -127,3 +127,5 @@ Oct 13, 2017:
       * in the future, the GC could benefit from generations.
       * currently, it only looks at how many objects are allocated and not how much space
         an object occupies
+
+    - Implemented some of the necessary base IR nodes

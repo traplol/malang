@@ -7,7 +7,7 @@
 
 struct Method
 {
-    struct IR_Symbol *name;
+    struct IR_Symbol *symbol;
     struct IR_Type *return_type;
     std::vector<IR_Symbol*> parameters;
 };
@@ -16,6 +16,7 @@ struct IR_Type : IR_Node
 {
     IR_Type *parent;
     std::string name;
+    size_t index;
     std::vector<struct IR_Symbol*> fields;
     std::vector<Method> methods;
     std::vector<Method> virtual_methods;
