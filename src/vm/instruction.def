@@ -1,72 +1,220 @@
 #ifndef ITEM
-#define ITEM(X,Y)
+#define ITEM(X)
 #endif
 
-ITEM(Fixnum_Add, 0)
-ITEM(Fixnum_Subtract, 1)
-ITEM(Fixnum_Multiply, 2)
-ITEM(Fixnum_Divide, 3)
-ITEM(Fixnum_Modulo, 4)
-ITEM(Fixnum_And, 5)
-ITEM(Fixnum_Or, 6)
-ITEM(Fixnum_Xor, 7)
-ITEM(Fixnum_Left_Shift, 8)
-ITEM(Fixnum_Right_Shift, 9)
-ITEM(Fixnum_Greater_Than, 10)
-ITEM(Fixnum_Greater_Than_Equals, 11)
-ITEM(Fixnum_Less_Than, 13)
-ITEM(Fixnum_Less_Than_Equals, 14)
-ITEM(Fixnum_Negate, 15)
-ITEM(Fixnum_Invert, 16)
-ITEM(Noop, 17)
-ITEM(Literal_8, 18)
-ITEM(Literal_16, 19)
-ITEM(Literal_32, 20)
-ITEM(Literal_value, 21)
-ITEM(Get_Type, 22)
-ITEM(Branch, 23)
-ITEM(Branch_If_Zero, 24)
-ITEM(Leave, 25)
-ITEM(Return, 26)
-ITEM(Call, 27)
-ITEM(Call_Global, 28)
-ITEM(Call_Method, 29)
-ITEM(Call_Method_Cast_To, 30)
-ITEM(Call_Method_Add, 31)
-ITEM(Call_Method_Subtract, 32)
-ITEM(Call_Method_Multiply, 33)
-ITEM(Call_Method_Divide, 34)
-ITEM(Call_Method_Modulo, 35)
-ITEM(Call_Method_And, 36)
-ITEM(Call_Method_Or, 37)
-ITEM(Call_Method_Xor, 38)
-ITEM(Call_Method_Left_Shift, 39)
-ITEM(Call_Method_Right_Shift, 40)
-ITEM(Call_Method_Greater_Than, 41)
-ITEM(Call_Method_Greater_Than_Equals, 42)
-ITEM(Call_Method_Less_Than, 43)
-ITEM(Call_Method_Less_Than_Equals, 44)
-ITEM(Call_Method_Negate, 45)
-ITEM(Call_Method_Invert, 46)
-ITEM(Call_Method_Not, 47)
-ITEM(Call_Method_To_String, 48)
-ITEM(Load_Global, 49)
-ITEM(Load_Local, 50)
-ITEM(Load_Field, 51)
-ITEM(Store_Global, 52)
-ITEM(Store_Local, 53)
-ITEM(Store_Field, 54)
-ITEM(Alloc_Globals, 55)
-ITEM(Alloc_Locals, 56)
-ITEM(Free_Globals, 57)
-ITEM(Free_Locals, 58)
-ITEM(Drop_1, 59)
-ITEM(Drop_2, 60)
-ITEM(Drop_3, 61)
-ITEM(Drop_4, 62)
-ITEM(Drop_5, 63)
-ITEM(Drop_N, 64)
-ITEM(Fixnum_Equals, 65)
-ITEM(Call_Method_Equals, 66)
+// pop 2 fixnums from datastack, add them, push result to datastack
+ITEM(Fixnum_Add)
+
+// pop 2 fixnums from datastack, subtract them, push result to datastack
+ITEM(Fixnum_Subtract)
+
+// pop 2 fixnums from datastack, multiply them, push result to datastack
+ITEM(Fixnum_Multiply)
+
+// pop 2 fixnums from datastack, divide them, push result to datastack
+ITEM(Fixnum_Divide)
+
+// pop 2 fixnums from datastack, modulus them, push result to datastack
+ITEM(Fixnum_Modulo)
+
+// pop 2 fixnums from datastack, and them, push result to datastack
+ITEM(Fixnum_And)
+
+// pop 2 fixnums from datastack, or them, push result to datastack
+ITEM(Fixnum_Or)
+
+// pop 2 fixnums from datastack, xor them, push result to datastack
+ITEM(Fixnum_Xor)
+
+// pop 2 fixnums from datastack, shift the first left by the second, push result to datastack
+ITEM(Fixnum_Left_Shift)
+
+// pop 2 fixnums from datastack, shift the first right by the second, push result to datastack
+ITEM(Fixnum_Right_Shift)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Equals)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Greater_Than)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Greater_Than_Equals)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Less_Than)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Less_Than_Equals)
+
+// pop 1 fixnum from datastack, negate it, push result to datastack
+ITEM(Fixnum_Negate)
+
+// pop 1 fixnum from datastack, invert it, push result to datastack
+ITEM(Fixnum_Invert)
+
+// does nothing
+ITEM(Noop)
+
+// assumes the next byte of the bytecode is an 8-bit integer to push to the datastack
+ITEM(Literal_8)
+
+// assumes the next 2 bytes of the bytecode is a 16-bit integer to push to the datastack
+ITEM(Literal_16)
+
+// assumes the next 4 bytes of the bytecode is a 32-bit integer to push to the datastack
+ITEM(Literal_32)
+
+// assumes the next 8 bytes of the bytecode is a value to push to the datastack
+ITEM(Literal_value)
+
+// gets the type of a value and pushes it to the datastack
+ITEM(Get_Type)
+
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+ITEM(Branch)
+
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the top of stack is zero
+ITEM(Branch_If_Zero)
+
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the top of stack is not zero
+ITEM(Branch_If_Not_Zero)
+
+// pop IP from return stack, set IP to this value
+ITEM(Return)
+
+// push IP of next instruction to return stack, pop value from datastack and set IP to that
+// value
+ITEM(Call)
+
+// push IP of next instruction to return stack, the next 4 bytes of the bytecode is a 32-bit
+// index into the globals table, jump to the value pointed at by this index
+ITEM(Call_Global)
+
+// push IP of next instruction to return stack, pop value from datastack as a Type, the next
+// 2 bytes of the bytecode is a 16-bit index into the methods table of Type, jump to this
+// method's code.
+ITEM(Call_Method)
+
+// the next 4 bytes of the bytecode is a 32-bit index into the globals table, push the value
+// pointed at by this index to the top of the datastack
+ITEM(Load_Global)
+
+// the next 4 bytes of the bytecode is a 32-bit index into the globals table, pop the top of
+// the datastack to the store value at this index
+ITEM(Store_Global)
+
+// pop value from datastack as a Type, the next 2 bytes of the bytecode is a 16-bit index
+// into the `fields' table of Type push this value to the top of the datastack
+ITEM(Load_Field)
+
+// pop value from datastack as 'A
+// pop value from datastack as a Type: 'B, the next 2 bytes of the bytecode is a 16-bit
+// index into the `fields' table of 'B store 'A at this index into 'B.fields
+ITEM(Store_Field)
+
+// the next 2 bytes of the bytecode is a 16-bit index into the locals table, push the value
+// of variable #index to the top of the datastack
+ITEM(Load_Local)
+
+// push the value of variable 0 to the top of the datastack
+ITEM(Load_Local_0)
+
+// push the value of variable 1 to the top of the datastack
+ITEM(Load_Local_1)
+
+// push the value of variable 2 to the top of the datastack
+ITEM(Load_Local_2)
+
+// push the value of variable 3 to the top of the datastack
+ITEM(Load_Local_3)
+
+// the next 2 bytes of the bytecode is a 16-bit index into the locals table, pop the top
+// of the datastack into variable #index
+ITEM(Store_Local)
+
+// pop the top of the datastack into variable 0
+ITEM(Store_Local_0)
+
+// pop the top of the datastack into variable 1
+ITEM(Store_Local_1)
+
+// pop the top of the datastack into variable 2
+ITEM(Store_Local_2)
+
+// pop the top of the datastack into variable 3
+ITEM(Store_Local_3)
+
+// the next 2 bytes of the bytecode is a 16-bit index into the locals table, push the
+// value of argument #index to the top of the datastack
+ITEM(Load_Arg)
+
+// push the value of argument 0 to the top of the datastack
+ITEM(Load_Arg_0)
+
+// push the value of argument 1 to the top of the datastack
+ITEM(Load_Arg_1)
+
+// push the value of argument 2 to the top of the datastack
+ITEM(Load_Arg_2)
+
+// push the value of argument 3 to the top of the datastack
+ITEM(Load_Arg_3)
+
+// the next 2 bytes of the bytecode is a 16-bit index into the locals table, pop the top
+// of the datastack into argument #index
+ITEM(Store_Arg)
+
+// pop the top of the datastack into argument 0
+ITEM(Store_Arg_0)
+
+// pop the top of the datastack into argument 1
+ITEM(Store_Arg_1)
+
+// pop the top of the datastack into argument 2
+ITEM(Store_Arg_2)
+
+// pop the top of the datastack into argument 3
+ITEM(Store_Arg_3)
+
+// the next 2 bytes of the bytecode is a 16-bit integer representing how many locals to
+// allocate for this frame
+ITEM(Alloc_Locals)
+
+// pop a locals frame
+ITEM(Free_Locals)
+
+// before: a
+// after:  a a
+ITEM(Dup_1)
+
+// before: a b
+// after:  a b a b
+ITEM(Dup_2)
+
+// before: a b
+// after:  b a
+ITEM(Swap_1)
+
+// before: a b
+// after:  a b a
+ITEM(Over_1)
+
+// discard the top of the datastack
+ITEM(Drop_1)
+
+// discard the top 2 of the datastack
+ITEM(Drop_2)
+
+// discard the top 3 of the datastack
+ITEM(Drop_3)
+
+// discard the top 4 of the datastack
+ITEM(Drop_4)
+
+// the next 2 bytes of the bytecode represent a 16-bit integer 'N; discard the top 'N of the datastack
+ITEM(Drop_N)
 
 #undef ITEM

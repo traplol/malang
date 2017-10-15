@@ -4,6 +4,15 @@
 
 #define NOT_IMPL {printf("IR_To_Code visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
+static bool is_fixnum(IR_Node &n)
+{
+    if (n.type_id() == IR_Fixnum::_type_id())
+    {
+        return true;
+    }
+    return false;
+}
+
 void IR_To_Code::visit(IR_Boolean &n)
 {
     NOT_IMPL;
@@ -106,27 +115,62 @@ void IR_To_Code::visit(IR_B_Add &n)
     if (n.lhs->type_id() == IR_Fixnum::_type_id()
         && n.rhs->type_id() == IR_Fixnum::_type_id())
     {
+        /* Example optimization:
+        auto lhs = static_cast<IR_Fixnum*>(n.lhs);
+        auto rhs = static_cast<IR_Fixnum*>(n.rhs);
+        cg->push_back_literal_32(lhs->value + rhs->value);
+        */
         cg->push_back_fixnum_add();
     }
     else
     {
-        cg->push_back_call_method_add();
+        NOT_IMPL;
     }
 }
 
 void IR_To_Code::visit(IR_B_Subtract &n)
 {
-    NOT_IMPL;
+    convert_impl(cg, *n.lhs);
+    convert_impl(cg, *n.rhs);
+    if (n.lhs->type_id() == IR_Fixnum::_type_id()
+        && n.rhs->type_id() == IR_Fixnum::_type_id())
+    {
+        cg->push_back_fixnum_subtract();
+    }
+    else
+    {
+        NOT_IMPL;
+    }
 }
 
 void IR_To_Code::visit(IR_B_Multiply &n)
 {
-    NOT_IMPL;
+    convert_impl(cg, *n.lhs);
+    convert_impl(cg, *n.rhs);
+    if (n.lhs->type_id() == IR_Fixnum::_type_id()
+        && n.rhs->type_id() == IR_Fixnum::_type_id())
+    {
+        cg->push_back_fixnum_multiply();
+    }
+    else
+    {
+        NOT_IMPL;
+    }
 }
 
 void IR_To_Code::visit(IR_B_Divide &n)
 {
-    NOT_IMPL;
+    convert_impl(cg, *n.lhs);
+    convert_impl(cg, *n.rhs);
+    if (n.lhs->type_id() == IR_Fixnum::_type_id()
+        && n.rhs->type_id() == IR_Fixnum::_type_id())
+    {
+        cg->push_back_fixnum_multiply();
+    }
+    else
+    {
+        NOT_IMPL;
+    }
 }
 
 void IR_To_Code::visit(IR_B_Modulo &n)

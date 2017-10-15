@@ -3,7 +3,6 @@ TODO:
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
     front by a variable/command line argument
 
-    + Implement the IR tree structs
     + Implement the Ast to IR visitor
     + Implement Object + Type system
     + Write tests for every VM instruction
@@ -48,7 +47,7 @@ Garbage Collection:
 IR:
     Symbol table to map symbols to globals/locals/fields
     Label table to backfill branches
-    
+
 
     Builtin primitives:
         Boolean
@@ -116,16 +115,23 @@ DONE:
 
 Oct 12, 2017:
     + Figure out how to store floats/doubles
-        ? no primitive floating point types, box them all?
-        ? tagged pointers, integers go to 31 or 63 bits, some overhead
-        ? maybe this is solvable with locals reordering or some analysis at compile time
-    - Implemented a Value system using boxed nans, abusing 48 bit pointers and 32 bit fixnums
+      ? no primitive floating point types, box them all?
+      ? tagged pointers, integers go to 31 or 63 bits, some overhead
+      ? maybe this is solvable with locals reordering or some analysis at compile time
+    + Implemented a Value system using boxed nans, abusing 48 bit pointers and 32 bit fixnums
 
 Oct 13, 2017:
-    - Implemented basic tri-color GC, it needs to link better with the VM.
+    + Implemented basic tri-color GC, it needs to link better with the VM.
       * GC needs lots of testing
       * in the future, the GC could benefit from generations.
       * currently, it only looks at how many objects are allocated and not how much space
         an object occupies
 
-    - Implemented some of the necessary base IR nodes
+    + Implemented some of the necessary base IR nodes
+
+Oct 14, 2017:
+    + Implement the IR tree structs
+    + First source to bytecode translation!
+    + Partial implementation of AST to IR converter
+    + Partial implementation of IR to bytecode converter
+

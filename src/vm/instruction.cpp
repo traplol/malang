@@ -5,7 +5,7 @@ std::string to_string(Instruction instruction)
 {
     switch (instruction)
     {
-#define ITEM(X, Y) case Instruction::X: return #X ;
+#define ITEM(X) case Instruction::X: return #X ;
         #include "instruction.def"
         case Instruction::INSTRUCTION_ENUM_SIZE : return "INSTRUCTION_ENUM_SIZE";
     }

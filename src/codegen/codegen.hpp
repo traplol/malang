@@ -53,27 +53,6 @@ struct Codegen
     void push_back_literal_16(int16_t n);
     void push_back_literal_32(int32_t n);
     void push_back_literal_value(Malang_Value value);
-
-    void push_back_call_method_cast_to();
-    void push_back_call_method_add();
-    void push_back_call_method_subtract();
-    void push_back_call_method_multiply();
-    void push_back_call_method_divide();
-    void push_back_call_method_modulo();
-    void push_back_call_method_and();
-    void push_back_call_method_or();
-    void push_back_call_method_xor();
-    void push_back_call_method_left_shift();
-    void push_back_call_method_right_shift();
-    void push_back_call_method_equals();
-    void push_back_call_method_greater_than();
-    void push_back_call_method_greater_than_equals();
-    void push_back_call_method_less_than();
-    void push_back_call_method_less_than_equals();
-    void push_back_call_method_negate();
-    void push_back_call_method_invert();
-    void push_back_call_method_not();
-    void push_back_call_method_to_string();
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */
