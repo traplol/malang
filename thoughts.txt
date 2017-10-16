@@ -1,14 +1,49 @@
 ==============================================================================================
 TODO:
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
-    front by a variable/command line argument
+    front by a variable/command line argument. Alternatively since these are entirely accessed
+    using indexes they could even be dynamically allocated.
 
-    + Implement the Ast to IR visitor
+    + Implement VM calls (see: VM Calling Convention)
+
+    + Implement the AST to IR visitor
+
     + Implement Object + Type system
+
     + Write tests for every VM instruction
+
     + Write tests for every Codegen function
 
+    + AST should begin generating type declarations and the IR should handle actually
+    defining them
+        x: MyObj = new... implicitly declares/references the `MyObj' type
+        x := new Thing    implicitly declares/references the `Thing' type
+        struct MyStruct   will ensure MyStruct hasn't been declared, and then it will declare
+                          MyStruct
+        y :: fn(a:int, b:string) -> void {}   references types: `int', `string' and `void' 
+                          and implicitly declares/references the type: `(int,string) -> void'
 
+
+==============================================================================================
+VM Calling Convention:
+
+    Arguments:
+    + VM call arguments use data stack; when a call happens save the current data stack top 
+    and use that to access arguments:
+      - fn (a, b, c, d, e)
+      - Load/Store_Arg_0 = e, 1 = d, 2 = c, 3 = b, N[4] = a this will work because the body 
+      will know where each argument is as soon as the function is declared.
+      - variadic arguments can be handled by the compiler generating an array of values and
+      then pushing that to the data stack last, the array would be accessible with Load_Arg_0
+
+    Return values:
+    + Since the data stack is also used to "return" values from functions, it is the caller's
+    responsibility to unpack or drop them as necessary. This allows functions to return any
+    number of values.
+
+    Local variables:
+    + Local variables use a separate `locals' stack and allocating/freeing space on this stack
+    is controlled by the callee itself.
 
 ==============================================================================================
 Object Representation:
@@ -19,11 +54,11 @@ Object Representation:
     struct Object
     {
         Type_Info *type_info;
-        char free : 1;
-        char color : 2;
-        uinptr_t *fields;
+        unsigned char free : 1;
+        unsigned char color : 2;
+        Value *fields;
 
-        void mark();
+        void gc_mark(); // visits every field, if it's an object call its gc_mark
     };
 
 ==============================================================================================
