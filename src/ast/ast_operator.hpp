@@ -1,28 +1,28 @@
 #ifndef MALANG_AST_OPERATOR_AST_HPP
 #define MALANG_AST_OPERATOR_AST_HPP
 
-#include "ast.hpp"
+#include "ast_value.hpp"
 
 
 #define DEF_BINARY_AST_NODE(class_name) \
 struct class_name : public Binary_Holder { \
     ~class_name(); \
-    class_name(Ast_Node *lhs, Ast_Node *rhs) {this->lhs = lhs; this->rhs = rhs;} \
+    class_name(Ast_Value *lhs, Ast_Value *rhs) {this->lhs = lhs; this->rhs = rhs;} \
     AST_NODE_OVERRIDES; \
 }
 
 #define DEF_PREFIX_AST_NODE(class_name) \
-struct class_name : public Ast_Node { \
-    Ast_Node *rhs; \
+struct class_name : public Ast_RValue { \
+    Ast_Value *operand; \
     ~class_name(); \
-    class_name(Ast_Node *rhs) : rhs(rhs) {} \
+    class_name(Ast_Value *operand) : operand(operand) {} \
     AST_NODE_OVERRIDES; \
 }
 
-struct Binary_Holder : public Ast_Node
+struct Binary_Holder : public Ast_RValue
 {
-    Ast_Node *lhs;
-    Ast_Node *rhs;
+    Ast_Value *lhs;
+    Ast_Value *rhs;
 };
 
 DEF_BINARY_AST_NODE(Logical_Or_Node);

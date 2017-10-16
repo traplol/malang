@@ -1,25 +1,25 @@
 #ifndef MALANG_AST_AST_VALUE_HPP
 #define MALANG_AST_AST_VALUE_HPP
 
-
-#include <stdint.h>
-#include <string>
 #include "ast.hpp"
 
-#define DEF_VALUE_NODE(class_name, value_type) \
-struct class_name : public Ast_Node \
-{ \
-    value_type value; \
-    ~class_name(); \
-    class_name(value_type const &value) : value(value) {} \
-    AST_NODE_OVERRIDES; \
-}
+struct Ast_Value : public Ast_Node
+{
+    virtual void *get_type();
+    virtual bool can_lvalue() const = 0;
+    virtual bool can_rvalue() const = 0;
+};
 
-DEF_VALUE_NODE(Integer_Node, int64_t);
-DEF_VALUE_NODE(Real_Node, double);
-DEF_VALUE_NODE(String_Node, std::string);
-DEF_VALUE_NODE(Boolean_Node, bool);
-DEF_VALUE_NODE(Reference_Node, Ast_Node*);
+struct Ast_LValue : public Ast_Value
+{
+    virtual bool can_lvalue() const final;
+    virtual bool can_rvalue() const final;
+};
 
+struct Ast_RValue : public Ast_Value
+{
+    virtual bool can_lvalue() const final;
+    virtual bool can_rvalue() const final;
+};
 
 #endif /* MALANG_AST_AST_VALUE_HPP */

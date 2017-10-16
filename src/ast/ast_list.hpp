@@ -2,13 +2,13 @@
 #define MALANG_AST_AST_LIST_HPP
 
 #include <vector>
-#include "ast.hpp"
+#include "ast_value.hpp"
 
-struct List_Node : public Ast_Node
+struct List_Node : public Ast_RValue
 {
-    std::vector<Ast_Node*> contents;
+    std::vector<Ast_Value*> contents;
     ~List_Node();
-    List_Node(const std::vector<Ast_Node*> &contents)
+    List_Node(const std::vector<Ast_Value*> &contents)
         : contents(std::move(contents))
     {}
 

@@ -13,5 +13,6 @@
 #include "ir_symbol.hpp"
 #include "ir_type.hpp"
 #include "ir_unary_ops.hpp"
+#include "ir_values.hpp"
 
 #endif /* MALANG_IR_NODES_HPP */

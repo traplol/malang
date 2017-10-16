@@ -1,9 +1,9 @@
 #ifndef MALANG_AST_AST_VARIABLE_HPP
 #define MALANG_AST_AST_VARIABLE_HPP
 
-#include "ast.hpp"
+#include "ast_value.hpp"
 
-struct Variable_Node : public Ast_Node
+struct Variable_Node : public Ast_LValue
 {
     ~Variable_Node();
     Variable_Node(const std::string &name)

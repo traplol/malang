@@ -5,8 +5,9 @@
 
 #include "ast.hpp"
 #include "ast_decl.hpp"
+#include "ast_value.hpp"
 
-struct Fn_Node : Ast_Node
+struct Fn_Node : Ast_RValue
 {
     std::vector<Decl_Node*> params;
     Ast_Node *return_type;

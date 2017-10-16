@@ -1,48 +1,25 @@
-#include <sstream>
 #include "ast_value.hpp"
 
-
-
-Integer_Node::~Integer_Node()
+void *Ast_Value::get_type()
 {
-    PRINT_DTOR;
+    printf("get_type for `%s' not implemented.\n", type_name().c_str());
+    abort();
 }
-AST_NODE_OVERRIDES_IMPL(Integer_Node)
 
-
-
-
-Real_Node::~Real_Node()
+bool Ast_LValue::can_lvalue() const
 {
-    PRINT_DTOR;
+    return true;
 }
-AST_NODE_OVERRIDES_IMPL(Real_Node)
-
-
-
-
-String_Node::~String_Node()
+bool Ast_LValue::can_rvalue() const
 {
-    PRINT_DTOR;
+    return true;
 }
-AST_NODE_OVERRIDES_IMPL(String_Node)
 
-
-
-
-
-Boolean_Node::~Boolean_Node()
+bool Ast_RValue::can_lvalue() const
 {
-    PRINT_DTOR;
+    return false;
 }
-AST_NODE_OVERRIDES_IMPL(Boolean_Node)
-
-
-
-
-Reference_Node::~Reference_Node()
+bool Ast_RValue::can_rvalue() const
 {
-    PRINT_DTOR;
+    return true;
 }
-AST_NODE_OVERRIDES_IMPL(Reference_Node)
-

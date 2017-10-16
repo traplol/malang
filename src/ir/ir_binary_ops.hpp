@@ -6,11 +6,8 @@
 struct IR_Binary_Operation : IR_Node
 {
     virtual ~IR_Binary_Operation() {}
-    // TODO: LHS should be a value
-    IR_Node *lhs;
-
-    // TODO: RHS should be a value
-    IR_Node *rhs;
+    struct IR_RValue *lhs;
+    struct IR_RValue *rhs;
 };
 
 struct IR_B_Add : IR_Binary_Operation

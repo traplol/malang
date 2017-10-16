@@ -6,7 +6,7 @@
 struct Unary_Operation : IR_Node
 {
     virtual ~Unary_Operation(){}
-    IR_Node *operand;
+    struct IR_RValue *operand;
 };
 
 struct IR_U_Not : Unary_Operation

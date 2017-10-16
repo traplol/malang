@@ -5,10 +5,8 @@
 
 struct IR_Assignment : IR_Node
 {
-    // TODO: LHS should be LVal
-    IR_Node *lhs;
-    // TODO: RHS should be RVal
-    IR_Node *rhs;
+    struct IR_LValue *lhs;
+    struct IR_RValue *rhs;
 
     IR_NODE_OVERRIDES;
 };

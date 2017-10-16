@@ -105,10 +105,6 @@ void Ast_Pretty_Printer::visit(Boolean_Node &n)
 {
     str << (n.value ? "true" : "false");
 }
-void Ast_Pretty_Printer::visit(Reference_Node &n)
-{
-    str << "Reference_To(" << n.value << ")";
-}
 #define BIN_OP_PP(n, opStr) \
     Ast_Pretty_Printer pp; \
     str << "(" << pp.to_string(*(n).lhs) << " " opStr " " << pp.to_string(*(n).rhs) << ")"
@@ -203,20 +199,20 @@ void Ast_Pretty_Printer::visit(Field_Accessor_Node &n)
 void Ast_Pretty_Printer::visit(Negate_Node &n)
 {
     Ast_Pretty_Printer pp;
-    str << "(-" << pp.to_string(*n.rhs) << ")";
+    str << "(-" << pp.to_string(*n.operand) << ")";
 }
 void Ast_Pretty_Printer::visit(Positive_Node &n)
 {
     Ast_Pretty_Printer pp;
-    str << "(+" << pp.to_string(*n.rhs) << ")";
+    str << "(+" << pp.to_string(*n.operand) << ")";
 }
 void Ast_Pretty_Printer::visit(Not_Node &n)
 {
     Ast_Pretty_Printer pp;
-    str << "(!" << pp.to_string(*n.rhs) << ")";
+    str << "(!" << pp.to_string(*n.operand) << ")";
 }
 void Ast_Pretty_Printer::visit(Invert_Node &n)
 {
     Ast_Pretty_Printer pp;
-    str << "(~" << pp.to_string(*n.rhs) << ")";
+    str << "(~" << pp.to_string(*n.operand) << ")";
 }

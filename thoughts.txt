@@ -135,3 +135,9 @@ Oct 14, 2017:
     + Partial implementation of AST to IR converter
     + Partial implementation of IR to bytecode converter
 
+Oct 15, 2017:
+    + Documented the VM's instruction set
+    + Implemented some VM instructions
+    + Fixed some VM instructions
+    + Partial implementation of LValue/RValue concepts to make AST to IR translation easier
+

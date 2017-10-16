@@ -109,25 +109,25 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
 
 // forward decls
 static uptr<Ast_Node> parse_assignment(Parser &parser);
-static uptr<Ast_Node> parse_declaration(Parser &parser);
-static uptr<Ast_Node> parse_logical_or_exp(Parser &parser);
-static uptr<Ast_Node> parse_logical_and_exp(Parser &parser);
-static uptr<Ast_Node> parse_inclusive_or_exp(Parser &parser);
-static uptr<Ast_Node> parse_exclusive_or_exp(Parser &parser);
-static uptr<Ast_Node> parse_and_exp(Parser &parser);
-static uptr<Ast_Node> parse_equality_exp(Parser &parser);
-static uptr<Ast_Node> parse_relational_exp(Parser &parser);
-static uptr<Ast_Node> parse_shift_exp(Parser &parser);
-static uptr<Ast_Node> parse_additive_exp(Parser &parser);
-static uptr<Ast_Node> parse_multiplicative_exp(Parser &parser);
-static uptr<Ast_Node> parse_unary_exp(Parser &parser);
-static uptr<Ast_Node> parse_postfix_exp(Parser &parser);
-static uptr<Ast_Node> parse_primary(Parser &parser);
+static uptr<Decl_Node> parse_declaration(Parser &parser);
+static uptr<Ast_Value> parse_logical_or_exp(Parser &parser);
+static uptr<Ast_Value> parse_logical_and_exp(Parser &parser);
+static uptr<Ast_Value> parse_inclusive_or_exp(Parser &parser);
+static uptr<Ast_Value> parse_exclusive_or_exp(Parser &parser);
+static uptr<Ast_Value> parse_and_exp(Parser &parser);
+static uptr<Ast_Value> parse_equality_exp(Parser &parser);
+static uptr<Ast_Value> parse_relational_exp(Parser &parser);
+static uptr<Ast_Value> parse_shift_exp(Parser &parser);
+static uptr<Ast_Value> parse_additive_exp(Parser &parser);
+static uptr<Ast_Value> parse_multiplicative_exp(Parser &parser);
+static uptr<Ast_Value> parse_unary_exp(Parser &parser);
+static uptr<Ast_Value> parse_postfix_exp(Parser &parser);
+static uptr<Ast_Value> parse_primary(Parser &parser);
 static uptr<List_Node> parse_expression_list(Parser &parser);
-static uptr<Ast_Node> parse_expression(Parser &parser);
+static uptr<Ast_Value> parse_expression(Parser &parser);
 static uptr<Ast_Node> parse_statement(Parser &parser);
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body);
-static uptr<Ast_Node> parse_fn(Parser &parser);
+static uptr<Ast_RValue> parse_fn(Parser &parser);
 
 #define SAVE auto _save_idx = parser.lex_idx
 #define RESTORE parser.lex_idx = _save_idx
@@ -151,7 +151,7 @@ static uptr<Ast_Node> parse_assignment(Parser &parser)
     CHECK_OR_FAIL(rhs);
     return uptr<Assign_Node>(new Assign_Node(lhs.release(), rhs.release()));
 }
-static uptr<Ast_Node> parse_declaration(Parser &parser)
+static uptr<Decl_Node> parse_declaration(Parser &parser)
 {
     SAVE;
     Token ident, type_name;
@@ -168,7 +168,7 @@ static uptr<Ast_Node> parse_declaration(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_logical_or_exp(Parser &parser)
+static uptr<Ast_Value> parse_logical_or_exp(Parser &parser)
 {   // l_or :=
     //     l_and
     //     l_or || l_and
@@ -180,7 +180,7 @@ static uptr<Ast_Node> parse_logical_or_exp(Parser &parser)
     {
         auto rhs = parse_logical_and_exp(parser);
         CHECK_OR_FAIL(rhs);
-        lhs = uptr<Ast_Node>(new Logical_Or_Node(lhs.release(), rhs.release()));
+        lhs = uptr<Ast_Value>(new Logical_Or_Node(lhs.release(), rhs.release()));
     }
     if (lhs)
     {
@@ -188,7 +188,7 @@ static uptr<Ast_Node> parse_logical_or_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_logical_and_exp(Parser &parser)
+static uptr<Ast_Value> parse_logical_and_exp(Parser &parser)
 {   // l_and :=
     //     inclusive_or
     //     l_and && inclusive_or
@@ -200,7 +200,7 @@ static uptr<Ast_Node> parse_logical_and_exp(Parser &parser)
     {
         auto rhs = parse_inclusive_or_exp(parser);
         CHECK_OR_FAIL(rhs);
-        lhs = uptr<Ast_Node>(new Logical_And_Node(lhs.release(), rhs.release()));
+        lhs = uptr<Ast_Value>(new Logical_And_Node(lhs.release(), rhs.release()));
     }
     if (lhs)
     {
@@ -208,7 +208,7 @@ static uptr<Ast_Node> parse_logical_and_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_inclusive_or_exp(Parser &parser)
+static uptr<Ast_Value> parse_inclusive_or_exp(Parser &parser)
 {   // inclusive_or :=
     //     exclusive_or
     //     inclusive_or | exclusive_or
@@ -220,7 +220,7 @@ static uptr<Ast_Node> parse_inclusive_or_exp(Parser &parser)
     {
         auto rhs = parse_exclusive_or_exp(parser);
         CHECK_OR_FAIL(rhs);
-        lhs = uptr<Ast_Node>(new Inclusive_Or_Node(lhs.release(), rhs.release()));
+        lhs = uptr<Ast_Value>(new Inclusive_Or_Node(lhs.release(), rhs.release()));
     }
     if (lhs)
     {
@@ -228,7 +228,7 @@ static uptr<Ast_Node> parse_inclusive_or_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_exclusive_or_exp(Parser &parser)
+static uptr<Ast_Value> parse_exclusive_or_exp(Parser &parser)
 {   // exclusive_or :=
     //     and
     //     exclusive_or ^ and
@@ -240,7 +240,7 @@ static uptr<Ast_Node> parse_exclusive_or_exp(Parser &parser)
     {
         auto rhs = parse_and_exp(parser);
         CHECK_OR_FAIL(rhs);
-        lhs = uptr<Ast_Node>(new Exclusive_Or_Node(lhs.release(), rhs.release()));
+        lhs = uptr<Ast_Value>(new Exclusive_Or_Node(lhs.release(), rhs.release()));
     }
     if (lhs)
     {
@@ -248,7 +248,7 @@ static uptr<Ast_Node> parse_exclusive_or_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_and_exp(Parser &parser)
+static uptr<Ast_Value> parse_and_exp(Parser &parser)
 {   // and :=
     //     equality
     //     and & equality
@@ -260,7 +260,7 @@ static uptr<Ast_Node> parse_and_exp(Parser &parser)
     {
         auto rhs = parse_equality_exp(parser);
         CHECK_OR_FAIL(rhs);
-        lhs = uptr<Ast_Node>(new And_Node(lhs.release(), rhs.release()));
+        lhs = uptr<Ast_Value>(new And_Node(lhs.release(), rhs.release()));
     }
     if (lhs)
     {
@@ -268,7 +268,7 @@ static uptr<Ast_Node> parse_and_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_equality_exp(Parser &parser)
+static uptr<Ast_Value> parse_equality_exp(Parser &parser)
 {   // equality :=
     //     relational
     //     equality == relational
@@ -283,11 +283,11 @@ static uptr<Ast_Node> parse_equality_exp(Parser &parser)
         CHECK_OR_FAIL(rhs);
         if (tok.id() == Token_Id::Equals_Equals)
         {
-            lhs = uptr<Ast_Node>(new Equals_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Equals_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Not_Equals)
         {
-            lhs = uptr<Ast_Node>(new Not_Equals_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Not_Equals_Node(lhs.release(), rhs.release()));
         }
     }
     if (lhs)
@@ -296,7 +296,7 @@ static uptr<Ast_Node> parse_equality_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_relational_exp(Parser &parser)
+static uptr<Ast_Value> parse_relational_exp(Parser &parser)
 {   // relational :=
     //     shift
     //     relational <  shift
@@ -314,19 +314,19 @@ static uptr<Ast_Node> parse_relational_exp(Parser &parser)
         CHECK_OR_FAIL(rhs);
         if (tok.id() == Token_Id::Less)
         {
-            lhs = uptr<Ast_Node>(new Less_Than_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Less_Than_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Less_Equals)
         {
-            lhs = uptr<Ast_Node>(new Less_Than_Equals_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Less_Than_Equals_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Greater)
         {
-            lhs = uptr<Ast_Node>(new Greater_Than_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Greater_Than_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Greater_Equals)
         {
-            lhs = uptr<Ast_Node>(new Greater_Than_Equals_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Greater_Than_Equals_Node(lhs.release(), rhs.release()));
         }
     }
     if (lhs)
@@ -335,7 +335,7 @@ static uptr<Ast_Node> parse_relational_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_shift_exp(Parser &parser)
+static uptr<Ast_Value> parse_shift_exp(Parser &parser)
 {   // shift :=
     //     additive
     //     shift << additive
@@ -350,11 +350,11 @@ static uptr<Ast_Node> parse_shift_exp(Parser &parser)
         CHECK_OR_FAIL(rhs);
         if (tok.id() == Token_Id::L_Shift)
         {
-            lhs = uptr<Ast_Node>(new Left_Shift_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Left_Shift_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::R_Shift)
         {
-            lhs = uptr<Ast_Node>(new Right_Shift_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Right_Shift_Node(lhs.release(), rhs.release()));
         }
     }
     if (lhs)
@@ -363,7 +363,7 @@ static uptr<Ast_Node> parse_shift_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_additive_exp(Parser &parser)
+static uptr<Ast_Value> parse_additive_exp(Parser &parser)
 {   // additive :=
     //     multiplicative
     //     additive + multiplicative
@@ -379,12 +379,12 @@ static uptr<Ast_Node> parse_additive_exp(Parser &parser)
         if (tok.id() == Token_Id::Plus)
         {
             DEBUG(tok, "Add");
-            lhs = uptr<Ast_Node>(new Add_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Add_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Minus)
         {
             DEBUG(tok, "Subtract");
-            lhs = uptr<Ast_Node>(new Subtract_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Subtract_Node(lhs.release(), rhs.release()));
         }
     }
     if (lhs)
@@ -393,7 +393,7 @@ static uptr<Ast_Node> parse_additive_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_multiplicative_exp(Parser &parser)
+static uptr<Ast_Value> parse_multiplicative_exp(Parser &parser)
 {   // multiplicative :=
     //     unary
     //     multiplicative * unary
@@ -410,17 +410,17 @@ static uptr<Ast_Node> parse_multiplicative_exp(Parser &parser)
         if (tok.id() == Token_Id::Star)
         {
             DEBUG(tok, "Multiply");
-            lhs = uptr<Ast_Node>(new Multiply_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Multiply_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Slash)
         {
             DEBUG(tok, "Divide");
-            lhs = uptr<Ast_Node>(new Divide_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Divide_Node(lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Mod)
         {
             DEBUG(tok, "Modulo");
-            lhs = uptr<Ast_Node>(new Modulo_Node(lhs.release(), rhs.release()));
+            lhs = uptr<Ast_Value>(new Modulo_Node(lhs.release(), rhs.release()));
         }
     }
     if (lhs)
@@ -430,7 +430,7 @@ static uptr<Ast_Node> parse_multiplicative_exp(Parser &parser)
     PARSE_FAIL;
 }
 
-static uptr<Ast_Node> parse_unary_exp(Parser &parser)
+static uptr<Ast_Value> parse_unary_exp(Parser &parser)
 {   // unary :=
     //     postfix
     //     - unary
@@ -438,7 +438,7 @@ static uptr<Ast_Node> parse_unary_exp(Parser &parser)
    //     ! unary
     //     ~ unary
     SAVE;
-    uptr<Ast_Node> postfix = parse_postfix_exp(parser);
+    uptr<Ast_Value> postfix = parse_postfix_exp(parser);
     if (postfix)
     {
         return postfix;
@@ -452,27 +452,27 @@ static uptr<Ast_Node> parse_unary_exp(Parser &parser)
         if (tok.id() == Token_Id::Minus)
         {
             DEBUG(tok, "Negate");
-            return uptr<Ast_Node>(new Negate_Node(unary.release()));
+            return uptr<Ast_Value>(new Negate_Node(unary.release()));
         }
         if (tok.id() == Token_Id::Plus)
         {
             DEBUG(tok, "Positive");
-            return uptr<Ast_Node>(new Positive_Node(unary.release()));
+            return uptr<Ast_Value>(new Positive_Node(unary.release()));
         }
         if (tok.id() == Token_Id::Not)
         {
             DEBUG(tok, "Not");
-            return uptr<Ast_Node>(new Not_Node(unary.release()));
+            return uptr<Ast_Value>(new Not_Node(unary.release()));
         }
         if (tok.id() == Token_Id::Invert)
         {
             DEBUG(tok, "Invert");
-            return uptr<Ast_Node>(new Invert_Node(unary.release()));
+            return uptr<Ast_Value>(new Invert_Node(unary.release()));
         }
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
+static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
 {   // postfix :=
     //     primary
     //     postfix ( )
@@ -489,7 +489,7 @@ static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
         {
             PARSE_FAIL;
         }
-        return uptr<Ast_Node>(new Call_Node(prim.release(), args.release()));
+        return uptr<Ast_Value>(new Call_Node(prim.release(), args.release()));
     }
     if (parser.accept(tok, {Token_Id::Open_Square}))
     {
@@ -498,7 +498,7 @@ static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
         {
             PARSE_FAIL;
         }
-        return uptr<Ast_Node>(new Index_Node(prim.release(), args.release()));
+        return uptr<Ast_Value>(new Index_Node(prim.release(), args.release()));
     }
     //if (parser.accept(tok, {Token_Id::Dot}))
     //{
@@ -510,7 +510,7 @@ static uptr<Ast_Node> parse_postfix_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<Ast_Node> parse_primary(Parser &parser)
+static uptr<Ast_Value> parse_primary(Parser &parser)
 {
     SAVE;
     Token token;
@@ -530,15 +530,15 @@ static uptr<Ast_Node> parse_primary(Parser &parser)
     }
     if (parser.accept(token, { Token_Id::Integer }))
     {
-        return uptr<Ast_Node>(new Integer_Node(token.to_int()));
+        return uptr<Ast_Value>(new Integer_Node(token.to_int()));
     }
     if (parser.accept(token, { Token_Id::Real }))
     {
-        return uptr<Ast_Node>(new Real_Node(token.to_real()));
+        return uptr<Ast_Value>(new Real_Node(token.to_real()));
     }
     if (parser.accept(token, { Token_Id::Identifier }))
     {
-        return uptr<Ast_Node>(new Variable_Node(token.to_string()));
+        return uptr<Ast_Value>(new Variable_Node(token.to_string()));
     }
     //if (auto tk = parser.peek())
     //{
@@ -550,7 +550,7 @@ static uptr<List_Node> parse_expression_list(Parser &parser)
 {   // expression_list :=
     //     expression
     //     expression_list , expression
-    std::vector<Ast_Node*> contents;
+    std::vector<Ast_Value*> contents;
     while (true)
     {
         auto x = parse_expression(parser);
@@ -571,7 +571,7 @@ static uptr<List_Node> parse_expression_list(Parser &parser)
     }
     return uptr<List_Node>(new List_Node(contents));
 }
-static uptr<Ast_Node> parse_expression(Parser &parser)
+static uptr<Ast_Value> parse_expression(Parser &parser)
 {   // expression :=
     //     function
     //     l_or
@@ -608,7 +608,7 @@ static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
         }
     }
 }
-static uptr<Ast_Node> parse_fn(Parser &parser)
+static uptr<Ast_RValue> parse_fn(Parser &parser)
 {   // function :=
     //     fn ( ) -> identifier { body }
     //     fn ( decl_list ) -> identifier { body }
@@ -621,7 +621,7 @@ static uptr<Ast_Node> parse_fn(Parser &parser)
     CHECK_OR_FAIL(parser.expect(return_type, Token_Id::Identifier));
     std::vector<Ast_Node*> body;
     CHECK_OR_FAIL(parse_body(parser, body));
-    return uptr<Ast_Node>(new Fn_Node({}, new Variable_Node(return_type.to_string()), body));
+    return uptr<Ast_RValue>(new Fn_Node({}, new Variable_Node(return_type.to_string()), body));
 }
 static uptr<Ast_Node> parse_statement(Parser &parser)
 {   // statement :=

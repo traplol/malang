@@ -53,11 +53,6 @@ void Ast_To_IR::visit(Boolean_Node&n)
     NOT_IMPL;
 }
 
-void Ast_To_IR::visit(Reference_Node&n)
-{
-    NOT_IMPL;
-}
-
 void Ast_To_IR::visit(Logical_Or_Node&n)
 {
     NOT_IMPL;

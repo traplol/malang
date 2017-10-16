@@ -4,51 +4,51 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
-#include "ir.hpp"
+#include "ir_values.hpp"
 
-struct IR_Boolean : IR_Node
+struct IR_Boolean : IR_RValue
 {
     bool value;
     
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Char : IR_Node
+struct IR_Char : IR_RValue
 {
     char value;
     
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Fixnum : IR_Node
+struct IR_Fixnum : IR_RValue
 {
     int32_t value;
 
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Single : IR_Node
+struct IR_Single : IR_RValue
 {
     float value;
     
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Double : IR_Node
+struct IR_Double : IR_RValue
 {
     double value;
 
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Array : IR_Node
+struct IR_Array : IR_RValue
 {
     int32_t num_elements;
     struct IR_Type *element_type;
     IR_NODE_OVERRIDES;
 };
 
-struct IR_String : IR_Node
+struct IR_String : IR_RValue
 {
     std::string value;
 
@@ -61,7 +61,7 @@ struct Callable_Parameter
     IR_Type *type;
 };
 
-struct IR_Callable : IR_Node
+struct IR_Callable : IR_RValue
 {
     struct IR_Type *return_type;
     std::vector<Callable_Parameter> parameters;

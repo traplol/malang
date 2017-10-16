@@ -7,18 +7,18 @@
 #include "ast_operator.hpp"
 #include "ast_list.hpp"
 
-#define BIN_OP_DTOR(class_name) \
-    class_name::~class_name() { \
-        delete lhs;             \
-        lhs = nullptr;          \
-        delete rhs;             \
-        rhs = nullptr;          \
+#define BIN_OP_DTOR(class_name)                 \
+    class_name::~class_name() {                 \
+        delete lhs;                             \
+        lhs = nullptr;                          \
+        delete rhs;                             \
+        rhs = nullptr;                          \
         PRINT_DTOR;}
 
-#define PREFIX_OP_DTOR(class_name) \
-    class_name::~class_name() { \
-        delete rhs;             \
-        rhs = nullptr;          \
+#define PREFIX_OP_DTOR(class_name)              \
+    class_name::~class_name() {                 \
+        delete operand;                         \
+        operand = nullptr;                      \
         PRINT_DTOR;}
 
 BIN_OP_DTOR(Logical_Or_Node)

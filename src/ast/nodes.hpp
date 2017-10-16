@@ -4,6 +4,7 @@
 
 #include "ast.hpp"
 #include "ast_value.hpp"
+#include "ast_primitives.hpp"
 #include "ast_decl.hpp"
 #include "ast_assign.hpp"
 #include "ast_operator.hpp"

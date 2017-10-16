@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "ast.hpp"
+#include "ast_value.hpp"
 
-struct Decl_Node : public Ast_Node
+struct Decl_Node : public Ast_LValue
 {
     std::string variable_name;
     std::string type;
