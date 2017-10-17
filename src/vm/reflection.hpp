@@ -47,12 +47,16 @@ struct Type_Info
     bool add_method(Method_Info *method);
     const std::vector<Method_Info*> methods() const;
 
+    bool castable_to(Type_Info *other) const;
+    bool is_subtype_of(Type_Info *other) const;
+
 private:
     Type_Info *m_parent;
     Type_Token m_type_token;
     std::string m_name;
     std::vector<Field_Info*> m_fields;
     std::vector<Method_Info*> m_methods;
+    std::vector<Type_Info*> m_subtypes;
 };
 
 struct Function_Type_Info : Type_Info

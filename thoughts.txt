@@ -176,3 +176,10 @@ Oct 15, 2017:
     + Fixed some VM instructions
     + Partial implementation of LValue/RValue concepts to make AST to IR translation easier
 
+Oct 16, 2017:
+    + Added source locations to AST nodes
+    + Bringing the Type_Map towards being useful during source parsing and IR translation
+
+Oct 17, 2017:
+    + Implemented better VM helper functions
+    + Implemented argument access in the VM

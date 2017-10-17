@@ -57,9 +57,9 @@ void Ast_Pretty_Printer::visit(Assign_Node &n)
 void Ast_Pretty_Printer::visit(Decl_Node &n)
 {
     str << n.variable_name << " :";
-    if (n.type.size() != 0)
+    if (n.type != nullptr)
     {
-        str << " " << n.type;
+        str << " " << n.type->name();
     }
 }
 void Ast_Pretty_Printer::visit(Fn_Node &n)

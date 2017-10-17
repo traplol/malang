@@ -2,6 +2,41 @@
 #include <sstream>
 #include "type_map.hpp"
 
+Type_Map::Type_Map()
+{
+    m_object = declare_type("object", nullptr);
+    m_int    = declare_type("int", m_object);
+    m_char   = declare_type("char", m_object);
+    m_double = declare_type("double", m_object);
+    m_string = declare_type("string", m_object);
+    m_bool   = declare_type("bool", m_object);
+}
+
+Type_Info *Type_Map::get_object() const
+{
+    return m_object;
+}
+Type_Info *Type_Map::get_int() const
+{
+    return m_int;
+}
+Type_Info *Type_Map::get_char() const
+{
+    return m_char;
+}
+Type_Info *Type_Map::get_double() const
+{
+    return m_double;
+}
+Type_Info *Type_Map::get_string() const
+{
+    return m_string;
+}
+Type_Info *Type_Map::get_bool() const
+{
+    return m_bool;
+}
+
 Type_Info *Type_Map::get_or_declare_type(const std::string &name)
 {
     auto existing = get_type(name);
@@ -16,6 +51,11 @@ Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
 {
     assert(!name.empty());
     assert(get_type(name) == nullptr);
+
+    if (parent == nullptr)
+    {
+        parent = m_object;
+    }
 
     auto type = new Type_Info(parent, m_types_fast.size(), name);
     m_types[type->name()] = type;

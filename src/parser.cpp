@@ -161,12 +161,12 @@ static uptr<Decl_Node> parse_declaration(Parser &parser)
     ACCEPT_OR_FAIL({ Token_Id::Colon });
     if (parser.accept(type_name, { Token_Id::Identifier }))
     {
-        //auto type = Type::get_or_create_type(type_name.to_string());
-        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type_name.to_string()));
+        auto type = parser.types->get_or_declare_type(type_name.to_string());
+        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type));
     }
     if (parser.peek_id() == Token_Id::Equals)
     {   // x : = 
-        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), ""));
+        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), nullptr));
     }
     PARSE_FAIL;
 }
@@ -532,11 +532,13 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     }
     if (parser.accept(token, { Token_Id::Integer }))
     {
-        return uptr<Ast_Value>(new Integer_Node(token.src_loc(), token.to_int()));
+        return uptr<Ast_Value>(
+            new Integer_Node(token.src_loc(), token.to_int(), parser.types->get_int()));
     }
     if (parser.accept(token, { Token_Id::Real }))
     {
-        return uptr<Ast_Value>(new Real_Node(token.src_loc(), token.to_real()));
+        return uptr<Ast_Value>(
+            new Real_Node(token.src_loc(), token.to_real(), parser.types->get_double()));
     }
     if (parser.accept(token, { Token_Id::Identifier }))
     {

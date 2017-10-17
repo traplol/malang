@@ -10,6 +10,7 @@ void Type_Info::set_parent(Type_Info *parent)
 {
     assert(m_parent == nullptr);
     m_parent = parent;
+    m_parent->m_subtypes.push_back(this);
 }
 
 Type_Token Type_Info::type_token() const
@@ -60,4 +61,47 @@ bool Type_Info::add_method(Method_Info *method)
 const std::vector<Method_Info*> Type_Info::methods() const
 {
     return m_methods;
+}
+
+bool Type_Info::castable_to(Type_Info *other) const
+{
+    if (this == other)
+    {
+        return true;
+    }
+    assert(m_type_token != other->m_type_token);
+
+    if (is_subtype_of(other))
+    {
+        return true;
+    }
+
+    for (auto &&m : other->m_methods)
+    {
+        // @XXX: magic string: "cast_to"
+        if (m->return_type == this && m->name == "cast_to")
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Type_Info::is_subtype_of(Type_Info *other) const
+{
+    if (this == other)
+    {
+        return false;
+    }
+    auto p = m_parent;
+    while (p)
+    {
+        if (p == other)
+        {
+            return true;
+        }
+        p = p->m_parent;
+    }
+    return false;
 }

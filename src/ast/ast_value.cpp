@@ -1,6 +1,7 @@
 #include "ast_value.hpp"
 
-void *Ast_Value::get_type()
+__attribute__((noreturn))
+Type_Info *Ast_Value::get_type()
 {
     printf("get_type for `%s' not implemented.\n", type_name().c_str());
     abort();

@@ -2,11 +2,12 @@
 #define MALANG_AST_AST_VALUE_HPP
 
 #include "ast.hpp"
+#include "../type_map.hpp"
 
 struct Ast_Value : public Ast_Node
 {
     Ast_Value(const Source_Location &src_loc) : Ast_Node(src_loc) {}
-    virtual void *get_type();
+    virtual Type_Info *get_type();
     virtual bool can_lvalue() const = 0;
     virtual bool can_rvalue() const = 0;
 };

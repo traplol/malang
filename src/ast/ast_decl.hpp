@@ -8,13 +8,15 @@
 struct Decl_Node : public Ast_LValue
 {
     std::string variable_name;
-    std::string type;
+    Type_Info *type;
     ~Decl_Node();
-    Decl_Node(const Source_Location &src_loc, const std::string &variable, const std::string &type)
+    Decl_Node(const Source_Location &src_loc, const std::string &variable, Type_Info *type)
         : Ast_LValue(src_loc)
         , variable_name(variable)
         , type(type)
     {}
+
+    virtual Type_Info *get_type() final;
 
     AST_NODE_OVERRIDES;
 };

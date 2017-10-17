@@ -89,14 +89,8 @@ ITEM(Return)
 // value
 ITEM(Call)
 
-// push IP of next instruction to return stack, the next 4 bytes of the bytecode is a 32-bit
-// index into the globals table, jump to the value pointed at by this index
-ITEM(Call_Global)
-
-// push IP of next instruction to return stack, pop value from datastack as a Type, the next
-// 2 bytes of the bytecode is a 16-bit index into the methods table of Type, jump to this
-// method's code.
-ITEM(Call_Method)
+// TODO: describe Call_Virtual
+ITEM(Call_Virtual)
 
 // the next 4 bytes of the bytecode is a 32-bit index into the globals table, push the value
 // pointed at by this index to the top of the datastack

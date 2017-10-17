@@ -9,10 +9,13 @@
     struct class_name : public Ast_RValue                               \
     {                                                                   \
         value_type value;                                               \
+        Type_Info *type;                                                \
         ~class_name();                                                  \
-        class_name(const Source_Location &src_loc, value_type const &value) \
+        class_name(const Source_Location &src_loc, value_type const &value, Type_Info *type) \
             : Ast_RValue(src_loc)                                       \
-            , value(value) {}                                           \
+            , value(value)                                              \
+            , type(type) {}                                             \
+        virtual Type_Info *get_type() final;                            \
         AST_NODE_OVERRIDES;                                             \
     }
 
