@@ -6,8 +6,9 @@
 struct Variable_Node : public Ast_LValue
 {
     ~Variable_Node();
-    Variable_Node(const std::string &name)
-        : name(name)
+    Variable_Node(const Source_Location &src_loc, const std::string &name)
+        : Ast_LValue(src_loc)
+        , name(name)
     {}
     AST_NODE_OVERRIDES;
 

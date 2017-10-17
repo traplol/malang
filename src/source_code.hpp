@@ -8,9 +8,13 @@ struct Source_Location
 {
     std::string to_string() const;
 
+    const class Source_Code *source_code;
     std::string filename;
     int line_no;
     int char_no;
+
+    void report(const char *type, const char *fmt, ...) const;
+    void vreport(const char *type, const char *fmt, va_list vargs) const;
 };
 
 class Source_Code

@@ -93,9 +93,9 @@ struct Lexer
 {
     std::vector<Token> tokens;
 
-    bool lex(Source_Code &code);
+    bool lex(Source_Code *code);
     void dump();
-    static bool match_ident(Source_Code &code, const std::string &ident);
+    static bool match_ident(Source_Code *code, const std::string &ident);
     static bool is_ident_start_char(int c);
     static bool is_ident_char(int c);
     static bool is_digit(int c);

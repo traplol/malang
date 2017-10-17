@@ -8,8 +8,9 @@ struct List_Node : public Ast_RValue
 {
     std::vector<Ast_Value*> contents;
     ~List_Node();
-    List_Node(const std::vector<Ast_Value*> &contents)
-        : contents(std::move(contents))
+    List_Node(const Source_Location &src_loc, const std::vector<Ast_Value*> &contents)
+        : Ast_RValue(src_loc)
+        , contents(std::move(contents))
     {}
 
     AST_NODE_OVERRIDES;

@@ -5,6 +5,7 @@
 
 struct Ast_Value : public Ast_Node
 {
+    Ast_Value(const Source_Location &src_loc) : Ast_Node(src_loc) {}
     virtual void *get_type();
     virtual bool can_lvalue() const = 0;
     virtual bool can_rvalue() const = 0;
@@ -12,12 +13,14 @@ struct Ast_Value : public Ast_Node
 
 struct Ast_LValue : public Ast_Value
 {
+    Ast_LValue(const Source_Location &src_loc) : Ast_Value(src_loc) {}
     virtual bool can_lvalue() const final;
     virtual bool can_rvalue() const final;
 };
 
 struct Ast_RValue : public Ast_Value
 {
+    Ast_RValue(const Source_Location &src_loc) : Ast_Value(src_loc) {}
     virtual bool can_lvalue() const final;
     virtual bool can_rvalue() const final;
 };

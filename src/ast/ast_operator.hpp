@@ -4,23 +4,31 @@
 #include "ast_value.hpp"
 
 
-#define DEF_BINARY_AST_NODE(class_name) \
-struct class_name : public Binary_Holder { \
-    ~class_name(); \
-    class_name(Ast_Value *lhs, Ast_Value *rhs) {this->lhs = lhs; this->rhs = rhs;} \
-    AST_NODE_OVERRIDES; \
-}
+#define DEF_BINARY_AST_NODE(class_name)                                 \
+    struct class_name : public Binary_Holder {                          \
+        ~class_name();                                                  \
+        class_name(const Source_Location &src_loc, Ast_Value *lhs, Ast_Value *rhs) \
+            : Binary_Holder(src_loc, lhs, rhs) {}                       \
+        AST_NODE_OVERRIDES;                                             \
+    }
 
-#define DEF_PREFIX_AST_NODE(class_name) \
-struct class_name : public Ast_RValue { \
-    Ast_Value *operand; \
-    ~class_name(); \
-    class_name(Ast_Value *operand) : operand(operand) {} \
-    AST_NODE_OVERRIDES; \
-}
+#define DEF_PREFIX_AST_NODE(class_name)                                 \
+    struct class_name : public Ast_RValue {                             \
+        Ast_Value *operand;                                             \
+        ~class_name();                                                  \
+        class_name(const Source_Location &src_loc, Ast_Value *operand)  \
+            : Ast_RValue(src_loc)                                       \
+            , operand(operand) {}                                       \
+        AST_NODE_OVERRIDES;                                             \
+    }
 
 struct Binary_Holder : public Ast_RValue
 {
+    Binary_Holder(const Source_Location &src_loc, Ast_Value *lhs, Ast_Value *rhs)
+        : Ast_RValue(src_loc)
+        , lhs(lhs)
+        , rhs(rhs)
+    {}
     Ast_Value *lhs;
     Ast_Value *rhs;
 };

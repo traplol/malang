@@ -3,8 +3,8 @@
 
 #include <vector>
 #include "../metadata.hpp"
+#include "../type_map.hpp"
 #include "ir_visitor.hpp"
-#include "type_map.hpp"
 #include "label_map.hpp"
 #include "symbol_map.hpp"
 
@@ -26,9 +26,9 @@ struct IR_Node : public Metadata
 struct Malang_IR
 {
     std::vector<IR_Node*> roots;
-    Symbol_Map symbols;
-    Label_Map labels;
-    Type_Map types;
+    Symbol_Map *symbols;
+    Label_Map *labels;
+    Type_Map *types;
 };
 
 #endif /* MALANG_IR_IR_HPP */

@@ -10,8 +10,9 @@ struct Decl_Node : public Ast_LValue
     std::string variable_name;
     std::string type;
     ~Decl_Node();
-    Decl_Node(const std::string &variable, const std::string &type)
-        : variable_name(variable)
+    Decl_Node(const Source_Location &src_loc, const std::string &variable, const std::string &type)
+        : Ast_LValue(src_loc)
+        , variable_name(variable)
         , type(type)
     {}
 

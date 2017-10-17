@@ -8,6 +8,28 @@ std::string Source_Location::to_string() const
     return ss.str();
 }
 
+void Source_Location::report(const char *type, const char *fmt, ...) const
+{
+    va_list vargs;
+    va_start(vargs, fmt);
+    vreport(type, fmt, vargs);
+    va_end(vargs);
+}
+void Source_Location::vreport(const char *type, const char *fmt, va_list vargs) const
+{
+    if (source_code)
+    {
+        source_code->vreport_at_src_loc(type, *this, fmt, vargs);
+    }
+    else
+    {
+        printf("%s: %s:%d:%d\n\n", type, filename.c_str(), line_no, char_no);
+        printf("\t");
+        vprintf(fmt, vargs);
+        printf("\n");
+    }
+}
+
 int Source_Code::next()
 {
     if (m_idx >= m_code.size())
@@ -85,7 +107,7 @@ const std::string &Source_Code::filename() const
 
 Source_Location Source_Code::curr_src_loc() const
 {
-    return { m_filename, m_cur_line, m_cur_line_char };
+    return { this, m_filename, m_cur_line, m_cur_line_char };
 }
 
 void Source_Code::report_at_src_loc(const char *type, const Source_Location &src_loc, const char *fmt, ...) const

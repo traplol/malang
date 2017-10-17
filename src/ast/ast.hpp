@@ -1,9 +1,10 @@
 #ifndef MALANG_AST_AST_HPP
 #define MALANG_AST_AST_HPP
 
-#include "../metadata.hpp"
 #include <vector>
 #include <string>
+#include "../metadata.hpp"
+#include "../source_code.hpp"
 #include "ast_visitor.hpp"
 
 #if 0
@@ -23,7 +24,10 @@
 struct Ast_Node : public Metadata
 {
     virtual ~Ast_Node();
-    
+
+    Ast_Node(const Source_Location &src_loc) : src_loc(src_loc){}
+    Source_Location src_loc;
+
     virtual void accept(Ast_Visitor&) = 0;
     METADATA_OVERRIDES;
 };

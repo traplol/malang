@@ -1,0 +1,109 @@
+
+max :: fn(a: _, b: _) -> _ {
+    return if a > b { a } else { b }
+}
+
+
+x := 42
+print(x)
+
+class Vec3 {
+    x : double
+    y : double
+    z : double
+
+    b_op + :: fn(Vec3 other) -> Vec3 {
+    // impl...
+    }
+    b_op - :: fn(Vec3 other) -> Vec3 {
+    // impl...
+    }
+    b_op * :: fn(double scalar) -> Vec3 {
+    // impl...
+    }
+}
+
+p1 := new Vec3
+p2 := new Vec3
+p3 := p1 + p2
+
+class Greeter {
+    m_greeting : string
+
+    Greeter(greeting: string) {
+        m_greeting = greeting
+    }
+
+    greet :: fn(name: string) {
+        print("#{m_greeting} #{name}")
+    }
+}
+
+greeter := new Greeter("Hello, ")
+greeter.greet("Bob") // Hello, Bob
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+// Matching
+// matching requires the type being matched against to implement a "matches"
+// method which is called with the thing being matched
+// 
+// match a {
+//     typeof string => print("it's a string"),
+//     1 => print("one"),
+//     2 | 3 | 5 | 7 | 11 => print("prime"),
+//     13...19 => print("teen"),
+//     _ => print("ain't special")
+// }
+//
+// gets converted into:
+// 
+// if (typeof string).matches(a) {
+//     print("it's a string")
+// }
+// else if 1.matches(a) {
+//     print("one")
+// }
+// else if 2.matches(a) || 3.matches(a) || 5.matches(a)... {
+//     print("prime")
+// }
+// else if range(13,19).matches(a) {
+//     print("teen")
+// }
+// else {
+//     print("ain't special")
+// }
+// 
+// 
+// n: int
+// match {
+//     n is not int: print("not an int!"),
+//     n % 15 == 0: print("fizzbuzz"),
+//     n % 5 == 0: print("fizz")<
+//     n % 3 == 0: print("buzz"),
+//     _: print(n)
+// }
+//
+// this is syntactic sugar for `match true { ... }'
+//
+// if (n is not int).matches(true) {
+//     print("fizzbuzz")
+// }
+// else if (n % 15 == 0).matches(true) {
+//     print("fizzbuzz")
+// }
+// else if (n % 5 == 0).matches(true) {
+//     print("fizz")
+// }
+// else if (n % 3 == 0).matches(true) {
+//     print("buzz")
+// }
+// else {
+//     print(n)
+// }
+//
+// ideally, `bool.matches(true)' will be optimized away
+//
+/////////////////////////////////////////////////////////////////////////////////

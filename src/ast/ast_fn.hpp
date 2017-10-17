@@ -12,8 +12,9 @@ struct Fn_Node : Ast_RValue
     std::vector<Decl_Node*> params;
     Ast_Node *return_type;
     std::vector<Ast_Node*> body;
-    Fn_Node(const std::vector<Decl_Node*> &params, Ast_Node *return_type, const std::vector<Ast_Node*> &body)
-        : params(std::move(params))
+    Fn_Node(const Source_Location &src_loc, const std::vector<Decl_Node*> &params, Ast_Node *return_type, const std::vector<Ast_Node*> &body)
+        : Ast_RValue(src_loc)
+        , params(std::move(params))
         , return_type(return_type)
         , body(std::move(body))
         {}

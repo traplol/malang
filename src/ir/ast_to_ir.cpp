@@ -124,8 +124,8 @@ void Ast_To_IR::visit(Add_Node&n)
     auto lhs = c.convert_impl(ir, *n.lhs);
     auto rhs = c.convert_impl(ir, *n.rhs);
     auto add = new IR_B_Add;
-    add->lhs = lhs;
-    add->rhs = rhs;
+    //add->lhs = lhs;
+    //add->rhs = rhs;
     tree = add;
 }
 

@@ -22,7 +22,8 @@ struct Parse_Test
 
 std::string get_parse_test_output(Parse_Test &test)
 {
-    Parser parser;
+    Type_Map types;
+    Parser parser(&types);
     try
     {
         auto ast = parser.parse("test.ma", test.input);
@@ -139,7 +140,13 @@ void parse_tests()
             "fn () -> int {\n"
             "    x : = 5\n"
             "}"
-        }
+        },
+
+        /* TODO:
+        {"fn() {}",
+         "fn () -> void {\n"
+         "}"},
+        */
     };
     for (auto &&it : tests)
     {
@@ -163,7 +170,8 @@ void parse_to_code();
 
 int main()
 {
-    parse_to_code();
+    //parse_to_code();
+    parse_tests();
     return 0;
 }
 
@@ -188,14 +196,9 @@ void gc_stuff()
     Malang_VM vm;
     Malang_GC gc(&vm, 5);
 
-    Type_Info str;
-    str.name = "string";
-
-    Type_Info fix;
-    fix.name = "fixnum";
-
-    Type_Info obj;
-    obj.name = "object";
+    Type_Info obj(nullptr, 0, "object");
+    Type_Info str(&obj, 1, "string");
+    Type_Info fix(&obj, 2, "fixnum");
     
     vm.add_local(99999);
     vm.add_local(3.14159);
@@ -223,7 +226,8 @@ void parse_stuff()
 
 void parse_to_code()
 {
-    Parser parser;
+    Type_Map types;
+    Parser parser(&types);
     auto ast = parser.parse("test.ma", "1 + 2");
     if (parser.errors)
     {

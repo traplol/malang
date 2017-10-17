@@ -124,44 +124,44 @@ void Lexer::dump()
     printf("======================\n");
 }
 
-bool Lexer::lex(Source_Code &src)
+bool Lexer::lex(Source_Code *src)
 {
     init_tk_type_map();
     tokens.clear();
-    while (src.peek() != src.end_of_file)
+    while (src->peek() != src->end_of_file)
     {
-        if (is_wspace(src.peek()))
+        if (is_wspace(src->peek()))
         {
-            src.next();
+            src->next();
             continue;
         }
-        if (is_digit(src.peek()))
+        if (is_digit(src->peek()))
         {
             std::stringstream num;
-            auto line = src.line();
-            auto line_char = src.line_char();
+            auto line = src->line();
+            auto line_char = src->line_char();
             bool is_real = false;
-            while (src.peek() != src.end_of_file)
+            while (src->peek() != src->end_of_file)
             {
-                if (is_digit(src.peek()))
+                if (is_digit(src->peek()))
                 {
-                    num << (char)src.next();
+                    num << (char)src->next();
                     continue;
                 }
-                if (src.peek() == '.')
+                if (src->peek() == '.')
                 {
                     // valid: 123.stuff
-                    if (!is_digit(src.peek(1))) { break; }
+                    if (!is_digit(src->peek(1))) { break; }
                     // valid: 123.4.stuff
                     if (is_real) { break; }
                     is_real = true;
-                    num << (char)src.next();
+                    num << (char)src->next();
                     continue;
                 }
-                if (is_ident_char(src.peek()))
+                if (is_ident_char(src->peek()))
                 {
                     // invalid: 123a
-                    src.report_at_src_loc("error", src.curr_src_loc(), "Unexpected character '%c' while parsing number\n", src.peek());
+                    src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c' while parsing number\n", src->peek());
                     return false;
                 }
                 // breaks on non-digits and non-ident chars
@@ -169,19 +169,19 @@ bool Lexer::lex(Source_Code &src)
             }
             if (is_real)
             {
-                tokens.push_back(Token(Token_Id::Real, num.str(), {src.filename(), line, line_char}));
+                tokens.push_back(Token(Token_Id::Real, num.str(), {src, src->filename(), line, line_char}));
             }
             else
             {
-                tokens.push_back(Token(Token_Id::Integer, num.str(), {src.filename(), line, line_char}));
+                tokens.push_back(Token(Token_Id::Integer, num.str(), {src, src->filename(), line, line_char}));
             }
             continue;
         }
 #define PUSH_KEY_IDENT(str, id) \
         if (match_ident(src, (str))) \
         { \
-            tokens.push_back(Token(Token_Id::id, (str), src.curr_src_loc())); \
-            src.advance(sizeof(str) - 1); \
+            tokens.push_back(Token(Token_Id::id, (str), src->curr_src_loc())); \
+            src->advance(sizeof(str) - 1); \
             continue; \
         }
         PUSH_KEY_IDENT("b_op", K_b_op);
@@ -193,28 +193,28 @@ bool Lexer::lex(Source_Code &src)
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
         PUSH_KEY_IDENT("else", K_else);
-        if (is_ident_start_char(src.peek()))
+        if (is_ident_start_char(src->peek()))
         {
             std::stringstream ident;
-            auto line = src.line();
-            auto line_char = src.line_char();
-            while (is_ident_char(src.peek()))
+            auto line = src->line();
+            auto line_char = src->line_char();
+            while (is_ident_char(src->peek()))
             {
-                ident << (char)src.next();
+                ident << (char)src->next();
             }
-            tokens.push_back(Token(Token_Id::Identifier, ident.str(), {src.filename(), line, line_char}));
+            tokens.push_back(Token(Token_Id::Identifier, ident.str(), {src, src->filename(), line, line_char}));
             continue;
         }
 #define PUSH_TOKEN_BODY(str, id) \
 { \
-tokens.push_back(Token(Token_Id::id, (str), src.curr_src_loc())); \
-for (size_t i = 0; i < sizeof(str)-1; ++i) { src.next(); } \
+tokens.push_back(Token(Token_Id::id, (str), src->curr_src_loc())); \
+for (size_t i = 0; i < sizeof(str)-1; ++i) { src->next(); } \
 continue; \
 }
         // @FixMe: this needs lookahead after the token because >=< will parse into [Greater_Equals, Less]
-#define PUSH_TOKEN_1C(str, id) if (src.peek() == (str)[0]) PUSH_TOKEN_BODY(str, id)
-#define PUSH_TOKEN_2C(str, id) if (src.peek() == (str)[0] && src.peek(1) == (str)[1]) PUSH_TOKEN_BODY(str, id)
-#define PUSH_TOKEN_3C(str, id) if (src.peek() == (str)[0] && src.peek(1) == (str)[1] && src.peek(2) == (str[2])) PUSH_TOKEN_BODY(str, id)
+#define PUSH_TOKEN_1C(str, id) if (src->peek() == (str)[0]) PUSH_TOKEN_BODY(str, id)
+#define PUSH_TOKEN_2C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1]) PUSH_TOKEN_BODY(str, id)
+#define PUSH_TOKEN_3C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1] && src->peek(2) == (str[2])) PUSH_TOKEN_BODY(str, id)
 
         PUSH_TOKEN_3C("<=>", Compare);
 
@@ -252,22 +252,22 @@ continue; \
         PUSH_TOKEN_1C("/", Slash);
         PUSH_TOKEN_1C(".", Dot);
 
-        src.report_at_src_loc("error", src.curr_src_loc(), "Unexpected character '%c'\n", src.peek());
+        src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c'\n", src->peek());
         return false;
     }
     return true;
 }
 
-bool Lexer::match_ident(Source_Code &code, const std::string &ident)
+bool Lexer::match_ident(Source_Code *code, const std::string &ident)
 {
     for (size_t i = 0; i < ident.size(); ++i)
     {
-        if (code.peek(i) != ident[i])
+        if (code->peek(i) != ident[i])
         {
             return false;
         }
     }
-    if (is_ident_char(code.peek(ident.size())))
+    if (is_ident_char(code->peek(ident.size())))
     {
         return false;
     }

@@ -5,14 +5,16 @@
 #include <string>
 #include "ast_value.hpp"
 
-#define DEF_VALUE_NODE(class_name, value_type) \
-struct class_name : public Ast_RValue \
-{ \
-    value_type value; \
-    ~class_name(); \
-    class_name(value_type const &value) : value(value) {} \
-    AST_NODE_OVERRIDES; \
-}
+#define DEF_VALUE_NODE(class_name, value_type)                          \
+    struct class_name : public Ast_RValue                               \
+    {                                                                   \
+        value_type value;                                               \
+        ~class_name();                                                  \
+        class_name(const Source_Location &src_loc, value_type const &value) \
+            : Ast_RValue(src_loc)                                       \
+            , value(value) {}                                           \
+        AST_NODE_OVERRIDES;                                             \
+    }
 
 DEF_VALUE_NODE(Integer_Node, int64_t);
 DEF_VALUE_NODE(Real_Node, double);
