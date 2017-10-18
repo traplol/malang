@@ -185,3 +185,7 @@ Oct 16, 2017:
 Oct 17, 2017:
     + Implemented better VM helper functions
     + Implemented argument access in the VM
+    + Implemented class definition parsing
+    + Implemented declaration+assign parsing
+    + Implemented declaration+constant parsing
+    + Implemented type parsing

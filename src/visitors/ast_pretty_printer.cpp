@@ -187,11 +187,11 @@ void Ast_Pretty_Printer::visit(Call_Node &n)
 }
 void Ast_Pretty_Printer::visit(Index_Node &n)
 {
-    to_string(*n.lhs); str << "["; to_string(*n.rhs); str << "]";
+    to_string(*n.thing); str << "["; to_string(*n.subscript); str << "]";
 }
 void Ast_Pretty_Printer::visit(Field_Accessor_Node &n)
 {
-    to_string(*n.lhs); str << "."; to_string(*n.rhs);
+    to_string(*n.thing); str << "."; to_string(*n.member);
 }
 void Ast_Pretty_Printer::visit(Negate_Node &n)
 {

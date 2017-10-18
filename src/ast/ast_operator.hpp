@@ -53,8 +53,34 @@ DEF_BINARY_AST_NODE(Divide_Node);
 DEF_BINARY_AST_NODE(Modulo_Node);
 
 DEF_BINARY_AST_NODE(Call_Node);
-DEF_BINARY_AST_NODE(Index_Node);
-DEF_BINARY_AST_NODE(Field_Accessor_Node);
+//DEF_BINARY_AST_NODE(Index_Node);
+//DEF_BINARY_AST_NODE(Field_Accessor_Node);
+
+struct Index_Node : public Ast_LValue
+{
+    Ast_Value *thing; 
+    Ast_Value *subscript;
+    ~Index_Node();
+    Index_Node(const Source_Location &src_loc, Ast_Value *thing, Ast_Value *subscript)
+        : Ast_LValue(src_loc)
+        , thing(thing)
+        , subscript(subscript)
+        {}
+    AST_NODE_OVERRIDES;
+};
+
+struct Field_Accessor_Node : public Ast_LValue
+{
+    Ast_Value *thing; 
+    Ast_Value *member; // @FixMe: rhs should be variable?
+    ~Field_Accessor_Node();
+    Field_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Ast_Value *member)
+        : Ast_LValue(src_loc)
+        , thing(thing)
+        , member(member)
+        {}
+    AST_NODE_OVERRIDES;
+};
 
 DEF_PREFIX_AST_NODE(Negate_Node);
 DEF_PREFIX_AST_NODE(Positive_Node);

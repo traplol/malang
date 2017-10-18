@@ -202,6 +202,8 @@ void parse_tests()
          "class MyDouble : double {\n"
          "}"},
 
+        {"a[0] = 5", "a[0] = 5"},
+
     };
     for (auto &&it : tests)
     {

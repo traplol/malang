@@ -90,9 +90,22 @@ AST_NODE_OVERRIDES_IMPL(Invert_Node)
 BIN_OP_DTOR(Call_Node)
 AST_NODE_OVERRIDES_IMPL(Call_Node)
 
-BIN_OP_DTOR(Index_Node)
 AST_NODE_OVERRIDES_IMPL(Index_Node)
+Index_Node::~Index_Node()
+{
+    delete thing;
+    thing = nullptr;
+    delete subscript;
+    subscript = nullptr;
+    PRINT_DTOR;
+}
 
-BIN_OP_DTOR(Field_Accessor_Node)
 AST_NODE_OVERRIDES_IMPL(Field_Accessor_Node)
-
+Field_Accessor_Node::~Field_Accessor_Node()
+{
+    delete thing;
+    thing = nullptr;
+    delete member;
+    member = nullptr;
+    PRINT_DTOR;
+}
