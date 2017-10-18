@@ -38,6 +38,10 @@ VM Calling Convention:
       - variadic arguments can be handled by the compiler generating an array of values and
       then pushing that to the data stack last, the array would be accessible with Load_Arg_0
 
+    + The backwards accessibility ordering looks odd but it allows for arguments to be
+    evaluated in order from left to right without having to rearrange their ordering on the
+    stack before the call is executed.
+
     Return values:
     + Since the data stack is also used to "return" values from functions, it is the caller's
     responsibility to unpack or drop them as necessary. This allows functions to return any
@@ -46,6 +50,12 @@ VM Calling Convention:
     Local variables:
     + Local variables use a separate `locals' stack and allocating/freeing space on this stack
     is controlled by the callee itself.
+
+    Instance Method calls:
+    + The object instance, "this", is implicitly passed to a method call last. Doing this
+    allows "this" to always be accessible with Load/Store_Arg_0. This also makes chaining
+    method calls more fluid because it is a simple Load_Arg_0 before calling a method within
+    another method.
 
 ==============================================================================================
 Object Representation:
