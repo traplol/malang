@@ -5,11 +5,14 @@
 
 std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
 {
+    n.accept(*this);
+    return str.str();
+}
+void Ast_Pretty_Printer::reset()
+{
     indent_level = 0;
     str.str(std::string());
     str.clear();
-    n.accept(*this);
-    return str.str();
 }
 void Ast_Pretty_Printer::indent()
 {
@@ -31,13 +34,13 @@ void Ast_Pretty_Printer::do_indention()
 void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
 {
     // I don't think this will work for nested bodies?
-    str << " {" << std::endl;
+    str << " {" << "\n";
     indent();
-    Ast_Pretty_Printer pp;
     for (auto &&n : body)
     {
         do_indention();
-        str << pp.to_string(*n) << std::endl;
+        to_string(*n);
+        str << "\n";
     }
     dedent();
     str << "}";
@@ -49,40 +52,38 @@ void Ast_Pretty_Printer::visit(Variable_Node &n)
 }
 void Ast_Pretty_Printer::visit(Assign_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << pp.to_string(*n.lhs);
+    to_string(*n.lhs);
     str << " = ";
-    str << pp.to_string(*n.rhs);
+    to_string(*n.rhs);
 }
 void Ast_Pretty_Printer::visit(Decl_Node &n)
 {
     str << n.variable_name << " :";
     if (n.type != nullptr)
     {
-        str << " " << n.type->name();
+        str << " " << n.type->type->name();
     }
 }
 void Ast_Pretty_Printer::visit(Fn_Node &n)
 {
     str << "fn (";
-    Ast_Pretty_Printer pp;
     for (size_t i = 0; i < n.params.size(); ++i)
     {
-        str << pp.to_string(*n.params[i]);
+        to_string(*n.params[i]);
         if (i + 1 < n.params.size())
         {
             str << ", ";
         }
     }
-    str << ") -> " << pp.to_string(*n.return_type);
+    str << ") -> ";
+    to_string(*n.return_type);
     do_body(n.body);
 }
 void Ast_Pretty_Printer::visit(List_Node &n)
 {
-    Ast_Pretty_Printer pp;
     for (size_t i = 0; i < n.contents.size(); ++i)
     {
-        str << pp.to_string(*n.contents[i]);
+        to_string(*n.contents[i]);
         if (i + 1 < n.contents.size())
         {
             str << ", ";
@@ -106,8 +107,7 @@ void Ast_Pretty_Printer::visit(Boolean_Node &n)
     str << (n.value ? "true" : "false");
 }
 #define BIN_OP_PP(n, opStr) \
-    Ast_Pretty_Printer pp; \
-    str << "(" << pp.to_string(*(n).lhs) << " " opStr " " << pp.to_string(*(n).rhs) << ")"
+    str << "("; to_string(*(n).lhs); str << " " opStr " "; to_string(*(n).rhs); str << ")"
 
 void Ast_Pretty_Printer::visit(Logical_Or_Node &n)
 {
@@ -183,36 +183,78 @@ void Ast_Pretty_Printer::visit(Modulo_Node &n)
 }
 void Ast_Pretty_Printer::visit(Call_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << pp.to_string(*n.lhs) << "(" << pp.to_string(*n.rhs) << ")";
+    to_string(*n.lhs); str << "("; to_string(*n.rhs); str << ")";
 }
 void Ast_Pretty_Printer::visit(Index_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << pp.to_string(*n.lhs) << "[" << pp.to_string(*n.rhs) << "]";
+    to_string(*n.lhs); str << "["; to_string(*n.rhs); str << "]";
 }
 void Ast_Pretty_Printer::visit(Field_Accessor_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << pp.to_string(*n.lhs) << "." << pp.to_string(*n.rhs);
+    to_string(*n.lhs); str << "."; to_string(*n.rhs);
 }
 void Ast_Pretty_Printer::visit(Negate_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << "(-" << pp.to_string(*n.operand) << ")";
+    str << "(-"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Positive_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << "(+" << pp.to_string(*n.operand) << ")";
+    str << "(+"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Not_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << "(!" << pp.to_string(*n.operand) << ")";
+    str << "(!"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Invert_Node &n)
 {
-    Ast_Pretty_Printer pp;
-    str << "(~" << pp.to_string(*n.operand) << ")";
+    str << "(~"; to_string(*n.operand); str << ")";
+}
+void Ast_Pretty_Printer::visit(Class_Def_Node &n)
+{
+    str << "class " << n.type_info->name();
+    if (n.has_explicit_supertype)
+    {
+        str << " : " << n.type_info->get_parent()->name();
+    }
+    str << " {" << "\n";
+    indent();
+    for (auto &&f : n.fields)
+    {
+        do_indention();
+        to_string(*f);
+        str << "\n";
+    }
+    for (auto &&c : n.constructors)
+    {
+        do_indention();
+        to_string(*c);
+        str << "\n";
+    }
+    for (auto &&m : n.methods)
+    {
+        do_indention();
+        to_string(*m);
+        str << "\n";
+    }
+    dedent();
+    str << "}";
+}
+void Ast_Pretty_Printer::visit(Type_Node &n)
+{
+    if (n.type)
+    {
+        str << n.type->name();
+    }
+}
+void Ast_Pretty_Printer::visit(Decl_Assign_Node &n)
+{
+    to_string(*n.decl);
+    str << " = ";
+    to_string(*n.value);
+}
+void Ast_Pretty_Printer::visit(Decl_Constant_Node &n)
+{
+    to_string(*n.decl);
+    str << " : ";
+    to_string(*n.value);
 }

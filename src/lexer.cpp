@@ -82,14 +82,17 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Not);
         SET_TK_TYPE_MAP(K_b_op);
         SET_TK_TYPE_MAP(K_u_op);
-        SET_TK_TYPE_MAP(K_proc);
+        //SET_TK_TYPE_MAP(K_proc);
         SET_TK_TYPE_MAP(K_for);
         SET_TK_TYPE_MAP(K_while);
         SET_TK_TYPE_MAP(K_return);
         SET_TK_TYPE_MAP(K_if);
         SET_TK_TYPE_MAP(K_else);
         SET_TK_TYPE_MAP(K_fn);
+        SET_TK_TYPE_MAP(K_class);
+        SET_TK_TYPE_MAP(K_match);
 #undef SET_TK_TYPE_MAP
+        // this is a runtime check that will warn if we forgot any
         for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
         {
             if (tk_type_map[i] == nullptr)
@@ -186,13 +189,15 @@ bool Lexer::lex(Source_Code *src)
         }
         PUSH_KEY_IDENT("b_op", K_b_op);
         PUSH_KEY_IDENT("u_op", K_u_op);
-        PUSH_KEY_IDENT("proc", K_proc);
+        //PUSH_KEY_IDENT("proc", K_proc);
         PUSH_KEY_IDENT("for", K_for);
         PUSH_KEY_IDENT("while", K_while);
         PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
         PUSH_KEY_IDENT("else", K_else);
+        PUSH_KEY_IDENT("class", K_class);
+        PUSH_KEY_IDENT("match", K_match);
         if (is_ident_start_char(src->peek()))
         {
             std::stringstream ident;

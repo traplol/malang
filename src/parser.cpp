@@ -110,8 +110,10 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
 }
 
 // forward decls
-static uptr<Ast_Node> parse_assignment(Parser &parser);
+static uptr<Assign_Node> parse_assignment(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser);
+static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
+static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser);
 static uptr<Ast_Value> parse_logical_and_exp(Parser &parser);
 static uptr<Ast_Value> parse_inclusive_or_exp(Parser &parser);
@@ -127,9 +129,11 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser);
 static uptr<Ast_Value> parse_primary(Parser &parser);
 static uptr<List_Node> parse_expression_list(Parser &parser);
 static uptr<Ast_Value> parse_expression(Parser &parser);
+static uptr<Type_Node> parse_type(Parser &parser);
 static uptr<Ast_Node> parse_statement(Parser &parser);
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body);
-static uptr<Ast_RValue> parse_fn(Parser &parser);
+static uptr<Fn_Node> parse_fn(Parser &parser);
+static uptr<Class_Def_Node> parse_class(Parser &parser);
 
 #define SAVE auto _save_idx = parser.lex_idx
 #define RESTORE parser.lex_idx = _save_idx
@@ -139,36 +143,81 @@ static uptr<Ast_RValue> parse_fn(Parser &parser);
 //#define DEBUG(tk, ...) parser.report_debug(tk, __VA_ARGS__)
 #define DEBUG(tk, ...)
 
-static uptr<Ast_Node> parse_assignment(Parser &parser)
-{
+static uptr<Assign_Node> parse_assignment(Parser &parser)
+{   // assignment :=
+    //     lvalue = expression
     SAVE;
-    auto lhs = parse_declaration(parser);
-    if (!lhs) 
+    auto lhs = parse_expression(parser);
+    CHECK_OR_FAIL(lhs);
+    Token eq_tk;
+    ACCEPT_OR_FAIL(eq_tk, { Token_Id::Equals });
+    if (!lhs->can_lvalue())
     {
-        Token ident;
-        ACCEPT_OR_FAIL(ident, { Token_Id::Identifier });
+        parser.report_error(eq_tk, "LHS of assignment is not an lvalue.");
+        PARSE_FAIL;
     }
-    ACCEPT_OR_FAIL({ Token_Id::Equals });
     auto rhs = parse_expression(parser);
     CHECK_OR_FAIL(rhs);
-    return uptr<Assign_Node>(new Assign_Node(lhs->src_loc, lhs.release(), rhs.release()));
+    return uptr<Assign_Node>(new Assign_Node(lhs->src_loc,
+                                             static_cast<Ast_LValue*>(lhs.release()),
+                                             rhs.release()));
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser)
-{
+{   // decl :=
+    //     identifier : type
+    //     identifier : 
     SAVE;
     Token ident, type_name;
     ACCEPT_OR_FAIL(ident, { Token_Id::Identifier });
     ACCEPT_OR_FAIL({ Token_Id::Colon });
-    if (parser.accept(type_name, { Token_Id::Identifier }))
+    auto type = parse_type(parser);
+    if (type)
     {
-        auto type = parser.types->get_or_declare_type(type_name.to_string());
-        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type));
+        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type.release()));
     }
-    if (parser.peek_id() == Token_Id::Equals)
-    {   // x : = 
-        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), nullptr));
+    return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), nullptr));
+}
+static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
+{   // decl_assign :=
+    //     decl = value
+    SAVE;
+    auto decl = parse_declaration(parser);
+    CHECK_OR_FAIL(decl);
+    ACCEPT_OR_FAIL({Token_Id::Equals});
+    auto value = parse_expression(parser);
+    CHECK_OR_FAIL(value);
+    if (!decl->type)
+    {
+        auto val_ty = value->get_type();
+        if (val_ty)
+        {
+            decl->type = new Type_Node(decl->src_loc, val_ty);
+        }
     }
-    PARSE_FAIL;
+    return uptr<Decl_Assign_Node>(new Decl_Assign_Node(decl->src_loc,
+                                                       decl.release(),
+                                                       value.release()));
+}
+static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
+{   // decl_constant :=
+    //     decl : value
+    SAVE;
+    auto decl = parse_declaration(parser);
+    CHECK_OR_FAIL(decl);
+    ACCEPT_OR_FAIL({Token_Id::Colon});
+    auto value = parse_expression(parser);
+    CHECK_OR_FAIL(value);
+    if (!decl->type)
+    {
+        auto val_ty = value->get_type();
+        if (val_ty)
+        {
+            decl->type = new Type_Node(decl->src_loc, val_ty);
+        }
+    }
+    return uptr<Decl_Constant_Node>(new Decl_Constant_Node(decl->src_loc,
+                                                           decl.release(),
+                                                           value.release()));
 }
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser)
 {   // l_or :=
@@ -591,6 +640,51 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
     }
     return parse_logical_or_exp(parser);
 }
+static uptr<Type_Node> parse_type(Parser &parser)
+{   // type :=
+    //     ident
+    //     fn ( ) -> type
+    //     fn ( type ) -> type
+    //     fn ( type, type ) -> type
+    SAVE;
+    Token first_tk;
+    if (parser.accept(first_tk, {Token_Id::K_fn}))
+    {
+        std::vector<uptr<Type_Node>> params_ty_nodes;
+        CHECK_OR_FAIL(parser.expect(Token_Id::Open_Paren));
+        while (true)
+        {
+            auto p_ty_node = parse_type(parser);
+            if (!p_ty_node)
+            {
+                break;
+            }
+            params_ty_nodes.push_back(std::move(p_ty_node));
+            if (!parser.accept({Token_Id::Comma}))
+            {
+                break;
+            }
+        }
+        CHECK_OR_FAIL(parser.expect(Token_Id::Close_Paren));
+        CHECK_OR_FAIL(parser.expect(Token_Id::Right_Arrow));
+        auto ret_ty_node = parse_type(parser);
+        CHECK_OR_FAIL(ret_ty_node);
+        std::vector<Type_Info*> params_types;
+        for (auto &&n : params_ty_nodes)
+        {
+            params_types.push_back(n->type);
+        }
+        auto fn_type = parser.types->declare_function(ret_ty_node->type, params_types);
+        return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), fn_type));
+    }
+    else
+    {
+        Token ident_tk;
+        ACCEPT_OR_FAIL(ident_tk, {Token_Id::Identifier});
+        auto type = parser.types->get_or_declare_type(ident_tk.to_string());
+        return uptr<Type_Node>(new Type_Node(ident_tk.src_loc(), type));
+    }
+}
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
 {
     SAVE;
@@ -613,22 +707,110 @@ static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
         }
     }
 }
-static uptr<Ast_RValue> parse_fn(Parser &parser)
+static bool parse_decl_list(Parser &parser, std::vector<Decl_Node*> &decls)
+{   // decl_list :=
+    //     decl
+    //     decl , decl_list
+    SAVE;
+    while (true)
+    {
+        auto last_tk = parser.peek();
+        auto decl = parse_declaration(parser);
+        if (!decl)
+        {
+            break;
+        }
+        if (!decl->type || !decl->type->type)
+        {
+            parser.report_error(*last_tk, "Declaration list expected to have types");
+            RESTORE;
+            return false;
+        }
+        decls.push_back(decl.release());
+        if (!parser.accept({Token_Id::Comma}))
+        {
+            break;
+        }
+    }
+    return true;
+}
+static uptr<Fn_Node> parse_fn(Parser &parser)
 {   // function :=
-    //     fn ( ) -> identifier { body }
-    //     fn ( decl_list ) -> identifier { body }
+    //     fn ( ) -> type { body }
+    //     fn ( decl_list ) -> type { body }
     SAVE;
     Token tk_fn;
     ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
     CHECK_OR_FAIL(parser.expect(Token_Id::Open_Paren));
-    CHECK_OR_FAIL(parser.expect(Token_Id::Close_Paren));
-    CHECK_OR_FAIL(parser.expect(Token_Id::Right_Arrow));
-    Token return_type;
-    CHECK_OR_FAIL(parser.expect(return_type, Token_Id::Identifier));
+    std::vector<Decl_Node*> params;
+    CHECK_OR_FAIL(parse_decl_list(parser, params));
+    Token close_paren_tk;
+    CHECK_OR_FAIL(parser.expect(close_paren_tk, Token_Id::Close_Paren));
+    Type_Node *ret_ty = nullptr;
+    if (parser.accept({Token_Id::Right_Arrow}))
+    {
+        ret_ty = parse_type(parser).release();
+    }
+    else
+    {
+        auto void_ty = parser.types->get_or_declare_type("void");
+        ret_ty = new Type_Node(close_paren_tk.src_loc(), void_ty);
+    }
+    CHECK_OR_FAIL(ret_ty);
     std::vector<Ast_Node*> body;
     CHECK_OR_FAIL(parse_body(parser, body));
-    auto ret_ty = new Variable_Node(return_type.src_loc(), return_type.to_string());
-    return uptr<Ast_RValue>(new Fn_Node(tk_fn.src_loc(), {}, ret_ty, body));
+    std::vector<Type_Info*> p_types;
+    for (auto &&decl : params)
+    {
+        p_types.push_back(decl->type->type);
+    }
+    auto fn_ty = parser.types->declare_function(ret_ty->type, p_types);
+    return uptr<Fn_Node>(new Fn_Node(tk_fn.src_loc(), params, ret_ty, body, fn_ty));
+}
+static uptr<Class_Def_Node> parse_class(Parser &parser)
+{
+    SAVE;
+    Token class_tk;
+    ACCEPT_OR_FAIL(class_tk, {Token_Id::K_class});
+    Token class_name_tk;
+    CHECK_OR_FAIL(parser.expect(class_name_tk, Token_Id::Identifier));
+    auto class_type = parser.types->declare_type(class_name_tk.to_string(), nullptr);
+    bool has_explicit_supertype = false;
+    if (parser.accept({Token_Id::Colon}))
+    {
+        Token super_class_name_tk;
+        CHECK_OR_FAIL(parser.expect(super_class_name_tk, Token_Id::Identifier));
+        auto super_type = parser.types->get_or_declare_type(super_class_name_tk.to_string());
+        class_type->set_parent(super_type);
+        has_explicit_supertype = true;
+    }
+    CHECK_OR_FAIL(parser.expect(Token_Id::Open_Curly));
+    auto class_def = uptr<Class_Def_Node>(new Class_Def_Node(class_tk.src_loc(), class_type, has_explicit_supertype));
+    while (true)
+    {
+        // @FixMe: ensure field names are unique
+        if (auto field = parse_declaration(parser))
+        {
+            class_def->fields.push_back(field.release());
+            continue;
+        }
+        // @FixMe: ensure method signatures are unique
+        if (auto method = parse_fn(parser))
+        {
+            class_def->methods.push_back(method.release());
+            continue;
+        }
+        // @FixMe: ensure ctor signatures are unique
+        //if (auto ctor = parse_ctor(parser, class_type->name()))
+        //{
+        //    class_def->constructors.push_back(ctor);
+        //}
+
+        // didn't parse anything, so we're done
+        break;
+    }
+    CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
+    return class_def;
 }
 static uptr<Ast_Node> parse_statement(Parser &parser)
 {   // statement :=
@@ -642,13 +824,25 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     //    // eat stray semicolons
     //}
     SAVE;
-    if (auto stmt = parse_assignment(parser))
+    if (auto stmt = parse_decl_assign(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return stmt;
+    }
+    if (auto stmt = parse_decl_constant(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
         return stmt;
     }
     if (auto stmt = parse_declaration(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return stmt;
+    }
+    if (auto stmt = parse_assignment(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
@@ -668,8 +862,11 @@ static Ast_Node *parse_top_level(Parser &parser)
     //     <nothing>
     //     statement top-level
     SAVE;
-    auto top = parse_statement(parser);
-    if (top.get())
+    if (auto top = parse_statement(parser))
+    {
+        return top.release();
+    }
+    if (auto top = parse_class(parser))
     {
         return top.release();
     }

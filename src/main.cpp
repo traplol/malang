@@ -17,10 +17,19 @@
 struct Parse_Test
 {
     std::string input;
-    std::string output;
+    std::vector<std::string> expected;
+    Parse_Test(const std::string &input, const std::string &expected)
+        : input(input)
+        {
+            this->expected.push_back(expected);
+        }
+    Parse_Test(const std::string &input, const std::vector<std::string> &expected)
+        : input(input)
+        , expected(expected)
+        {}
 };
 
-std::string get_parse_test_output(Parse_Test &test)
+std::vector<std::string> get_parse_test_output(Parse_Test &test)
 {
     Type_Map types;
     Parser parser(&types);
@@ -30,20 +39,20 @@ std::string get_parse_test_output(Parse_Test &test)
         if (parser.errors)
         {
             printf("there were parsing errors...\n");
-            return "";
+            return {""};
         }
-        std::stringstream ss;
+        std::vector<std::string> result;
         Ast_Pretty_Printer pp;
-        for (size_t i = 0; i < ast.roots.size(); ++i)
+        for (auto &&n : ast.roots)
         {
-            ss << pp.to_string(*ast.roots[i]);
-            if (i + 1 < ast.roots.size()) ss << std::endl;
+            result.push_back(pp.to_string(*n));
+            pp.reset();
         }
-        return ss.str();
+        return result;
     }
     catch(...)
     {
-        return "<exception thrown>";
+        return {"<exception thrown>"};
     }
 }
 
@@ -51,11 +60,13 @@ void parse_tests()
 {
     std::vector<Parse_Test> tests =
     {
+        {"", std::vector<std::string>()},
+
         {"1", "1"},
 
         {"123456", "123456"},
 
-        {"1 2 3", "1\n2\n3"},
+        {"1 2 3", {"1", "2", "3"}},
 
         {"-1", "(-1)"},
 
@@ -124,7 +135,7 @@ void parse_tests()
          "c : int = (1 + 2)"},
 
         {"d := 42",
-         "d : = 42"},
+         "d : int = 42"},
 
         {"e := 1 + 2",
          "e : = (1 + 2)"},
@@ -133,32 +144,110 @@ void parse_tests()
          "fn () -> int {\n"
          "}"},
 
+        {"fn (a:int, b : double) -> void {}",
+         "fn (a : int, b : double) -> void {\n"
+         "}"},
+
         {
             "fn () -> int {\n"
             "    x := 5;\n"
             "}",
             "fn () -> int {\n"
-            "    x : = 5\n"
+            "    x : int = 5\n"
             "}"
         },
 
-        /* TODO:
         {"fn() {}",
          "fn () -> void {\n"
          "}"},
-        */
+
+        { "PI :: 3.14159",
+          "PI : double : 3.14159" },
+
+        {"y : fn()->xxx = fn () -> xxx {}",
+         "y : fn () -> xxx = fn () -> xxx {\n"
+         "}"},
+
+        {"z : fn(fn(int)->zzz)->yyy = fn (cb: fn (int) -> zzz) -> yyy {}",
+         "z : fn (fn (int) -> zzz) -> yyy = fn (cb : fn (int) -> zzz) -> yyy {\n"
+         "}"},
+
+        {"x := fn () -> int {}",
+         "x : fn () -> int = fn () -> int {\n"
+         "}"},
+
+        {"x : fn () -> int ",
+         "x : fn () -> int"},
+
+        {"x :: fn () -> int {}",
+         "x : fn () -> int : fn () -> int {\n"
+         "}"},
+
+        {"class MyClass {}",
+         "class MyClass {\n"
+         "}"},
+
+        {"class Vec3 {\n"
+         "    x : double\n"
+         "    y : double\n"
+         "    z : double\n"
+         "}",
+         "class Vec3 {\n"
+         "    x : double\n"
+         "    y : double\n"
+         "    z : double\n"
+         "}"},
+
+        {"class MyDouble : double {}",
+         "class MyDouble : double {\n"
+         "}"},
+
     };
     for (auto &&it : tests)
     {
-        auto result = get_parse_test_output(it);
-        if (result == it.output)
+        auto actual = get_parse_test_output(it);
+        if (actual.size() != it.expected.size())
         {
+            printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
+        }
+        auto n = std::min(actual.size(), it.expected.size());
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (actual[i] == it.expected[i])
+            {
             printf(".");
+            }
+            else
+            {
+                printf("\nexpected: %s\nactual:   %s\n",
+                       it.expected[i].c_str(), actual[i].c_str());
+            }
+        }
+    }
+}
+
+void parse_one()
+{
+    Parse_Test pt =
+        {"z : fn(fn(int)->zzz)->yyy = fn (cb: fn (int) -> zzz) -> yyy {}",
+         "z : fn (fn (int) -> zzz) -> yyy = fn (cb : fn (int) -> zzz) -> yyy {\n"
+         "}"};
+    auto actual = get_parse_test_output(pt);
+    if (actual.size() != pt.expected.size())
+    {
+        printf("!(a:%i,e:%i)", (int)actual.size(), (int)pt.expected.size());
+    }
+    auto n = std::min(actual.size(), pt.expected.size());
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (actual[i] == pt.expected[i])
+        {
+        printf(".");
         }
         else
         {
-            //printf("x");
-            printf("\nexpected: %s\nactual:   %s\n", it.output.c_str(), result.c_str());
+            printf("\nexpected: %s\nactual:   %s\n",
+                    pt.expected[i].c_str(), actual[i].c_str());
         }
     }
 }
@@ -172,6 +261,7 @@ int main()
 {
     //parse_to_code();
     parse_tests();
+    //parse_one();
     return 0;
 }
 

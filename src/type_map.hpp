@@ -14,6 +14,7 @@ struct Type_Map
     Type_Info *get_type(const std::string &name);
     Type_Info *get_type(Type_Token type_token);
 
+    Type_Info *get_void() const;
     Type_Info *get_object() const;
     Type_Info *get_int() const;
     Type_Info *get_char() const;
@@ -24,6 +25,7 @@ private:
     std::map<std::string, Type_Info*> m_types;
     std::vector<Type_Info*> m_types_fast;
 
+    Type_Info *m_void;
     Type_Info *m_object;
     Type_Info *m_int;
     Type_Info *m_char;

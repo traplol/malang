@@ -42,6 +42,10 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Positive_Node&n) override;
     virtual void visit(struct Not_Node&n) override;
     virtual void visit(struct Invert_Node&n) override;
+    virtual void visit(struct Class_Def_Node&n) override;
+    virtual void visit(struct Type_Node&n) override;
+    virtual void visit(struct Decl_Assign_Node&n) override;
+    virtual void visit(struct Decl_Constant_Node&n) override;
 
     Malang_IR *convert(Ast_Node &n);
 

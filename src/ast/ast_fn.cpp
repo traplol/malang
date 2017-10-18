@@ -19,6 +19,10 @@ Fn_Node::~Fn_Node()
     body.clear();
     PRINT_DTOR;
 }
+Type_Info *Fn_Node::get_type()
+{
+    return fn_type;
+}
 AST_NODE_OVERRIDES_IMPL(Fn_Node);
 
 

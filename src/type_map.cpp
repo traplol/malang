@@ -4,6 +4,7 @@
 
 Type_Map::Type_Map()
 {
+    m_void   = declare_type("void", nullptr);
     m_object = declare_type("object", nullptr);
     m_int    = declare_type("int", m_object);
     m_char   = declare_type("char", m_object);
@@ -12,6 +13,10 @@ Type_Map::Type_Map()
     m_bool   = declare_type("bool", m_object);
 }
 
+Type_Info *Type_Map::get_void() const
+{
+    return m_void;
+}
 Type_Info *Type_Map::get_object() const
 {
     return m_object;
@@ -51,11 +56,6 @@ Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
 {
     assert(!name.empty());
     assert(get_type(name) == nullptr);
-
-    if (parent == nullptr)
-    {
-        parent = m_object;
-    }
 
     auto type = new Type_Info(parent, m_types_fast.size(), name);
     m_types[type->name()] = type;

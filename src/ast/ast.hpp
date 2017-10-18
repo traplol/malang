@@ -35,6 +35,8 @@ struct Ast_Node : public Metadata
 struct Ast
 {
     std::vector<Ast_Node*> roots;
+    std::vector<struct Class_Def_Node*> class_definitions;
+    std::vector<struct Fn_Node*> free_functions;
 };
 
 

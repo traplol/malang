@@ -184,6 +184,26 @@ void Ast_To_IR::visit(Invert_Node&n)
     NOT_IMPL;
 }
 
+void Ast_To_IR::visit(Class_Def_Node&n)
+{
+    NOT_IMPL;
+}
+
+void Ast_To_IR::visit(Type_Node&n)
+{
+    NOT_IMPL;
+}
+
+void Ast_To_IR::visit(Decl_Assign_Node&n)
+{
+    NOT_IMPL;
+}
+
+void Ast_To_IR::visit(Decl_Constant_Node&n)
+{
+    NOT_IMPL;
+}
+
 Malang_IR *Ast_To_IR::convert(Ast_Node &n)
 {
     auto ir = new Malang_IR;

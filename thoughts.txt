@@ -1,5 +1,7 @@
 ==============================================================================================
 TODO:
+    + Classes need a cycle check to ensure they aren't a sub/super-class of themselves.
+
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
     front by a variable/command line argument. Alternatively since these are entirely accessed
     using indexes they could even be dynamically allocated.

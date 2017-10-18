@@ -49,13 +49,15 @@ enum class Token_Id : size_t
 
     K_b_op,
     K_u_op,
-    K_proc,
+    //K_proc,
     K_for,
     K_while,
     K_return,
     K_if,
     K_else,
     K_fn,
+    K_class,
+    K_match,
 
     NUM_TOKEN_TYPES
 };

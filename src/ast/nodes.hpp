@@ -11,6 +11,8 @@
 #include "ast_variable.hpp"
 #include "ast_list.hpp"
 #include "ast_fn.hpp"
+#include "ast_class_def.hpp"
+#include "ast_type.hpp"
 
 
 #endif /* MALANG_AST_NODES_HPP */
