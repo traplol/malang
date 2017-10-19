@@ -4,23 +4,67 @@
 #include <string>
 #include <vector>
 
-struct Parameter_Info
-{
-    struct Type_Info *type;
-    std::string name;
-};
+struct Function_Type_Info;
+struct Type_Info;
+
+using Primitive_Function = void(*)(struct Malang_VM &vm);
 
 struct Method_Info
 {
-    struct Type_Info *return_type;
-    std::string name;
-    std::vector<Parameter_Info*> parameters;
+    Method_Info(const std::string &name, Function_Type_Info *fn_type)
+        : m_name(name)
+        , m_fn_type(fn_type)
+        , m_is_primitive(false)
+        {}
+
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, Primitive_Function prim)
+        : m_name(name)
+        , m_fn_type(fn_type)
+        {
+            set_function(prim);
+        }
+
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, uintptr_t code_ip)
+        : m_name(name)
+        , m_fn_type(fn_type)
+        {
+            set_function(code_ip);
+        }
+
+    Function_Type_Info *type() const;
+    const std::string &name() const;
+    const std::vector<Type_Info*> &parameter_types() const;
+    Type_Info *return_type() const;
+
+    void set_function(Primitive_Function primitive);
+    void set_function(uintptr_t code_ip);
+    bool is_primitive() const;
+    uintptr_t code_function() const;
+    Primitive_Function primitive_function() const;
+
+private:
+    std::string m_name;
+    Function_Type_Info *m_fn_type;
+    bool m_is_primitive;
+    union {
+        Primitive_Function primitive;
+        uintptr_t code_ip;
+    } m_fn;
 };
 
 struct Field_Info
 {
-    struct Type_Info *type;
-    std::string name;
+    Field_Info(const std::string &name, Type_Info *type)
+        : m_name(name)
+        , m_type(type)
+        {}
+
+    Type_Info *type() const;
+    const std::string &name() const;
+
+private:
+    std::string m_name;
+    Type_Info *m_type;
 };
 
 
@@ -42,13 +86,17 @@ struct Type_Info
     const std::string &name() const;
 
     bool add_field(Field_Info *field);
-    const std::vector<Field_Info*> fields() const;
+    const std::vector<Field_Info*> &fields() const;
 
     bool add_method(Method_Info *method);
-    const std::vector<Method_Info*> methods() const;
+    const std::vector<Method_Info*> &methods() const;
 
     bool castable_to(Type_Info *other) const;
     bool is_subtype_of(Type_Info *other) const;
+
+    Method_Info *get_method(const std::string &name, std::vector<Type_Info*> param_types) const;
+    std::vector<Method_Info*> get_methods(const std::string &name) const;
+    Field_Info *get_field(const std::string &name) const;
 
 private:
     Type_Info *m_parent;
@@ -68,7 +116,7 @@ struct Function_Type_Info : Type_Info
         {}
 
     Type_Info *return_type() const;
-    const std::vector<Type_Info*> parameter_types() const;
+    const std::vector<Type_Info*> &parameter_types() const;
 
 private:
     Type_Info *m_return_type;

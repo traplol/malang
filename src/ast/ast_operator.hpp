@@ -9,6 +9,7 @@
         ~class_name();                                                  \
         class_name(const Source_Location &src_loc, Ast_Value *lhs, Ast_Value *rhs) \
             : Binary_Holder(src_loc, lhs, rhs) {}                       \
+        virtual Type_Info *get_type() final;                            \
         AST_NODE_OVERRIDES;                                             \
     }
 
@@ -19,18 +20,19 @@
         class_name(const Source_Location &src_loc, Ast_Value *operand)  \
             : Ast_RValue(src_loc)                                       \
             , operand(operand) {}                                       \
+        virtual Type_Info *get_type() final;                            \
         AST_NODE_OVERRIDES;                                             \
     }
 
 struct Binary_Holder : public Ast_RValue
 {
+    Ast_Value *lhs;
+    Ast_Value *rhs;
     Binary_Holder(const Source_Location &src_loc, Ast_Value *lhs, Ast_Value *rhs)
         : Ast_RValue(src_loc)
         , lhs(lhs)
         , rhs(rhs)
     {}
-    Ast_Value *lhs;
-    Ast_Value *rhs;
 };
 
 DEF_BINARY_AST_NODE(Logical_Or_Node);
@@ -52,9 +54,23 @@ DEF_BINARY_AST_NODE(Multiply_Node);
 DEF_BINARY_AST_NODE(Divide_Node);
 DEF_BINARY_AST_NODE(Modulo_Node);
 
-DEF_BINARY_AST_NODE(Call_Node);
+//DEF_BINARY_AST_NODE(Call_Node);
 //DEF_BINARY_AST_NODE(Index_Node);
 //DEF_BINARY_AST_NODE(Field_Accessor_Node);
+
+struct Call_Node : public Ast_RValue
+{
+    Ast_Value *thing; 
+    List_Node *args;
+    ~Call_Node();
+    Call_Node(const Source_Location &src_loc, Ast_Value *thing, List_Node *args)
+        : Ast_RValue(src_loc)
+        , thing(thing)
+        , args(args)
+        {}
+    virtual Type_Info *get_type() final;
+    AST_NODE_OVERRIDES;
+};
 
 struct Index_Node : public Ast_LValue
 {
@@ -66,19 +82,21 @@ struct Index_Node : public Ast_LValue
         , thing(thing)
         , subscript(subscript)
         {}
+    virtual Type_Info *get_type() final;
     AST_NODE_OVERRIDES;
 };
 
 struct Field_Accessor_Node : public Ast_LValue
 {
     Ast_Value *thing; 
-    Ast_Value *member; // @FixMe: rhs should be variable?
+    Variable_Node *member; // @FixMe: rhs should be variable?
     ~Field_Accessor_Node();
-    Field_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Ast_Value *member)
+    Field_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Variable_Node *member)
         : Ast_LValue(src_loc)
         , thing(thing)
         , member(member)
         {}
+    virtual Type_Info *get_type() final;
     AST_NODE_OVERRIDES;
 };
 

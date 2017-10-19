@@ -1,6 +1,8 @@
 #include <cassert>
 #include <sstream>
 #include "type_map.hpp"
+#include "vm/runtime_double.hpp"
+#include "vm/runtime_fixnum.hpp"
 
 Type_Map::Type_Map()
 {
@@ -11,6 +13,9 @@ Type_Map::Type_Map()
     m_double = declare_type("double", m_object);
     m_string = declare_type("string", m_object);
     m_bool   = declare_type("bool", m_object);
+
+    runtime_fixnum_init(this);
+    runtime_double_init(this);
 }
 
 Type_Info *Type_Map::get_void() const
@@ -25,10 +30,10 @@ Type_Info *Type_Map::get_int() const
 {
     return m_int;
 }
-Type_Info *Type_Map::get_char() const
-{
-    return m_char;
-}
+//Type_Info *Type_Map::get_char() const
+//{
+//    return m_char;
+//}
 Type_Info *Type_Map::get_double() const
 {
     return m_double;
@@ -85,7 +90,7 @@ std::string create_function_typename(Type_Info *return_type, const std::vector<T
     return ss.str();
 }
 
-Function_Type_Info *Type_Map::declare_function(Type_Info *return_type, const std::vector<Type_Info*> parameter_types)
+Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &parameter_types, Type_Info *return_type)
 {
     assert(return_type);
     auto type_name = create_function_typename(return_type, parameter_types);

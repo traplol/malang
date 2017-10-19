@@ -117,6 +117,16 @@ Malang_Value *Malang_VM::current_locals()
     auto frame = locals_frames[locals_frames_top-1];
     return &locals[frame];
 }
+inline
+Malang_Value Malang_VM::get_local(intptr_t n)
+{
+    return current_locals()[0+n];
+}
+inline
+void Malang_VM::set_local(intptr_t n, Malang_Value value)
+{
+    current_locals()[0+n] = value;
+}
 
 inline
 void Malang_VM::push_call_frame(Call_Frame frame)
@@ -140,6 +150,16 @@ Malang_Value *Malang_VM::current_args()
 {
     auto frame = call_frames[call_frames_top-1];
     return &data_stack[frame.args_frame];
+}
+inline
+Malang_Value Malang_VM::get_arg(intptr_t n)
+{
+    return current_args()[0-n];
+}
+inline
+void Malang_VM::set_arg(intptr_t n, Malang_Value value)
+{
+    current_args()[0-n] = value;
 }
 
 inline
@@ -439,6 +459,14 @@ static inline void exec_Call_Virtual(Malang_VM &vm)
     NOT_IMPL;
 }
 
+static inline void exec_Call_Primitive(Malang_VM &vm)
+{
+    auto prim_fn = reinterpret_cast<Primitive_Function>(vm.pop_data().as_pointer());
+    vm.push_call_frame({vm.ip+1, vm.data_top-1});
+    prim_fn(vm);
+    exec_Return(vm);
+}
+
 static inline void exec_Load_Global(Malang_VM &vm)
 {
     NEXT8;
@@ -469,40 +497,35 @@ static inline void exec_Load_Local(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch16(vm);
-    auto locals = vm.current_locals();
-    auto local = locals[n];
+    auto local = vm.get_local(n);
     vm.push_data(local);
     NEXT_N(n);
 }
 
 static inline void exec_Load_Local_0(Malang_VM &vm)
 {
-    auto locals = vm.current_locals();
-    auto local = locals[0];
+    auto local = vm.get_local(0);
     vm.push_data(local);
     NEXT8;
 }
 
 static inline void exec_Load_Local_1(Malang_VM &vm)
 {
-    auto locals = vm.current_locals();
-    auto local = locals[1];
+    auto local = vm.get_local(1);
     vm.push_data(local);
     NEXT8;
 }
 
 static inline void exec_Load_Local_2(Malang_VM &vm)
 {
-    auto locals = vm.current_locals();
-    auto local = locals[2];
+    auto local = vm.get_local(2);
     vm.push_data(local);
     NEXT8;
 }
 
 static inline void exec_Load_Local_3(Malang_VM &vm)
 {
-    auto locals = vm.current_locals();
-    auto local = locals[3];
+    auto local = vm.get_local(3);
     vm.push_data(local);
     NEXT8;
 }
@@ -512,40 +535,35 @@ static inline void exec_Store_Local(Malang_VM &vm)
     NEXT8;
     auto value = vm.data_stack[--vm.data_top];
     auto n = fetch16(vm);
-    auto locals = vm.current_locals();
-    locals[n] = value;
+    vm.set_local(n, value);
     NEXT_N(n);
 }
 
 static inline void exec_Store_Local_0(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto locals = vm.current_locals();
-    locals[0] = value;
+    vm.set_local(0, value);
     NEXT8;
 }
 
 static inline void exec_Store_Local_1(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto locals = vm.current_locals();
-    locals[1] = value;
+    vm.set_local(1, value);
     NEXT8;
 }
 
 static inline void exec_Store_Local_2(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto locals = vm.current_locals();
-    locals[2] = value;
+    vm.set_local(2, value);
     NEXT8;
 }
 
 static inline void exec_Store_Local_3(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto locals = vm.current_locals();
-    locals[3] = value;
+    vm.set_local(3, value);
     NEXT8;
 }
 
@@ -553,40 +571,35 @@ static inline void exec_Load_Arg(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch16(vm);
-    auto args = vm.current_args();
-    auto arg = args[-n];
+    auto arg = vm.get_arg(n);
     vm.push_data(arg);
     NEXT_N(n);
 }
 
 static inline void exec_Load_Arg_0(Malang_VM &vm)
 {
-    auto args = vm.current_args();
-    auto arg = args[-0];
+    auto arg = vm.get_arg(0);
     vm.push_data(arg);
     NEXT8;
 }
 
 static inline void exec_Load_Arg_1(Malang_VM &vm)
 {
-    auto args = vm.current_args();
-    auto arg = args[-1];
+    auto arg = vm.get_arg(1);
     vm.push_data(arg);
     NEXT8;
 }
 
 static inline void exec_Load_Arg_2(Malang_VM &vm)
 {
-    auto args = vm.current_args();
-    auto arg = args[-2];
+    auto arg = vm.get_arg(2);
     vm.push_data(arg);
     NEXT8;
 }
 
 static inline void exec_Load_Arg_3(Malang_VM &vm)
 {
-    auto args = vm.current_args();
-    auto arg = args[-3];
+    auto arg = vm.get_arg(3);
     vm.push_data(arg);
     NEXT8;
 }
@@ -596,40 +609,35 @@ static inline void exec_Store_Arg(Malang_VM &vm)
     NEXT8;
     auto value = vm.data_stack[--vm.data_top];
     auto n = fetch16(vm);
-    auto args = vm.current_args();
-    args[-n] = value;
+    vm.set_arg(n, value);
     NEXT_N(n);
 }
 
 static inline void exec_Store_Arg_0(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto args = vm.current_args();
-    args[-0] = value;
+    vm.set_arg(0, value);
     NEXT8;
 }
 
 static inline void exec_Store_Arg_1(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto args = vm.current_args();
-    args[-1] = value;
+    vm.set_arg(1, value);
     NEXT8;
 }
 
 static inline void exec_Store_Arg_2(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto args = vm.current_args();
-    args[-2] = value;
+    vm.set_arg(2, value);
     NEXT8;
 }
 
 static inline void exec_Store_Arg_3(Malang_VM &vm)
 {
     auto value = vm.pop_data();
-    auto args = vm.current_args();
-    args[-3] = value;
+    vm.set_arg(3, value);
     NEXT8;
 }
 

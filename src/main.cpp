@@ -138,7 +138,7 @@ void parse_tests()
          "d : int = 42"},
 
         {"e := 1 + 2",
-         "e : = (1 + 2)"},
+         "e : int = (1 + 2)"},
 
         {"fn () -> int {}",
          "fn () -> int {\n"
@@ -148,14 +148,12 @@ void parse_tests()
          "fn (a : int, b : double) -> void {\n"
          "}"},
 
-        {
-            "fn () -> int {\n"
-            "    x := 5;\n"
-            "}",
-            "fn () -> int {\n"
-            "    x : int = 5\n"
-            "}"
-        },
+        {"fn () -> int {\n"
+         "    x := 5;\n"
+         "}",
+         "fn () -> int {\n"
+         "    x : int = 5\n"
+         "}"},
 
         {"fn() {}",
          "fn () -> void {\n"
@@ -204,7 +202,68 @@ void parse_tests()
 
         {"a[0] = 5", "a[0] = 5"},
 
+        {"x:=-1", "x : int = (-1)"},
+        {"x:=+1", "x : int = (+1)"},
+        {"x:=~1", "x : int = (~1)"},
+
+        {"x:=1+2", "x : int = (1 + 2)"},
+        {"x:=1-2", "x : int = (1 - 2)"},
+        {"x:=1*2", "x : int = (1 * 2)"},
+        {"x:=1/2", "x : int = (1 / 2)"},
+        {"x:=1%2", "x : int = (1 % 2)"},
+        {"x:=1<<2", "x : int = (1 << 2)"},
+        {"x:=1>>2", "x : int = (1 >> 2)"},
+        {"x:=1<2", "x : bool = (1 < 2)"},
+        {"x:=1>2", "x : bool = (1 > 2)"},
+        {"x:=1<=2", "x : bool = (1 <= 2)"},
+        {"x:=1>=2", "x : bool = (1 >= 2)"},
+        {"x:=1==2", "x : bool = (1 == 2)"},
+        {"x:=1!=2", "x : bool = (1 != 2)"},
+        {"x:=1&2", "x : int = (1 & 2)"},
+        {"x:=1|2", "x : int = (1 | 2)"},
+        {"x:=1^2", "x : int = (1 ^ 2)"},
+
+        {"x:=-1.1", "x : double = (-1.1)"},
+        {"x:=+1.1", "x : double = (+1.1)"},
+
+        {"x:=1+2.1", "x : double = (1 + 2.1)"},
+        {"x:=1-2.1", "x : double = (1 - 2.1)"},
+        {"x:=1*2.1", "x : double = (1 * 2.1)"},
+        {"x:=1/2.1", "x : double = (1 / 2.1)"},
+        {"x:=1%2.1", "x : double = (1 % 2.1)"},
+        {"x:=1<2.1", "x : bool = (1 < 2.1)"},
+        {"x:=1>2.1", "x : bool = (1 > 2.1)"},
+        {"x:=1<=2.1", "x : bool = (1 <= 2.1)"},
+        {"x:=1>=2.1", "x : bool = (1 >= 2.1)"},
+        {"x:=1==2.1", "x : bool = (1 == 2.1)"},
+        {"x:=1!=2.1", "x : bool = (1 != 2.1)"},
+
+        {"x:=1.1+2.1", "x : double = (1.1 + 2.1)"},
+        {"x:=1.1-2.1", "x : double = (1.1 - 2.1)"},
+        {"x:=1.1*2.1", "x : double = (1.1 * 2.1)"},
+        {"x:=1.1/2.1", "x : double = (1.1 / 2.1)"},
+        {"x:=1.1%2.1", "x : double = (1.1 % 2.1)"},
+        {"x:=1.1<2.1", "x : bool = (1.1 < 2.1)"},
+        {"x:=1.1>2.1", "x : bool = (1.1 > 2.1)"},
+        {"x:=1.1<=2.1", "x : bool = (1.1 <= 2.1)"},
+        {"x:=1.1>=2.1", "x : bool = (1.1 >= 2.1)"},
+        {"x:=1.1==2.1", "x : bool = (1.1 == 2.1)"},
+        {"x:=1.1!=2.1", "x : bool = (1.1 != 2.1)"},
+
+        {"x:=1.1+2", "x : double = (1.1 + 2)"},
+        {"x:=1.1-2", "x : double = (1.1 - 2)"},
+        {"x:=1.1*2", "x : double = (1.1 * 2)"},
+        {"x:=1.1/2", "x : double = (1.1 / 2)"},
+        {"x:=1.1%2", "x : double = (1.1 % 2)"},
+        {"x:=1.1<2", "x : bool = (1.1 < 2)"},
+        {"x:=1.1>2", "x : bool = (1.1 > 2)"},
+        {"x:=1.1<=2", "x : bool = (1.1 <= 2)"},
+        {"x:=1.1>=2", "x : bool = (1.1 >= 2)"},
+        {"x:=1.1==2", "x : bool = (1.1 == 2)"},
+        {"x:=1.1!=2", "x : bool = (1.1 != 2)"},
+
     };
+    size_t total_run = 1;
     for (auto &&it : tests)
     {
         auto actual = get_parse_test_output(it);
@@ -213,27 +272,31 @@ void parse_tests()
             printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
         }
         auto n = std::min(actual.size(), it.expected.size());
-        for (size_t i = 0; i < n; ++i)
+        for (size_t i = 0; i < n; ++i, ++total_run)
         {
             if (actual[i] == it.expected[i])
             {
-            printf(".");
+                printf(".");
             }
             else
             {
                 printf("\nexpected: %s\nactual:   %s\n",
                        it.expected[i].c_str(), actual[i].c_str());
             }
+            if (total_run % 40 == 0)
+            {
+                printf(" %d\n", (int)total_run);
+            }
         }
     }
+    printf(" %d\n", (int)total_run);
 }
 
 void parse_one()
 {
     Parse_Test pt =
-        {"z : fn(fn(int)->zzz)->yyy = fn (cb: fn (int) -> zzz) -> yyy {}",
-         "z : fn (fn (int) -> zzz) -> yyy = fn (cb : fn (int) -> zzz) -> yyy {\n"
-         "}"};
+        {"x := 5 + 2",
+         "x : int = (5 + 2)"};
     auto actual = get_parse_test_output(pt);
     if (actual.size() != pt.expected.size())
     {

@@ -90,17 +90,19 @@ struct Value
 
     inline void set(double number)
     {
-        int32_t as_fixnum = static_cast<int32_t>(number);
+        int32_t fixnum = static_cast<int32_t>(number);
 
         // if the double can be losslessly stored as an int32 do so
         // (int32 doesn't have -0, so check for that too)
-        if (number == as_fixnum && !is_negative_zero(number))
+        if (number == fixnum && !is_negative_zero(number))
         {
-            set(as_fixnum);
+            set(fixnum);
+            assert(as_fixnum() == fixnum);
         }
         else
         {
             v.as_double = number;
+            assert(as_double() == number);
         }
     }
 
@@ -108,6 +110,7 @@ struct Value
     {
         // cast to unsigned so the sign isn't automatically extended
         v.as_bits = static_cast<uint32_t>(number) | fixnum_tag;
+        assert(as_fixnum() == number);
     }
 
     template<typename T>
@@ -117,6 +120,7 @@ struct Value
         assert((reinterpret_cast<uint64_t>(pointer) & pointer_tag) == 0);
 
         v.as_bits = reinterpret_cast<uint64_t>(pointer) | pointer_tag;
+        assert(as_pointer() == pointer);
     }
 
     inline void set(PointerType *pointer)
