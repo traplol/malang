@@ -203,3 +203,11 @@ Oct 17, 2017:
 Oct 18, 2017:
     + Implemented some primitives methods for fixnum and double operators
     + Implemented a new VM instruction called Call_Primitive
+    + Most(all?) IR expressions are now IR_Values and contain type information.
+
+Oct 19, 2017:
+    + Turned IR Binary operators into deducible method calls
+    + Can now compile multi-expression expressions into VM code
+    + Cleaned up some of the VM runtime stuff
+    + Factored out some code repetition
+
