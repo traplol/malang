@@ -14,7 +14,6 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Double &n) override;
     virtual void visit(struct IR_Array &n) override;
     virtual void visit(struct IR_String &n) override;
-    virtual void visit(struct IR_Callable &n) override;
     virtual void visit(struct IR_Symbol &n) override;
     virtual void visit(struct IR_Call &n) override;
     virtual void visit(struct IR_Call_Method &n) override;
@@ -42,13 +41,13 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_B_Greater_Than &n) override;
     virtual void visit(struct IR_B_Greater_Than_Equals &n) override;
     virtual void visit(struct IR_B_Equals &n) override;
+    virtual void visit(struct IR_B_Not_Equals &n) override;
 
     virtual void visit(struct IR_U_Not &n) override;
     virtual void visit(struct IR_U_Invert &n) override;
     virtual void visit(struct IR_U_Negate &n) override;
     virtual void visit(struct IR_U_Positive &n) override;
 
-    virtual void visit(struct IR_Type &n) override;
     virtual void visit(struct IR_Allocate_Object &n) override;
     virtual void visit(struct IR_Deallocate_Object &n) override;
 

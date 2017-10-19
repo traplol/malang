@@ -15,12 +15,13 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
  * This implementation also works for 32-bit on x86 because sizeof(void*) == sizeof(int32_t)
  * on 32-bit, the downside is that each Value still requires 8 bytes
  */
-template<typename PointerType = void>
+template<typename ObjectType = void>
 struct Value
 {
     static constexpr uint64_t max_double  = 0xfff8000000000000;
     static constexpr uint64_t fixnum_tag   = 0xfff9000000000000;
-    static constexpr uint64_t pointer_tag = 0xfffa000000000000;
+    static constexpr uint64_t object_tag = 0xfffa000000000000;
+    static constexpr uint64_t pointer_tag = 0xfffb000000000000;
 
     inline Value()
     {
@@ -37,15 +38,28 @@ struct Value
         set(fixnum);
     }
 
-    inline Value(PointerType *pointer)
+    inline Value(ObjectType *object)
     {
-        set<PointerType>(pointer);
+        set<ObjectType*, object_tag>(object);
     }
 
     template<typename T>
     inline Value(T *pointer)
     {
         set<T>(pointer);
+    }
+
+    template<uint64_t tag>
+    inline bool is() const
+    {
+        return (v.as_bits & tag) == tag;
+    }
+
+    template<typename T, uint64_t tag>
+    inline T as() const
+    {
+        assert(is<tag>());
+        return reinterpret_cast<T>(v.as_bits & ~tag);
     }
 
     inline bool is_double() const
@@ -55,12 +69,17 @@ struct Value
 
     inline bool is_fixnum() const
     {
-        return (v.as_bits & fixnum_tag) == fixnum_tag;
+        return is<fixnum_tag>();
     }
 
     inline bool is_pointer() const
     {
-        return (v.as_bits & pointer_tag) == pointer_tag;
+        return is<pointer_tag>();
+    }
+
+    inline bool is_object() const
+    {
+        return is<object_tag>();
     }
 
     inline double as_double() const
@@ -72,20 +91,32 @@ struct Value
     inline int32_t as_fixnum() const
     {
         assert(is_fixnum());
-        return static_cast<int32_t>(v.as_bits & ~fixnum_tag);
+        return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
     }
 
     template<typename T>
     inline T *as_pointer() const
     {
         assert(is_pointer());
-        return reinterpret_cast<T*>(v.as_bits & ~pointer_tag);
+        return as<T*, pointer_tag>();
     }
 
-    inline PointerType *as_pointer() const
+    inline ObjectType *as_object() const
     {
-        assert(is_pointer());
-        return reinterpret_cast<PointerType*>(v.as_bits & ~pointer_tag);
+        assert(is_object());
+        return as<ObjectType*, object_tag>();
+    }
+
+    template<typename T, uint64_t tag>
+    inline void set(T thing)
+    {
+        static_assert(sizeof(T) == sizeof(uint64_t), "sizeof T must be 8 bytes!");
+        auto thing_ptr = reinterpret_cast<uint64_t*>(&thing);
+        auto thing_bytes = *thing_ptr;
+        // ensure that the pointer really is only 48 bit
+        assert((thing_bytes & tag) == 0);
+
+        v.as_bits = thing_bytes | tag;
     }
 
     inline void set(double number)
@@ -109,23 +140,13 @@ struct Value
     inline void set(int32_t number)
     {
         // cast to unsigned so the sign isn't automatically extended
-        v.as_bits = static_cast<uint32_t>(number) | fixnum_tag;
+        set<uint64_t, fixnum_tag>(static_cast<uint32_t>(number));
         assert(as_fixnum() == number);
     }
 
-    template<typename T>
-    inline void set(T *pointer)
+    inline void set(ObjectType *object)
     {
-        // ensure that the pointer really is only 48 bit
-        assert((reinterpret_cast<uint64_t>(pointer) & pointer_tag) == 0);
-
-        v.as_bits = reinterpret_cast<uint64_t>(pointer) | pointer_tag;
-        assert(as_pointer() == pointer);
-    }
-
-    inline void set(PointerType *pointer)
-    {
-        set<PointerType>(pointer);
+        set<ObjectType*, object_tag>(object);
     }
 
     inline uint64_t bits() const

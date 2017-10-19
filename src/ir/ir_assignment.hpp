@@ -5,6 +5,9 @@
 
 struct IR_Assignment : IR_Node
 {
+    IR_Assignment(const Source_Location &src_loc)
+        : IR_Node(src_loc)
+        {}
     struct IR_LValue *lhs;
     struct IR_RValue *rhs;
 

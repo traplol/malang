@@ -6,7 +6,10 @@
 
 struct IR_Return : IR_Node
 {
-    std::vector<IR_Node*> values;
+    IR_Return(const Source_Location &src_loc)
+        : IR_Node(src_loc)
+        {}
+    std::vector<struct IR_Value*> values;
 
     IR_NODE_OVERRIDES;
 };

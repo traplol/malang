@@ -6,7 +6,7 @@
 #include "ast_variable.hpp"
 #include "ast_operator.hpp"
 #include "ast_list.hpp"
-#include "../vm/reflection.hpp"
+#include "../vm/runtime/reflection.hpp"
 
 #define BIN_OP_DTOR(class_name)                 \
     class_name::~class_name() {                 \

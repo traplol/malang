@@ -50,7 +50,8 @@ struct Ast_To_IR : Ast_Visitor
     Malang_IR *convert(Ast_Node &n);
 
 private:
-    IR_Node *convert_impl(Malang_IR *ir, Ast_Node &n);
+    IR_Node *get_node(Ast_Node &n);
+    void _return(IR_Node *value);
     Malang_IR *ir;
     IR_Node *tree;
 };

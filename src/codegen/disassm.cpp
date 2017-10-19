@@ -38,27 +38,27 @@ std::string Disassembler::dis(std::vector<byte> code)
             ++p;
             auto n = fetch8(p);
             ss << " <" << n << ">";
-            ++p;
+            p += sizeof(n);
         }
         else if (ins == Instruction::Literal_16)
         {
             ++p;
             auto n = fetch16(p);
             ss << " <" << n << ">";
-            p += 2;
+            p += sizeof(n);
         }
         else if (ins == Instruction::Literal_32)
         {
             ++p;
             auto n = fetch32(p);
             ss << " <" << n << ">";
-            p += 4;
+            p += sizeof(n);
         }
         else if (ins == Instruction::Literal_value)
         {
             ++p;
             auto n = fetch_value(p);
-            if (n.is_pointer())     {ss << " pointer:<" << n.as_pointer();}
+            if (n.is_object())     {ss << " pointer:<" << n.as_object();}
             else if (n.is_double()) {ss << " double:<" << n.as_double();}
             else if (n.is_fixnum()) {ss << " fixnum:<" << n.as_fixnum();}
             ss << ">";
@@ -72,6 +72,13 @@ std::string Disassembler::dis(std::vector<byte> code)
             p += sizeof(n);
         }
         else if (ins == Instruction::Branch_If_Zero)
+        {
+            ++p;
+            auto n = fetch32(p);
+            ss << "<" << n << ">";
+            p += sizeof(n);
+        }
+        else if (ins == Instruction::Call_Primitive)
         {
             ++p;
             auto n = fetch32(p);

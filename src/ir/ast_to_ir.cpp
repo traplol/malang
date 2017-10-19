@@ -31,16 +31,16 @@ void Ast_To_IR::visit(List_Node&n)
 
 void Ast_To_IR::visit(Integer_Node&n)
 {
-    auto fixnum = new IR_Fixnum;
+    auto fixnum = new IR_Fixnum{n.src_loc, n.type};
     fixnum->value = n.value;
-    tree = fixnum;
+    _return(fixnum);
 }
 
 void Ast_To_IR::visit(Real_Node&n)
 {
-    auto real = new IR_Double;
+    auto real = new IR_Double{n.src_loc, n.type};
     real->value = n.value;
-    tree = real;
+    _return(real);
 }
 
 void Ast_To_IR::visit(String_Node&n)
@@ -118,35 +118,42 @@ void Ast_To_IR::visit(Right_Shift_Node&n)
     NOT_IMPL;
 }
 
+#define BINARY_OP_CONVERT(ir_b_class_name) \
+    auto lhs = dynamic_cast<IR_Value*>(get_node(*n.lhs)); \
+    if (!lhs) { \
+        n.lhs->src_loc.report("error", "Expected a value"); \
+        abort();} \
+    auto rhs = dynamic_cast<IR_Value*>(get_node(*n.rhs)); \
+    if (!rhs) { \
+        n.rhs->src_loc.report("error", "Expected a value"); \
+        abort();} \
+    auto bop = new ir_b_class_name{n.src_loc}; \
+    bop->lhs = lhs; \
+    bop->rhs = rhs; \
+    _return(bop);
 void Ast_To_IR::visit(Add_Node&n)
 {
-    Ast_To_IR c;
-    auto lhs = c.convert_impl(ir, *n.lhs);
-    auto rhs = c.convert_impl(ir, *n.rhs);
-    auto add = new IR_B_Add;
-    //add->lhs = lhs;
-    //add->rhs = rhs;
-    tree = add;
+    BINARY_OP_CONVERT(IR_B_Add);
 }
 
 void Ast_To_IR::visit(Subtract_Node&n)
 {
-    NOT_IMPL;
+    BINARY_OP_CONVERT(IR_B_Subtract);
 }
 
 void Ast_To_IR::visit(Multiply_Node&n)
 {
-    NOT_IMPL;
+    BINARY_OP_CONVERT(IR_B_Multiply);
 }
 
 void Ast_To_IR::visit(Divide_Node&n)
 {
-    NOT_IMPL;
+    BINARY_OP_CONVERT(IR_B_Divide);
 }
 
 void Ast_To_IR::visit(Modulo_Node&n)
 {
-    NOT_IMPL;
+    BINARY_OP_CONVERT(IR_B_Modulo);
 }
 
 void Ast_To_IR::visit(Call_Node&n)
@@ -206,15 +213,22 @@ void Ast_To_IR::visit(Decl_Constant_Node&n)
 
 Malang_IR *Ast_To_IR::convert(Ast_Node &n)
 {
-    auto ir = new Malang_IR;
-    ir->roots.push_back(convert_impl(ir, n));
+    if (!ir)
+    {
+        ir = new Malang_IR;
+    }
+    ir->roots.push_back(get_node(n));
     return ir;
 }
 
-IR_Node *Ast_To_IR::convert_impl(Malang_IR *ir, Ast_Node &n)
+IR_Node *Ast_To_IR::get_node(Ast_Node &n)
 {
     tree = nullptr;
-    this->ir = ir;
     n.accept(*this);
     return tree;
+}
+
+void Ast_To_IR::_return(IR_Node *value)
+{
+    tree = value;
 }

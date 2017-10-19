@@ -1,15 +1,14 @@
 #include <cassert>
 #include "ir_symbol.hpp"
-#include "ir_type.hpp"
 #include "symbol_map.hpp"
 
-IR_Symbol *Symbol_Map::make_symbol(const std::string &name, IR_Type *type)
+IR_Symbol *Symbol_Map::make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc)
 {
     assert(!name.empty());
     assert(type != nullptr);
     assert(get_symbol(name) == nullptr);
 
-    auto sym = new IR_Symbol;
+    auto sym = new IR_Symbol{src_loc};
     sym->symbol = name;
     sym->type = type;
     sym->index = m_local_index++;

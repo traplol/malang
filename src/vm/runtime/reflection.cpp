@@ -23,33 +23,33 @@ const std::string &Method_Info::name() const
     return m_name;
 }
 
-void Method_Info::set_function(Primitive_Function primitive)
+void Method_Info::set_function(Primitive_Function *primitive)
 {
-    m_is_primitive = true;
-    m_fn.primitive = primitive;
+    m_is_native = true;
+    m_fn.prim = primitive;
 }
 
-void Method_Info::set_function(uintptr_t code_ip)
+void Method_Info::set_function(int32_t code_ip)
 {
-    m_is_primitive = false;
+    m_is_native = false;
     m_fn.code_ip = code_ip;
 }
 
-bool Method_Info::is_primitive() const
+bool Method_Info::is_native() const
 {
-    return m_is_primitive;
+    return m_is_native;
 }
 
 uintptr_t Method_Info::code_function() const
 {
-    assert(!is_primitive());
+    assert(!is_native());
     return m_fn.code_ip;
 }
 
-Primitive_Function Method_Info::primitive_function() const
+Primitive_Function *Method_Info::primitive_function() const
 {
-    assert(is_primitive());
-    return m_fn.primitive;
+    assert(is_native());
+    return m_fn.prim;
 }
 
 Type_Info *Field_Info::type() const

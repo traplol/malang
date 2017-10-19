@@ -3,12 +3,17 @@
 
 #include <string>
 #include "ir.hpp"
+#include "ir_values.hpp"
 
-struct IR_Symbol : IR_Node
+struct IR_Symbol : IR_LValue
 {
-    struct IR_Type *type;
+    IR_Symbol(const Source_Location &src_loc)
+        : IR_LValue(src_loc)
+        {}
     std::string symbol;
     size_t index;
+    struct Type_Info *type;
+    virtual struct Type_Info *get_type() const override { return type; }
 
     IR_NODE_OVERRIDES;
 };

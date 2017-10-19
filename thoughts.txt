@@ -199,3 +199,7 @@ Oct 17, 2017:
     + Implemented declaration+assign parsing
     + Implemented declaration+constant parsing
     + Implemented type parsing
+
+Oct 18, 2017:
+    + Implemented some primitives methods for fixnum and double operators
+    + Implemented a new VM instruction called Call_Primitive

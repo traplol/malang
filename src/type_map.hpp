@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include "vm/reflection.hpp"
+#include "vm/runtime/reflection.hpp"
 
 struct Type_Map
 {
@@ -11,6 +11,9 @@ struct Type_Map
     Type_Info *get_or_declare_type(const std::string &name);
     Type_Info *declare_type(const std::string &name, struct Type_Info *parent);
     Function_Type_Info *declare_function(const std::vector<Type_Info*> &parameter_types, Type_Info *return_type);
+
+    std::vector<Native_Code> primitives();
+    Primitive_Function *add_primitive(Native_Code native_code);
     Type_Info *get_type(const std::string &name);
     Type_Info *get_type(Type_Token type_token);
 
@@ -24,6 +27,7 @@ struct Type_Map
 private:
     std::map<std::string, Type_Info*> m_types;
     std::vector<Type_Info*> m_types_fast;
+    std::vector<Native_Code> m_primitives;
 
     Type_Info *m_void;
     Type_Info *m_object;

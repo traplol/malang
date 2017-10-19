@@ -5,6 +5,13 @@
 #include <string.h>
 #include "vm.hpp"
 #include "instruction.hpp"
+#include "runtime/gc.hpp"
+
+Malang_VM::Malang_VM(const std::vector<Native_Code> &primitives, size_t gc_run_interval)
+    : primitives(std::move(primitives))
+{
+    gc = new Malang_GC{this, gc_run_interval};
+}
 
 void Malang_VM::load_code(const std::vector<byte> &code)
 {
@@ -63,7 +70,7 @@ static void trace(Malang_VM &vm)
         auto &&e = vm.data_stack[i];
         if (e.is_pointer())
         {
-            print("-%ld: POINTER: %p\n", i, e.as_pointer());
+            print("-%ld: OBJECT: %p\n", i, e.as_object());
         }
         else if (e.is_double())
         {
@@ -461,9 +468,10 @@ static inline void exec_Call_Virtual(Malang_VM &vm)
 
 static inline void exec_Call_Primitive(Malang_VM &vm)
 {
-    auto prim_fn = reinterpret_cast<Primitive_Function>(vm.pop_data().as_pointer());
-    vm.push_call_frame({vm.ip+1, vm.data_top-1});
-    prim_fn(vm);
+    NEXT8;
+    auto prim_fn_idx = fetch32(vm);
+    vm.push_call_frame({vm.ip + sizeof(prim_fn_idx), vm.data_top-1});
+    vm.primitives[prim_fn_idx](vm);
     exec_Return(vm);
 }
 

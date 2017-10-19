@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "vm.hpp"
+#include "../vm.hpp"
 #include "gc.hpp"
 
 #define offsetof(a,b) __builtin_offsetof(a,b)
@@ -35,9 +35,9 @@ void Malang_GC::mark()
 #define _mark(n, a)                             \
     for (uintptr_t i = 0; i < (n); ++i) {       \
         visited++;                              \
-        if ((a)[i].is_pointer()) {              \
+        if ((a)[i].is_object()) {              \
             marked++;                           \
-            (a)[i].as_pointer()->gc_mark();}}
+            (a)[i].as_object()->gc_mark();}}
 
     printf("GC: allocated: %ld\n", m_num_allocated);
     printf("GC: marking globals\n");

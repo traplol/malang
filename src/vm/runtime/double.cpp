@@ -1,8 +1,8 @@
 #include <cmath>
-#include "runtime_double.hpp"
-#include "../type_map.hpp"
+#include "double.hpp"
 #include "primitive_helpers.hpp"
-#include "vm.hpp"
+#include "../vm.hpp"
+#include "../../type_map.hpp"
 
 static void d_pos(Malang_VM &vm)
 {

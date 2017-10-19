@@ -12,7 +12,6 @@ struct IR_Visitor
     virtual void visit(struct IR_Double&) = 0;
     virtual void visit(struct IR_Array&) = 0;
     virtual void visit(struct IR_String&) = 0;
-    virtual void visit(struct IR_Callable&) = 0;
     virtual void visit(struct IR_Symbol&) = 0;
     virtual void visit(struct IR_Call&) = 0;
     virtual void visit(struct IR_Call_Method&) = 0;
@@ -40,13 +39,13 @@ struct IR_Visitor
     virtual void visit(struct IR_B_Greater_Than&) = 0;
     virtual void visit(struct IR_B_Greater_Than_Equals&) = 0;
     virtual void visit(struct IR_B_Equals&) = 0;
+    virtual void visit(struct IR_B_Not_Equals&) = 0;
 
     virtual void visit(struct IR_U_Not&) = 0;
     virtual void visit(struct IR_U_Invert&) = 0;
     virtual void visit(struct IR_U_Negate&) = 0;
     virtual void visit(struct IR_U_Positive&) = 0;
 
-    virtual void visit(struct IR_Type&) = 0;
     virtual void visit(struct IR_Allocate_Object&) = 0;
     virtual void visit(struct IR_Deallocate_Object&) = 0;
 

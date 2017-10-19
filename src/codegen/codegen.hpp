@@ -3,7 +3,7 @@
 
 #include "../vm/vm.hpp"
 #include "../vm/instruction.hpp"
-#include "../vm/runtime_primitive_types.hpp"
+#include "../vm/runtime/primitive_types.hpp"
 
 struct Codegen
 {
@@ -53,6 +53,12 @@ struct Codegen
     void push_back_literal_16(int16_t n);
     void push_back_literal_32(int32_t n);
     void push_back_literal_value(Malang_Value value);
+    void push_back_raw_8(byte n);
+    void push_back_raw_16(int16_t n);
+    void push_back_raw_32(int32_t n);
+
+    void push_back_call_primitive(const Primitive_Function &primitive);
+    void push_back_call_code(int32_t code);
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

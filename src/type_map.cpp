@@ -1,8 +1,8 @@
 #include <cassert>
 #include <sstream>
 #include "type_map.hpp"
-#include "vm/runtime_double.hpp"
-#include "vm/runtime_fixnum.hpp"
+#include "vm/runtime/double.hpp"
+#include "vm/runtime/fixnum.hpp"
 
 Type_Map::Type_Map()
 {
@@ -16,6 +16,20 @@ Type_Map::Type_Map()
 
     runtime_fixnum_init(this);
     runtime_double_init(this);
+}
+
+std::vector<Native_Code> Type_Map::primitives()
+{
+    return m_primitives;
+}
+
+Primitive_Function *Type_Map::add_primitive(Native_Code native_code)
+{
+    auto pfn = new Primitive_Function;
+    pfn->native_code = native_code;
+    pfn->index = m_primitives.size();
+    m_primitives.push_back(native_code);
+    return pfn;
 }
 
 Type_Info *Type_Map::get_void() const

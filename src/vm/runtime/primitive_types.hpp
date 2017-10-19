@@ -2,7 +2,7 @@
 #define MALANG_RUNTIME_PRIMITIVE_TYPES_HPP
 
 #include <stdint.h>
-#include "nun_boxing.hpp"
+#include "../nun_boxing.hpp"
 
 using Fixnum = int32_t;
 using Double = double;
@@ -17,6 +17,13 @@ struct Array
 
 using String = Array<Char>;
 using Malang_Value = Value<struct Malang_Object>;
+using Native_Code = void(*)(struct Malang_VM &vm);
+
+struct Primitive_Function
+{
+    Fixnum index;
+    Native_Code native_code;
+};
 
 
 #endif

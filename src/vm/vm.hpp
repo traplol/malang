@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <stdint.h>
-#include "runtime_primitive_types.hpp"
-#include "reflection.hpp"
+#include "runtime/primitive_types.hpp"
+#include "runtime/reflection.hpp"
 
 using byte = unsigned char;
 
@@ -16,11 +16,15 @@ struct Call_Frame
 
 struct Malang_VM
 {
+    Malang_VM(const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50);
 
     void load_code(const std::vector<byte> &code);
     void run();
 
+    struct Malang_GC *gc;
+
     std::vector<byte> code;
+    std::vector<Native_Code> primitives;
 
     uintptr_t ip;
 

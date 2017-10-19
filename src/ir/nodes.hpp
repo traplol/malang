@@ -11,7 +11,6 @@
 #include "ir_primitives.hpp"
 #include "ir_return.hpp"
 #include "ir_symbol.hpp"
-#include "ir_type.hpp"
 #include "ir_unary_ops.hpp"
 #include "ir_values.hpp"
 

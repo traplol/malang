@@ -8,7 +8,7 @@
 #include "parser.hpp"
 #include "visitors/ast_pretty_printer.hpp"
 #include "vm/vm.hpp"
-#include "vm/gc.hpp"
+#include "vm/runtime/gc.hpp"
 #include "codegen/codegen.hpp"
 #include "codegen/disassm.hpp"
 #include "codegen/ir_to_code.hpp"
@@ -324,9 +324,10 @@ void parse_to_code();
 
 int main()
 {
-    //parse_to_code();
-    parse_tests();
+    parse_to_code();
+    //parse_tests();
     //parse_one();
+    //gc_stuff();
     return 0;
 }
 
@@ -341,15 +342,14 @@ void codegen_stuff()
     printf("%s", s.c_str());
 
     cg.code.push_back(0xff);
-    Malang_VM vm;
+    Malang_VM vm{{}};
     vm.load_code(cg.code);
     vm.run();
 }
 
 void gc_stuff()
 {
-    Malang_VM vm;
-    Malang_GC gc(&vm, 5);
+    Malang_VM vm{{}, 5};
 
     Type_Info obj(nullptr, 0, "object");
     Type_Info str(&obj, 1, "string");
@@ -359,19 +359,19 @@ void gc_stuff()
     vm.add_local(3.14159);
     vm.add_data(42.5);
     vm.add_global(696969);
-    auto a = gc.allocate(&str); vm.add_local(a); printf("%p\n", a);
-    auto b = gc.allocate(&str); vm.add_local(b); printf("%p\n", b);
-    auto c = gc.allocate(&str); vm.add_local(c); printf("%p\n", c);
-    auto d = gc.allocate(&str); vm.add_global(d); printf("%p\n", d);
-    auto e = gc.allocate(&str); vm.add_data(e); printf("%p\n", e);
-    auto f = gc.allocate(&str); vm.add_global(f); printf("%p\n", f);
-    auto g = gc.allocate(&str); printf("%p\n", g);
-    auto h = gc.allocate(&str); vm.add_global(h); printf("%p\n", h);
+    auto a = vm.gc->allocate(&str); vm.add_local(a); printf("%p\n", a);
+    auto b = vm.gc->allocate(&obj); vm.add_local(b); printf("%p\n", b);
+    auto c = vm.gc->allocate(&str); vm.add_local(c); printf("%p\n", c);
+    auto d = vm.gc->allocate(&str); vm.add_global(d); printf("%p\n", d);
+    auto e = vm.gc->allocate(&obj); vm.add_data(e); printf("%p\n", e);
+    auto f = vm.gc->allocate(&str); vm.add_global(f); printf("%p\n", f);
+    auto g = vm.gc->allocate(&fix); printf("%p\n", g);
+    auto h = vm.gc->allocate(&obj); vm.add_global(h); printf("%p\n", h);
     for (int i = 0; i < 100; ++i)
     {
-        printf("%p\n", gc.allocate(&str));
+        printf("%p\n", vm.gc->allocate(&str));
     }
-    gc.manual_run();
+    vm.gc->manual_run();
 }
 
 void parse_stuff()
@@ -383,7 +383,7 @@ void parse_to_code()
 {
     Type_Map types;
     Parser parser(&types);
-    auto ast = parser.parse("test.ma", "1 + 2");
+    auto ast = parser.parse("test.ma", "1 + 2 * 3 / 2");
     if (parser.errors)
     {
         printf("there were parsing errors...\n");
@@ -396,5 +396,9 @@ void parse_to_code()
         auto cg = ir_to_code.convert(*ir);
         auto disassembly = Disassembler::dis(cg->code);
         printf("%s\n", disassembly.c_str());
+        Malang_VM vm{types.primitives()};
+        vm.load_code(cg->code);
+        vm.run();
+        printf("%d\n", vm.pop_data().as_fixnum());
     }
 }

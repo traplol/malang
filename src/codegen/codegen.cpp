@@ -174,23 +174,17 @@ void Codegen::push_back_noop()
 void Codegen::push_back_literal_8(byte n)
 {
     push_back_instruction(Instruction::Literal_8);
-    code.push_back(n);
+    push_back_raw_8(n);
 }
 void Codegen::push_back_literal_16(int16_t n)
 {
     push_back_instruction(Instruction::Literal_16);
-    code.resize(code.size() + sizeof(n));
-    auto end = code.data() + code.size();
-    auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
-    *slot = n;
+    push_back_raw_16(n);
 }
 void Codegen::push_back_literal_32(int32_t n)
 {
     push_back_instruction(Instruction::Literal_32);
-    code.resize(code.size() + sizeof(n));
-    auto end = code.data() + code.size();
-    auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
-    *slot = n;
+    push_back_raw_32(n);
 }
 void Codegen::push_back_literal_value(Malang_Value value)
 {
@@ -199,4 +193,33 @@ void Codegen::push_back_literal_value(Malang_Value value)
     auto end = code.data() + code.size();
     auto slot = reinterpret_cast<decltype(value)*>(end - sizeof(value));
     *slot = value;
+}
+void Codegen::push_back_raw_8(byte n)
+{
+    code.push_back(n);
+}
+void Codegen::push_back_raw_16(int16_t n)
+{
+    code.resize(code.size() + sizeof(n));
+    auto end = code.data() + code.size();
+    auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
+    *slot = n;
+}
+void Codegen::push_back_raw_32(int32_t n)
+{
+    code.resize(code.size() + sizeof(n));
+    auto end = code.data() + code.size();
+    auto slot = reinterpret_cast<decltype(n)*>(end - sizeof(n));
+    *slot = n;
+}
+
+void Codegen::push_back_call_primitive(const Primitive_Function &primitive)
+{
+    push_back_instruction(Instruction::Call_Primitive);
+    push_back_raw_32(primitive.index);
+}
+void Codegen::push_back_call_code(int32_t code)
+{
+    push_back_literal_32(code);
+    push_back_instruction(Instruction::Call);
 }

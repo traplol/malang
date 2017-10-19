@@ -3,28 +3,27 @@
 
 #include <string>
 #include <vector>
+#include "primitive_types.hpp"
 
 struct Function_Type_Info;
 struct Type_Info;
-
-using Primitive_Function = void(*)(struct Malang_VM &vm);
 
 struct Method_Info
 {
     Method_Info(const std::string &name, Function_Type_Info *fn_type)
         : m_name(name)
         , m_fn_type(fn_type)
-        , m_is_primitive(false)
+        , m_is_native(false)
         {}
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type, Primitive_Function prim)
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, Primitive_Function *prim)
         : m_name(name)
         , m_fn_type(fn_type)
         {
             set_function(prim);
         }
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type, uintptr_t code_ip)
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, int32_t code_ip)
         : m_name(name)
         , m_fn_type(fn_type)
         {
@@ -36,19 +35,19 @@ struct Method_Info
     const std::vector<Type_Info*> &parameter_types() const;
     Type_Info *return_type() const;
 
-    void set_function(Primitive_Function primitive);
-    void set_function(uintptr_t code_ip);
-    bool is_primitive() const;
+    void set_function(Primitive_Function *prim);
+    void set_function(int32_t code_ip);
+    bool is_native() const;
     uintptr_t code_function() const;
-    Primitive_Function primitive_function() const;
+    Primitive_Function *primitive_function() const;
 
 private:
     std::string m_name;
     Function_Type_Info *m_fn_type;
-    bool m_is_primitive;
+    bool m_is_native;
     union {
-        Primitive_Function primitive;
-        uintptr_t code_ip;
+        Primitive_Function *prim;
+        int32_t code_ip;
     } m_fn;
 };
 

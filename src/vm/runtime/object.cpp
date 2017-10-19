@@ -13,9 +13,9 @@ void Malang_Object::gc_mark()
     color = grey;
     for (auto &&value : fields)
     {
-        if (value.is_pointer())
+        if (value.is_object())
         {
-            value.as_pointer()->gc_mark();
+            value.as_object()->gc_mark();
         }
     }
     color = black;

@@ -4,6 +4,7 @@
 #include <vector>
 #include "../metadata.hpp"
 #include "../type_map.hpp"
+#include "../source_code.hpp"
 #include "ir_visitor.hpp"
 #include "label_map.hpp"
 #include "symbol_map.hpp"
@@ -18,9 +19,14 @@
 
 struct IR_Node : public Metadata
 {
+    IR_Node(const Source_Location &src_loc)
+        : src_loc(src_loc)
+        {}
     virtual ~IR_Node(){}
     virtual void accept(IR_Visitor&) = 0;
     METADATA_OVERRIDES;
+
+    Source_Location src_loc;
 };
 
 struct Malang_IR
