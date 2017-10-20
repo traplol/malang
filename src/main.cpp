@@ -383,7 +383,14 @@ void parse_to_code()
 {
     Type_Map types;
     Parser parser(&types);
-    auto ast = parser.parse("test.ma", "x := 10; y := 32; z := x + y; z");
+    auto ast = parser.parse("test.ma", R"(
+x := 10;
+y := 99;
+yy := 11.25;
+z := 2 * (x + yy);
+z;
+)"
+        );
     if (parser.errors)
     {
         printf("there were parsing errors...\n");
@@ -399,6 +406,37 @@ void parse_to_code()
         Malang_VM vm{types.primitives()};
         vm.load_code(cg->code);
         vm.run();
-        printf("~>%d<~\n", vm.pop_data().as_fixnum());
+        printf("~>%lf<~\n", vm.pop_data().as_double());
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+*/

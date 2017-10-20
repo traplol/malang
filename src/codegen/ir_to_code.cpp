@@ -8,12 +8,12 @@
 
 void IR_To_Code::visit(IR_Boolean &n)
 {
-    NOT_IMPL;
+    cg->push_back_literal_value(n.value);
 }
 
 void IR_To_Code::visit(IR_Char &n)
 {
-    NOT_IMPL;
+    cg->push_back_literal_value(n.value);
 }
 
 void IR_To_Code::visit(IR_Fixnum &n)
@@ -23,12 +23,12 @@ void IR_To_Code::visit(IR_Fixnum &n)
 
 void IR_To_Code::visit(IR_Single &n)
 {
-    NOT_IMPL;
+    cg->push_back_literal_value(n.value);
 }
 
 void IR_To_Code::visit(IR_Double &n)
 {
-    NOT_IMPL;
+    cg->push_back_literal_value(n.value);
 }
 
 void IR_To_Code::visit(IR_Array &n)
@@ -102,11 +102,30 @@ void IR_To_Code::visit(IR_Branch_If_False &n)
 void IR_To_Code::visit(IR_Assignment &n)
 {
     // @TODO: how will array assignment be handled?
-    auto var = dynamic_cast<IR_Symbol*>(n.lhs);
-    if (!var)
+    auto lval = dynamic_cast<IR_LValue*>(n.lhs);
+    assert(lval);
+    auto lval_ty = lval->get_type();
+    if (!lval_ty)
     {
-        NOT_IMPL;
+        n.lhs->src_loc.report("error", "Could not deduce type.\n");
+        abort();
     }
+    auto val_ty = n.rhs->get_type();
+    if (!val_ty)
+    {
+        n.rhs->src_loc.report("error", "Could not deduce type.\n");
+        abort();
+    }
+
+
+    if (!val_ty->is_assignable_to(lval_ty))
+    {
+        n.src_loc.report("error", "Cannot assign from type `%s' to `%s'\n",
+                         val_ty->name().c_str(), lval_ty->name().c_str());
+        abort();
+    }
+
+    auto var = dynamic_cast<IR_Symbol*>(lval);
 
     convert_impl(cg, *n.rhs);
     if (n.is_local)

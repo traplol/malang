@@ -67,7 +67,6 @@ private:
     Scope *cur_scope;
     std::vector<Scope*> scopes;
 
-    void _return(IR_Node *value);
     void push_scope();
     void pop_scope();
     IR_Symbol *find_symbol(const std::string &name);

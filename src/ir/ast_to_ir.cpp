@@ -4,6 +4,8 @@
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
+#define _return(x) { tree = (x); return; }
+
 Scope::Scope()
     : labels(new Label_Map)
     , symbols(new Symbol_Map)
@@ -35,13 +37,36 @@ void Ast_To_IR::visit(Variable_Node&n)
 
 void Ast_To_IR::visit(Assign_Node&n)
 {
-    NOT_IMPL;
+    auto value = get<IR_Value>(*n.rhs);
+    assert(value);
+    auto lval = get<IR_LValue>(*n.lhs);
+    assert(lval);
+    auto sym = dynamic_cast<IR_Symbol*>(lval);
+    if (sym)
+    {
+        auto assign = new IR_Assignment{n.src_loc};
+        assign->is_local = sym->is_local;
+        assign->lhs = sym;
+        assign->rhs = value;
+        _return(assign);
+    }
+    else
+    {
+        NOT_IMPL;
+    }
 }
 
 void Ast_To_IR::visit(Decl_Node&n)
 {
     assert(n.type);
     assert(n.type->type);
+    auto exists = cur_scope->symbols->get_symbol(n.variable_name);
+    if (exists)
+    {
+        n.src_loc.report("error", "Cannot declare variable because it has already been declared");
+        exists->src_loc.report("here", "");
+        abort();
+    }
     bool is_local = !scopes.empty();
     auto symbol = cur_scope->symbols->make_symbol(n.variable_name, n.type->type, n.src_loc, is_local);
     _return(symbol);
@@ -292,11 +317,6 @@ Malang_IR *Ast_To_IR::convert_one(Ast_Node &n)
     }
     ir->roots.push_back(get(n));
     return ir;
-}
-
-void Ast_To_IR::_return(IR_Node *value)
-{
-    tree = value;
 }
 
 void Ast_To_IR::push_scope()

@@ -90,8 +90,8 @@ struct Type_Info
     bool add_method(Method_Info *method);
     const std::vector<Method_Info*> &methods() const;
 
-    bool castable_to(Type_Info *other) const;
     bool is_subtype_of(Type_Info *other) const;
+    bool is_assignable_to(Type_Info *other) const;
 
     Method_Info *get_method(const std::string &name, std::vector<Type_Info*> param_types) const;
     std::vector<Method_Info*> get_methods(const std::string &name) const;

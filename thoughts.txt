@@ -210,4 +210,10 @@ Oct 19, 2017:
     + Can now compile multi-expression expressions into VM code
     + Cleaned up some of the VM runtime stuff
     + Factored out some code repetition
+    + Implemented more instructions in the Codegen
+    + Implemented very basic symbols e.g:
+      x := 10;
+      y := 11;
+      z := 2 * (x + y);
+      z; // leaves 42 at the top of the stack
 

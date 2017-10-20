@@ -158,7 +158,7 @@ static uptr<Assign_Node> parse_assignment(Parser &parser)
     }
     auto rhs = parse_expression(parser);
     CHECK_OR_FAIL(rhs);
-    return uptr<Assign_Node>(new Assign_Node(lhs->src_loc,
+    return uptr<Assign_Node>(new Assign_Node(eq_tk.src_loc(),
                                              static_cast<Ast_LValue*>(lhs.release()),
                                              rhs.release()));
 }

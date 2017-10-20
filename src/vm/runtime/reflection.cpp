@@ -150,28 +150,17 @@ const std::vector<Method_Info*> &Type_Info::methods() const
     return m_methods;
 }
 
-bool Type_Info::castable_to(Type_Info *other) const
+bool Type_Info::is_assignable_to(Type_Info *other) const
 {
     if (this == other)
     {
         return true;
     }
     assert(m_type_token != other->m_type_token);
-
     if (is_subtype_of(other))
     {
         return true;
     }
-
-    for (auto &&m : other->m_methods)
-    {
-        // @XXX: magic string: "cast_to"
-        if (m->type()->return_type() == this && m->name() == "cast_to")
-        {
-            return true;
-        }
-    }
-
     return false;
 }
 

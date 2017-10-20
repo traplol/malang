@@ -121,9 +121,12 @@ void Source_Code::report_at_src_loc(const char *type, const Source_Location &src
 void Source_Code::vreport_at_src_loc(const char *type, const Source_Location &src_loc, const char *fmt, va_list vargs) const
 {
     printf("%s: %s:%d:%d\n\n", type, m_filename.c_str(), src_loc.line_no, src_loc.char_no);
-    printf("\t");
-    vprintf(fmt, vargs);
-    printf("\n");
+    if (fmt[0] != 0)
+    {
+        printf("\t");
+        vprintf(fmt, vargs);
+        printf("\n");
+    }
     int cur_line = 1;
     size_t line_idx = 0;
     size_t i = 0;
