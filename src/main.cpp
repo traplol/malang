@@ -383,15 +383,15 @@ void parse_to_code()
 {
     Type_Map types;
     Parser parser(&types);
-    auto ast = parser.parse("test.ma", "1 + 2 * 3 / 2");
+    auto ast = parser.parse("test.ma", "x := 10; y := 32; z := x + y; z");
     if (parser.errors)
     {
         printf("there were parsing errors...\n");
     }
     else
     {
-        Ast_To_IR ast_to_ir;
-        auto ir = ast_to_ir.convert(*ast.roots[0]);
+        Ast_To_IR ast_to_ir{&types};
+        auto ir = ast_to_ir.convert(ast);
         IR_To_Code ir_to_code;
         auto cg = ir_to_code.convert(*ir);
         auto disassembly = Disassembler::dis(cg->code);
@@ -399,6 +399,6 @@ void parse_to_code()
         Malang_VM vm{types.primitives()};
         vm.load_code(cg->code);
         vm.run();
-        printf("%d\n", vm.pop_data().as_fixnum());
+        printf("~>%d<~\n", vm.pop_data().as_fixnum());
     }
 }

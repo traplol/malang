@@ -43,7 +43,15 @@ void IR_To_Code::visit(IR_String &n)
 
 void IR_To_Code::visit(IR_Symbol &n)
 {
-    NOT_IMPL;
+    // @TODO: Symbols need to be: Global/Local/Arg/Field
+    if (n.is_local)
+    {
+        cg->push_back_load_local(n.index);
+    }
+    else
+    {
+        cg->push_back_load_global(n.index);
+    }
 }
 
 void IR_To_Code::visit(IR_Call &n)
@@ -93,7 +101,22 @@ void IR_To_Code::visit(IR_Branch_If_False &n)
 
 void IR_To_Code::visit(IR_Assignment &n)
 {
-    NOT_IMPL;
+    // @TODO: how will array assignment be handled?
+    auto var = dynamic_cast<IR_Symbol*>(n.lhs);
+    if (!var)
+    {
+        NOT_IMPL;
+    }
+
+    convert_impl(cg, *n.rhs);
+    if (n.is_local)
+    {
+        cg->push_back_store_local(var->index);
+    }
+    else
+    {
+        cg->push_back_store_global(var->index);
+    }
 }
 
 void IR_To_Code::visit(IR_B_Add &n)

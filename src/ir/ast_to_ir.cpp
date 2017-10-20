@@ -4,9 +4,33 @@
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
+Scope::Scope()
+    : labels(new Label_Map)
+    , symbols(new Symbol_Map)
+{}
+Scope::~Scope()
+{
+    delete labels;
+    labels = nullptr;
+
+    delete symbols;
+    symbols = nullptr;
+}
+
+Ast_To_IR::Ast_To_IR(Type_Map *types)
+    : types(types)
+    , cur_scope(new Scope)
+{}
+
 void Ast_To_IR::visit(Variable_Node&n)
 {
-    NOT_IMPL;
+    auto symbol = find_symbol(n.name);
+    if (!symbol)
+    {
+        n.src_loc.report("error", "Use of undeclared symbol");
+        abort();
+    }
+    _return(symbol);
 }
 
 void Ast_To_IR::visit(Assign_Node&n)
@@ -16,7 +40,57 @@ void Ast_To_IR::visit(Assign_Node&n)
 
 void Ast_To_IR::visit(Decl_Node&n)
 {
-    NOT_IMPL;
+    assert(n.type);
+    assert(n.type->type);
+    bool is_local = !scopes.empty();
+    auto symbol = cur_scope->symbols->make_symbol(n.variable_name, n.type->type, n.src_loc, is_local);
+    _return(symbol);
+}
+
+void Ast_To_IR::visit(Decl_Assign_Node&n)
+{
+    auto value = get<IR_Value>(*n.value);
+    assert(value);
+    auto val_ty = value->get_type();
+    if (!val_ty)
+    {
+        n.value->src_loc.report("error", "Could not deduce type.");
+        abort();
+    }
+    if (!n.decl->type)
+    {
+        n.decl->type = new Type_Node{n.src_loc, val_ty};
+    }
+    auto variable = get<IR_Symbol>(*n.decl);
+    assert(variable);
+    auto assign = new IR_Assignment{n.src_loc};
+    assign->is_local = variable->is_local;
+    assign->lhs = variable;
+    assign->rhs = value;
+    _return(assign);
+}
+
+void Ast_To_IR::visit(Decl_Constant_Node&n)
+{
+    // @TODO: Decl_Constant_Node needs to generate an IR_Set_Constant
+    auto value = get<IR_Value>(*n.value);
+    assert(value);
+    auto val_ty = value->get_type();
+    if (!val_ty)
+    {
+        n.value->src_loc.report("error", "Could not deduce type.");
+        abort();
+    }
+    if (!n.decl->type)
+    {
+        n.decl->type = new Type_Node{n.src_loc, val_ty};
+    }
+    auto variable = get<IR_Symbol>(*n.decl);
+    assert(variable);
+    auto assign = new IR_Assignment{n.src_loc};
+    assign->lhs = variable;
+    assign->rhs = value;
+    _return(assign);
 }
 
 void Ast_To_IR::visit(Fn_Node&n)
@@ -119,11 +193,11 @@ void Ast_To_IR::visit(Right_Shift_Node&n)
 }
 
 #define BINARY_OP_CONVERT(ir_b_class_name) \
-    auto lhs = dynamic_cast<IR_Value*>(get_node(*n.lhs)); \
+    auto lhs = get<IR_Value>(*n.lhs); \
     if (!lhs) { \
         n.lhs->src_loc.report("error", "Expected a value"); \
         abort();} \
-    auto rhs = dynamic_cast<IR_Value*>(get_node(*n.rhs)); \
+    auto rhs = get<IR_Value>(*n.rhs); \
     if (!rhs) { \
         n.rhs->src_loc.report("error", "Expected a value"); \
         abort();} \
@@ -201,34 +275,57 @@ void Ast_To_IR::visit(Type_Node&n)
     NOT_IMPL;
 }
 
-void Ast_To_IR::visit(Decl_Assign_Node&n)
+Malang_IR *Ast_To_IR::convert(Ast &ast)
 {
-    NOT_IMPL;
+    for (auto &&n : ast.roots)
+    {
+        convert_one(*n);
+    }
+    return ir;
 }
 
-void Ast_To_IR::visit(Decl_Constant_Node&n)
-{
-    NOT_IMPL;
-}
-
-Malang_IR *Ast_To_IR::convert(Ast_Node &n)
+Malang_IR *Ast_To_IR::convert_one(Ast_Node &n)
 {
     if (!ir)
     {
         ir = new Malang_IR;
     }
-    ir->roots.push_back(get_node(n));
+    ir->roots.push_back(get(n));
     return ir;
-}
-
-IR_Node *Ast_To_IR::get_node(Ast_Node &n)
-{
-    tree = nullptr;
-    n.accept(*this);
-    return tree;
 }
 
 void Ast_To_IR::_return(IR_Node *value)
 {
     tree = value;
+}
+
+void Ast_To_IR::push_scope()
+{
+    scopes.push_back(cur_scope);
+    cur_scope = new Scope;
+}
+
+void Ast_To_IR::pop_scope()
+{
+    assert(!scopes.empty());
+    auto to_free = cur_scope;
+    cur_scope = scopes.back();
+    scopes.pop_back();
+    delete to_free;
+}
+
+IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)
+{
+    if (auto sym = cur_scope->symbols->get_symbol(name))
+    {
+        return sym;
+    }
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+    {
+        if (auto sym = (*it)->symbols->get_symbol(name))
+        {
+            return sym;
+        }
+    }
+    return nullptr;
 }

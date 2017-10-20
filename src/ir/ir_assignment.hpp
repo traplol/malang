@@ -9,7 +9,8 @@ struct IR_Assignment : IR_Node
         : IR_Node(src_loc)
         {}
     struct IR_LValue *lhs;
-    struct IR_RValue *rhs;
+    struct IR_Value *rhs;
+    bool is_local;
 
     IR_NODE_OVERRIDES;
 };

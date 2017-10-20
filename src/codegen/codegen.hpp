@@ -59,6 +59,19 @@ struct Codegen
 
     void push_back_call_primitive(const Primitive_Function &primitive);
     void push_back_call_code(int32_t code);
+
+    void push_back_store_arg(uint16_t n);
+    void push_back_store_local(uint16_t n);
+    void push_back_store_global(uint32_t n);
+    void push_back_load_arg(uint16_t n);
+    void push_back_load_local(uint16_t n);
+    void push_back_load_global(uint32_t n);
+
+    void push_back_dup_1();
+    void push_back_dup_2();
+    void push_back_swap();
+    void push_back_over();
+    void push_back_drop(uint16_t n);
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

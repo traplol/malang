@@ -223,3 +223,145 @@ void Codegen::push_back_call_code(int32_t code)
     push_back_literal_32(code);
     push_back_instruction(Instruction::Call);
 }
+
+
+void Codegen::push_back_store_arg(uint16_t n)
+{
+    switch (n)
+    {
+        case 0:
+            push_back_instruction(Instruction::Store_Arg_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Store_Arg_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Store_Arg_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Store_Arg_3);
+            break;
+        default:
+            push_back_instruction(Instruction::Store_Arg);
+            push_back_raw_16(n);
+            break;
+    }
+}
+void Codegen::push_back_load_arg(uint16_t n)
+{
+    switch (n)
+    {
+        case 0:
+            push_back_instruction(Instruction::Load_Arg_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Load_Arg_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Load_Arg_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Load_Arg_3);
+            break;
+        default:
+            push_back_instruction(Instruction::Load_Arg);
+            push_back_raw_16(n);
+            break;
+    }
+}
+
+void Codegen::push_back_store_local(uint16_t n)
+{
+    switch (n)
+    {
+        case 0:
+            push_back_instruction(Instruction::Store_Local_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Store_Local_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Store_Local_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Store_Local_3);
+            break;
+        default:
+            push_back_instruction(Instruction::Store_Local);
+            push_back_raw_16(n);
+            break;
+    }
+}
+void Codegen::push_back_load_local(uint16_t n)
+{
+    switch (n)
+    {
+        case 0:
+            push_back_instruction(Instruction::Load_Local_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Load_Local_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Load_Local_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Load_Local_3);
+            break;
+        default:
+            push_back_instruction(Instruction::Load_Local);
+            push_back_raw_16(n);
+            break;
+    }
+}
+
+void Codegen::push_back_store_global(uint32_t n)
+{
+    push_back_instruction(Instruction::Store_Global);
+    push_back_raw_32(n);
+}
+void Codegen::push_back_load_global(uint32_t n)
+{
+    push_back_instruction(Instruction::Load_Global);
+    push_back_raw_32(n);
+}
+
+void Codegen::push_back_dup_1()
+{
+    push_back_instruction(Instruction::Dup_1);
+}
+void Codegen::push_back_dup_2()
+{
+    push_back_instruction(Instruction::Dup_2);
+}
+void Codegen::push_back_swap()
+{
+    push_back_instruction(Instruction::Swap_1);
+}
+void Codegen::push_back_over()
+{
+    push_back_instruction(Instruction::Over_1);
+}
+void Codegen::push_back_drop(uint16_t n)
+{
+    assert(n != 0);
+    switch (n)
+    {
+        case 1:
+            push_back_instruction(Instruction::Drop_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Drop_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Drop_3);
+            break;
+        case 4:
+            push_back_instruction(Instruction::Drop_4);
+            break;
+        default:
+            push_back_instruction(Instruction::Drop_N);
+            push_back_raw_16(n);
+            break;
+    }
+}

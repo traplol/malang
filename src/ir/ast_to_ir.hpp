@@ -6,8 +6,18 @@
 #include "../ast/ast.hpp"
 #include "ir.hpp"
 
+struct Scope
+{
+    Scope();
+    ~Scope();
+    Label_Map *labels;
+    Symbol_Map *symbols;
+};
+
 struct Ast_To_IR : Ast_Visitor
 {
+    Ast_To_IR(Type_Map *types);
+
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
     virtual void visit(struct Decl_Node&n) override;
@@ -47,13 +57,28 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Decl_Assign_Node&n) override;
     virtual void visit(struct Decl_Constant_Node&n) override;
 
-    Malang_IR *convert(Ast_Node &n);
+    Malang_IR *convert_one(Ast_Node &n);
+    Malang_IR *convert(Ast &ast);
 
 private:
-    IR_Node *get_node(Ast_Node &n);
-    void _return(IR_Node *value);
     Malang_IR *ir;
     IR_Node *tree;
+    Type_Map *types;
+    Scope *cur_scope;
+    std::vector<Scope*> scopes;
+
+    void _return(IR_Node *value);
+    void push_scope();
+    void pop_scope();
+    IR_Symbol *find_symbol(const std::string &name);
+
+    template<typename T = IR_Node>
+    T *get(Ast_Node &n)
+    {
+        tree = nullptr;
+        n.accept(*this);
+        return dynamic_cast<T*>(tree);
+    }
 };
 
 #endif /* MALANG_CODEGEN_AST_TO_IR_HPP */

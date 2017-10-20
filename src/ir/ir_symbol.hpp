@@ -13,6 +13,7 @@ struct IR_Symbol : IR_LValue
     std::string symbol;
     size_t index;
     struct Type_Info *type;
+    bool is_local;
     virtual struct Type_Info *get_type() const override { return type; }
 
     IR_NODE_OVERRIDES;
