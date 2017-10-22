@@ -69,6 +69,7 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Load_Local:
             case Instruction::Store_Arg:
             case Instruction::Store_Local:
+            case Instruction::Alloc_Locals:
             {
                 ss << get_n_bytes(p, 3);
                 ++p;
@@ -79,15 +80,25 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Load_Global:
             case Instruction::Store_Global:
             case Instruction::Literal_32:
-            case Instruction::Branch:
-            case Instruction::Branch_If_Zero:
-            case Instruction::Branch_If_Not_Zero:
             case Instruction::Call_Primitive:
             {
                 ss << get_n_bytes(p, 5);
                 ++p;
                 auto n = fetch32(p);
                 ss << ins_str <<" <" << n << ">";
+                p += sizeof(n);
+            } break;
+            case Instruction::Branch:
+            case Instruction::Branch_If_Zero:
+            case Instruction::Branch_If_Not_Zero:
+            {
+                ss << get_n_bytes(p, 5);
+                ++p;
+                auto n = fetch32(p);
+                ss << ins_str << "(" << n << ") -> ";
+                auto instr = p-1;
+                auto dest = instr + n;
+                ss << dest - begin;
                 p += sizeof(n);
             } break;
             case Instruction::Literal_value:

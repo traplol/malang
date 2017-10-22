@@ -22,6 +22,7 @@ struct Codegen
     void push_back_fixnum_left_shift();
     void push_back_fixnum_right_shift();
     void push_back_fixnum_equals();
+    void push_back_fixnum_not_equals();
     void push_back_fixnum_greater_than();
     void push_back_fixnum_greater_than_equals();
     void push_back_fixnum_less_than();
@@ -40,6 +41,7 @@ struct Codegen
     void push_back_fixnum_left_shift(Fixnum a, Fixnum b);
     void push_back_fixnum_right_shift(Fixnum a, Fixnum b);
     void push_back_fixnum_equals(Fixnum a, Fixnum b);
+    void push_back_fixnum_not_equals(Fixnum a, Fixnum b);
     void push_back_fixnum_greater_than(Fixnum a, Fixnum b);
     void push_back_fixnum_greater_than_equals(Fixnum a, Fixnum b);
     void push_back_fixnum_less_than(Fixnum a, Fixnum b);
@@ -88,6 +90,8 @@ struct Codegen
     void set_raw_8(size_t index, byte value);
     void set_raw_16(size_t index, int16_t value);
     void set_raw_32(size_t index, int32_t value);
+
+    void push_back_alloc_locals(uint16_t num_to_alloc);
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

@@ -661,7 +661,7 @@ static inline void exec_Alloc_Locals(Malang_VM &vm)
 static inline void exec_Free_Locals(Malang_VM &vm)
 {
     NEXT8;
-    auto n = fetch32(vm);
+    auto n = fetch16(vm);
     vm.locals_top -= n;
     NEXT_N(n);
 }
@@ -738,6 +738,14 @@ static inline void exec_Fixnum_Equals(Malang_VM &vm)
     auto b = vm.pop_data();
     auto a = vm.pop_data();
     vm.push_data(a.as_fixnum() == b.as_fixnum());
+    NEXT8;
+}
+
+static inline void exec_Fixnum_Not_Equals(Malang_VM &vm)
+{
+    auto b = vm.pop_data();
+    auto a = vm.pop_data();
+    vm.push_data(a.as_fixnum() != b.as_fixnum());
     NEXT8;
 }
 

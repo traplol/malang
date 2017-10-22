@@ -217,3 +217,12 @@ Oct 19, 2017:
       z := 2 * (x + y);
       z; // leaves 42 at the top of the stack
 
+Oct 20, 2017:
+    --
+
+Oct 21, 2017:
+    + Better disassembly output
+    + Fixed bug in branch codegen
+    + Basic function code generator
+    + Basic call generation
+    + IR_Labels have the ability to backfill their addresses after calculation

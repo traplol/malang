@@ -66,6 +66,10 @@ void Ast_To_IR::visit(Decl_Node &n)
         abort();
     }
     auto symbol = cur_scope->symbols->make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
+    if (cur_symbol_scope == Symbol_Scope::Local)
+    {
+        ++cur_locals_count;
+    }
     _return(symbol);
 }
 
@@ -121,28 +125,57 @@ static std::string label_name_gen()
 void Ast_To_IR::visit(Fn_Node &n)
 {
     auto old_scope = cur_symbol_scope;
+    auto old_locals_count = cur_locals_count;
+
     push_scope();
     auto block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(block);
+    // Since code can be free (outside of a function), we opt to define a function wherever we
+    // are. We don't want that code to accidently start executing so we just create a branch
+    // that jumps over the body of the function.
     auto branch_over_body = new IR_Branch{n.src_loc, block->end()};
     ir->roots.push_back(branch_over_body);
+
     cur_symbol_scope = Symbol_Scope::Argument;
-    for (auto &&p : n.params)
-    {
-        auto p_sym = get<IR_Symbol>(*p);
+    // @TODO: Handle "this" instance being in arg_0 for methods
+    // one way to do this is to implicitly append the symbol "this" to the function args
+    for (auto &&it = n.params.rbegin(); it != n.params.rend(); ++it)
+    {   // Parameters are accessed from right to left because calls ar evaluated left to right:
+        // fn (a, b, c, d)
+        //     3  2  1  0
+        // call(first(), second, x.third, y.fourth())
+        auto p_sym = get<IR_Symbol>(**it);
         assert(p_sym);
         p_sym->is_initialized = true;
     }
+
     cur_symbol_scope = Symbol_Scope::Local;
+    cur_locals_count = 0;
+    // Parameters and locals are separated but there still needs to be a way to reference them
+    // both in the same scope and a way that easily disallows declaring a variable with the
+    // same name as a parameter
+    cur_scope->symbols->reset_index();
     for (auto &&b : n.body)
     {
         auto body_node = get(*b);
         block->body().push_back(body_node);
     }
-    block->body().push_back(new IR_Return{n.src_loc}); // @FixMe: src_loc should be close curly of function def
+    if (auto last = block->body().back())
+    {
+        if (dynamic_cast<IR_Return*>(last) == nullptr)
+        {
+            block->body().push_back(new IR_Return{n.src_loc, {}}); // @FixMe: src_loc should be close curly of function def
+        }
+    }
+    if (cur_locals_count > 0)
+    {
+        auto num_locals_to_alloc = new IR_Allocate_Locals{n.src_loc, cur_locals_count};
+        block->body().insert(block->body().begin(), num_locals_to_alloc);
+    }
     ir->roots.push_back(block);
     pop_scope();
     cur_symbol_scope = old_scope;
+    cur_locals_count = old_locals_count;
     auto callable = new IR_Callable{n.src_loc, block, n.fn_type};
     _return(callable)
 }
@@ -331,12 +364,28 @@ void Ast_To_IR::visit(Class_Def_Node &n)
 
 void Ast_To_IR::visit(Type_Node &n)
 {
+    // @Audit: I don't think this should ever be called, is this a design mistake?
     NOT_IMPL;
+}
+
+void Ast_To_IR::visit(Return_Node &n)
+{
+    assert(n.values); // even an empty return this should not be null...
+    std::vector<IR_Value*> values;
+    for (auto &&v : n.values->contents)
+    {
+        auto ret_v = get<IR_Value>(*v);
+        assert(ret_v);
+        values.push_back(ret_v);
+    }
+    auto retn = new IR_Return{n.src_loc, values};
+    _return(retn);
 }
 
 Malang_IR *Ast_To_IR::convert(Ast &ast)
 {
     cur_symbol_scope = Symbol_Scope::Global;
+    cur_locals_count = 0;
     for (auto &&n : ast.roots)
     {
         convert_one(*n);

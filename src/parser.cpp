@@ -111,6 +111,7 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
 
 // forward decls
 static uptr<Assign_Node> parse_assignment(Parser &parser);
+static uptr<Return_Node> parse_return(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
 static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
@@ -161,6 +162,16 @@ static uptr<Assign_Node> parse_assignment(Parser &parser)
     return uptr<Assign_Node>(new Assign_Node(eq_tk.src_loc(),
                                              static_cast<Ast_LValue*>(lhs.release()),
                                              rhs.release()));
+}
+static uptr<Return_Node> parse_return(Parser &parser)
+{   // return :=
+    //     return
+    //     return expression_list
+    SAVE;
+    Token retn_tk;
+    ACCEPT_OR_FAIL(retn_tk, { Token_Id::K_return });
+    auto values = parse_expression_list(parser);
+    return uptr<Return_Node>(new Return_Node{retn_tk.src_loc(), values.release()});
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser)
 {   // decl :=
@@ -824,35 +835,41 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     //    // eat stray semicolons
     //}
     SAVE;
-    if (auto stmt = parse_decl_assign(parser))
+    if (auto decl_ass = parse_decl_assign(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
-        return stmt;
+        return decl_ass;
     }
-    if (auto stmt = parse_decl_constant(parser))
+    if (auto decl_con = parse_decl_constant(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
-        return stmt;
+        return decl_con;
     }
-    if (auto stmt = parse_declaration(parser))
+    if (auto decl = parse_declaration(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
-        return stmt;
+        return decl;
     }
-    if (auto stmt = parse_assignment(parser))
+    if (auto assign = parse_assignment(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
-        return stmt;
+        return assign;
     }
-    if (auto stmt = parse_expression(parser))
+    if (auto retn = parse_return(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
-        return stmt;
+        return retn;
+    }
+    if (auto expr = parse_expression(parser))
+    {
+        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
+        parser.accept({Token_Id::Semicolon});
+        return expr;
     }
     PARSE_FAIL;
 }

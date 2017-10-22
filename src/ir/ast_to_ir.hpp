@@ -56,6 +56,7 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Type_Node&n) override;
     virtual void visit(struct Decl_Assign_Node&n) override;
     virtual void visit(struct Decl_Constant_Node&n) override;
+    virtual void visit(struct Return_Node&n) override;
 
     Malang_IR *convert_one(Ast_Node &n);
     Malang_IR *convert(Ast &ast);
@@ -66,6 +67,7 @@ private:
     Type_Map *types;
     Scope *cur_scope;
     Symbol_Scope cur_symbol_scope;
+    uint16_t cur_locals_count;
     std::vector<Scope*> scopes;
 
     void push_scope();

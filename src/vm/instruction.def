@@ -36,6 +36,9 @@ ITEM(Fixnum_Right_Shift)
 ITEM(Fixnum_Equals)
 
 // pop 2 fixnums from datastack, compare them, push result to datastack
+ITEM(Fixnum_Not_Equals)
+
+// pop 2 fixnums from datastack, compare them, push result to datastack
 ITEM(Fixnum_Greater_Than)
 
 // pop 2 fixnums from datastack, compare them, push result to datastack
@@ -180,7 +183,8 @@ ITEM(Store_Arg_3)
 // allocate for this frame
 ITEM(Alloc_Locals)
 
-// pop a locals frame
+// the next 2 bytes of the bytecode is a 16-bit integer representing how many locals to
+// allow the garbage collector to free
 ITEM(Free_Locals)
 
 // before: a

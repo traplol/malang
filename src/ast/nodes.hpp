@@ -13,6 +13,7 @@
 #include "ast_fn.hpp"
 #include "ast_class_def.hpp"
 #include "ast_type.hpp"
+#include "ast_return.hpp"
 
 
 #endif /* MALANG_AST_NODES_HPP */

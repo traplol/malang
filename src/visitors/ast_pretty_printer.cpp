@@ -258,3 +258,12 @@ void Ast_Pretty_Printer::visit(Decl_Constant_Node &n)
     str << " : ";
     to_string(*n.value);
 }
+void Ast_Pretty_Printer::visit(struct Return_Node &n)
+{
+    str << "return";
+    if (!n.values->contents.empty())
+    {
+        str << " ";
+        to_string(*n.values);
+    }
+}

@@ -428,10 +428,13 @@ void parse_to_code()
     Parser parser(&types);
     auto ast = parser.parse("test.ma", R"(
 1+1;
-sum :: fn(a: int, b: int) -> int { a + b }
+sum :: fn(a: int, b: int) -> int { 
+  return a + b;
+}
 sum(5, 10)
 )"
-        );
+);
+
     if (parser.errors)
     {
         printf("there were parsing errors...\n");

@@ -1,6 +1,7 @@
 #ifndef MALANG_CODEGEN_IR_TO_CODE_HPP
 #define MALANG_CODEGEN_IR_TO_CODE_HPP
 
+#include <vector>
 #include "codegen.hpp"
 #include "../ir/ir_visitor.hpp"
 #include "../ir/ir.hpp"
@@ -52,12 +53,17 @@ struct IR_To_Code : IR_Visitor
 
     virtual void visit(struct IR_Allocate_Object &n) override;
     virtual void visit(struct IR_Deallocate_Object &n) override;
+    virtual void visit(struct IR_Allocate_Locals &n) override;
 
     Codegen *convert(Malang_IR &ir);
 
 private:
     Codegen *cg;
-    void convert_impl(Codegen *cg, IR_Node &n);
+    Malang_IR *ir;
+    void convert_one(IR_Node &n);
+    void convert_many(const std::vector<IR_Node*> &n, bool drop_unused);
+    void binary_op_helper(struct IR_Binary_Operation &bop);
+
 };
 
 #endif /* MALANG_CODEGEN_IR_TO_CODE_HPP */

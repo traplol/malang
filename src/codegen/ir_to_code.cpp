@@ -76,9 +76,9 @@ void IR_To_Code::visit(IR_Call &n)
 {
     for (auto &&a : n.arguments)
     {
-        convert_impl(cg, *a);
+        convert_one(*a);
     }
-    convert_impl(cg, *n.callee);
+    convert_one(*n.callee);
     cg->push_back_call_code();
 }
 
@@ -94,9 +94,9 @@ void IR_To_Code::visit(IR_Call_Virtual_Method &n)
 
 void IR_To_Code::visit(IR_Return &n)
 {
-    if (!n.values.empty())
+    for (auto &&v : n.values)
     {
-        NOT_IMPL;
+        convert_one(*v);
     }
     cg->push_back_return();
 }
@@ -111,11 +111,8 @@ void IR_To_Code::visit(IR_Label &n)
 void IR_To_Code::visit(IR_Named_Block &n)
 {
     visit(static_cast<IR_Label&>(n));
-    for (auto &&body : n.body())
-    {
-        convert_impl(cg, *body);
-    }
-    convert_impl(cg, *n.end());
+    convert_many(n.body(), true);
+    convert_one(*n.end());
 }
 
 void IR_To_Code::visit(IR_Branch &n)
@@ -195,7 +192,7 @@ void IR_To_Code::visit(IR_Assignment &n)
     if (var)
     {
         var->is_initialized = true;
-        convert_impl(cg, *n.rhs);
+        convert_one(*n.rhs);
         switch (var->scope)
         {
             default: printf("don't know this scope!\n"); abort();
@@ -215,338 +212,264 @@ void IR_To_Code::visit(IR_Assignment &n)
     }
 }
 
-void IR_To_Code::visit(IR_B_Add &n)
+inline
+void IR_To_Code::binary_op_helper(struct IR_Binary_Operation &bop)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
+    auto m = bop.get_method_to_call();
     assert(m);
     {
         if (m->is_native())
         {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
+            convert_one(*bop.rhs);
+            convert_one(*bop.lhs);
             cg->push_back_call_primitive(*m->primitive_function());
         }
         else
         {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
+            convert_one(*bop.rhs);
+            convert_one(*bop.lhs);
             cg->push_back_call_code(m->code_function());
         }
+    }
+}
+
+void IR_To_Code::visit(IR_B_Add &n)
+{
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    {
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_add();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Subtract &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_subtract();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Multiply &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_multiply();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Divide &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_divide();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Modulo &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_modulo();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_And &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_and();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Or &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_or();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Xor &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_xor();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Left_Shift &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_left_shift();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Right_Shift &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_right_shift();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Less_Than &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_less_than();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Less_Than_Equals &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_less_than_equals();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Greater_Than &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_greater_than();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Greater_Than_Equals &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_greater_than_equals();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
 void IR_To_Code::visit(IR_B_Equals &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_equals();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
+
 void IR_To_Code::visit(struct IR_B_Not_Equals &n)
 {
-    // @TODO: use Fixnum_instruction if possible
-    auto m = n.get_method_to_call();
-    assert(m);
+    auto _int = ir->types->get_int();
+    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
     {
-        if (m->is_native())
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_primitive(*m->primitive_function());
-        }
-        else
-        {
-            convert_impl(cg, *n.rhs);
-            convert_impl(cg, *n.lhs);
-            cg->push_back_call_code(m->code_function());
-        }
+        convert_one(*n.lhs);
+        convert_one(*n.rhs);
+        cg->push_back_fixnum_not_equals();
+    }
+    else
+    {
+        binary_op_helper(n);
     }
 }
 
@@ -581,19 +504,36 @@ void IR_To_Code::visit(IR_Deallocate_Object &n)
 {
     NOT_IMPL;
 }
+void IR_To_Code::visit(struct IR_Allocate_Locals &n)
+{
+    cg->push_back_alloc_locals(n.num_to_alloc);
+}
+
+void IR_To_Code::convert_many(const std::vector<IR_Node*> &n, bool drop_unused)
+{
+    for (auto &&one : n)
+    {
+        convert_one(*one);
+        if (drop_unused)
+        {
+            auto is_expression = nullptr != dynamic_cast<struct IR_Value*>(one);
+            if (is_expression)
+            {   // any tree that results in a value dangling on the stack needs to be pruned
+                cg->push_back_drop(1);
+            }
+        }
+    }
+}
 
 Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
-    auto cg = new Codegen;
-    for (auto &&n : ir.roots)
-    {
-        convert_impl(cg, *n);
-    }
+    cg = new Codegen;
+    this->ir = &ir;
+    convert_many(ir.roots, true);
     return cg;
 }
 
-void IR_To_Code::convert_impl(Codegen *cg, IR_Node &n)
+void IR_To_Code::convert_one(IR_Node &n)
 {
-    this->cg = cg;
     n.accept(*this);
 }

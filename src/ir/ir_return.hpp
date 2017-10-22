@@ -6,8 +6,9 @@
 
 struct IR_Return : IR_Node
 {
-    IR_Return(const Source_Location &src_loc)
+    IR_Return(const Source_Location &src_loc, const std::vector<struct IR_Value*> values)
         : IR_Node(src_loc)
+        , values(std::move(values))
         {}
     std::vector<struct IR_Value*> values;
 

@@ -50,6 +50,7 @@ struct IR_Visitor
 
     virtual void visit(struct IR_Allocate_Object&) = 0;
     virtual void visit(struct IR_Deallocate_Object&) = 0;
+    virtual void visit(struct IR_Allocate_Locals&) = 0;
 
 };
 

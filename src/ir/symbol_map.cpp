@@ -22,3 +22,8 @@ IR_Symbol *Symbol_Map::get_symbol(const std::string &name)
     }
     return nullptr;
 }
+
+void Symbol_Map::reset_index()
+{
+    m_local_index = 0;
+}

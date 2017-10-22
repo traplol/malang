@@ -49,6 +49,10 @@ void Codegen::push_back_fixnum_equals()
 {
     push_back_instruction(Instruction::Fixnum_Equals);
 }
+void Codegen::push_back_fixnum_not_equals()
+{
+    push_back_instruction(Instruction::Fixnum_Not_Equals);
+}
 void Codegen::push_back_fixnum_greater_than()
 {
     push_back_instruction(Instruction::Fixnum_Greater_Than);
@@ -132,6 +136,18 @@ void Codegen::push_back_fixnum_right_shift(Fixnum a, Fixnum b)
     push_back_literal_value(a);
     push_back_literal_value(b);
     push_back_fixnum_right_shift();
+}
+void Codegen::push_back_fixnum_equals(Fixnum a, Fixnum b)
+{
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_equals();
+}
+void Codegen::push_back_fixnum_not_equals(Fixnum a, Fixnum b)
+{
+    push_back_literal_value(a);
+    push_back_literal_value(b);
+    push_back_fixnum_not_equals();
 }
 void Codegen::push_back_fixnum_greater_than(Fixnum a, Fixnum b)
 {
@@ -427,4 +443,10 @@ void Codegen::set_raw_32(size_t index, int32_t value)
     assert(index+sizeof(value)-1 < code.size());
     auto slot = code.data()+index;
     *reinterpret_cast<decltype(value)*>(slot) = value;
+}
+
+void Codegen::push_back_alloc_locals(uint16_t num_to_alloc)
+{
+    push_back_instruction(Instruction::Alloc_Locals);
+    push_back_raw_16(num_to_alloc);
 }
