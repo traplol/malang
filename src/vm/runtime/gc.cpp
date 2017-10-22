@@ -83,7 +83,7 @@ void Malang_GC::construct(Malang_Object &obj, Type_Info *type)
     obj.type = type;
     // don't want to immediately free this object...
     obj.color = Malang_Object::grey;
-    // TODO: reserve fields and such 
+    // @TODO: reserve fields and such 
 }
 
 Malang_Object *Malang_GC::allocate(Type_Info *type)

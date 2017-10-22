@@ -43,20 +43,43 @@ void IR_To_Code::visit(IR_String &n)
 
 void IR_To_Code::visit(IR_Symbol &n)
 {
-    // @TODO: Symbols need to be: Global/Local/Arg/Field
-    if (n.is_local)
+    if (!n.is_initialized)
     {
-        cg->push_back_load_local(n.index);
+        n.src_loc.report("error", "Use of uninitialized variable");
+        abort();
     }
-    else
+    switch (n.scope)
     {
-        cg->push_back_load_global(n.index);
+        default: printf("don't know this scope!\n"); abort();
+        case Symbol_Scope::Global:
+            cg->push_back_load_global(n.index);
+            break;
+        case Symbol_Scope::Argument:
+            cg->push_back_load_arg(n.index);
+            break;
+        case Symbol_Scope::Local:
+            cg->push_back_load_local(n.index);
+            break;
+        case Symbol_Scope::Field:
+            NOT_IMPL;
+            break;
     }
+}
+
+void IR_To_Code::visit(struct IR_Callable &n)
+{
+    assert(n.label->is_resolved());
+    cg->push_back_literal_32(n.label->address());
 }
 
 void IR_To_Code::visit(IR_Call &n)
 {
-    NOT_IMPL;
+    for (auto &&a : n.arguments)
+    {
+        convert_impl(cg, *a);
+    }
+    convert_impl(cg, *n.callee);
+    cg->push_back_call_code();
 }
 
 void IR_To_Code::visit(IR_Call_Method &n)
@@ -71,32 +94,76 @@ void IR_To_Code::visit(IR_Call_Virtual_Method &n)
 
 void IR_To_Code::visit(IR_Return &n)
 {
-    NOT_IMPL;
+    if (!n.values.empty())
+    {
+        NOT_IMPL;
+    }
+    cg->push_back_return();
 }
 
 void IR_To_Code::visit(IR_Label &n)
 {
-    NOT_IMPL;
+    assert(!n.is_resolved());
+    auto address = cg->code.size();
+    n.address(address);
 }
 
 void IR_To_Code::visit(IR_Named_Block &n)
 {
-    NOT_IMPL;
+    visit(static_cast<IR_Label&>(n));
+    for (auto &&body : n.body())
+    {
+        convert_impl(cg, *body);
+    }
+    convert_impl(cg, *n.end());
 }
 
 void IR_To_Code::visit(IR_Branch &n)
 {
-    NOT_IMPL;
+    assert(n.destination);
+    if (n.destination->is_resolved())
+    {
+        cg->push_back_branch(n.destination->address());
+    }
+    else
+    {
+        auto from = cg->code.size();
+        auto idx = cg->push_back_branch();
+        n.destination->please_backfill_on_resolve_rel(cg, idx, from);
+    }
 }
 
 void IR_To_Code::visit(IR_Branch_If_True &n)
 {
-    NOT_IMPL;
+    assert(n.destination);
+    // @FixMe: does this need to generate a check against the "true" instance?
+    if (n.destination->is_resolved())
+    {
+        cg->push_back_branch_if_not_zero(n.destination->address());
+    }
+    else
+    {
+        auto from = cg->code.size();
+        auto idx = cg->push_back_branch();
+        n.destination->please_backfill_on_resolve_rel(cg, idx, from);
+    }
 }
 
 void IR_To_Code::visit(IR_Branch_If_False &n)
 {
     NOT_IMPL;
+    assert(n.destination);
+    // @FixMe: does this need to generate a check against the "false" instance?
+    if (n.destination->is_resolved())
+    {
+        cg->push_back_branch_if_zero(n.destination->address());
+    }
+    else
+    {
+        auto from = cg->code.size();
+        auto idx = cg->push_back_branch();
+        n.destination->please_backfill_on_resolve_rel(cg, idx, from);
+    }
 }
 
 void IR_To_Code::visit(IR_Assignment &n)
@@ -117,7 +184,6 @@ void IR_To_Code::visit(IR_Assignment &n)
         abort();
     }
 
-
     if (!val_ty->is_assignable_to(lval_ty))
     {
         n.src_loc.report("error", "Cannot assign from type `%s' to `%s'\n",
@@ -126,15 +192,26 @@ void IR_To_Code::visit(IR_Assignment &n)
     }
 
     auto var = dynamic_cast<IR_Symbol*>(lval);
-
-    convert_impl(cg, *n.rhs);
-    if (n.is_local)
+    if (var)
     {
-        cg->push_back_store_local(var->index);
-    }
-    else
-    {
-        cg->push_back_store_global(var->index);
+        var->is_initialized = true;
+        convert_impl(cg, *n.rhs);
+        switch (var->scope)
+        {
+            default: printf("don't know this scope!\n"); abort();
+            case Symbol_Scope::Global:
+                cg->push_back_store_global(var->index);
+                break;
+            case Symbol_Scope::Argument:
+                cg->push_back_store_arg(var->index);
+                break;
+            case Symbol_Scope::Local:
+                cg->push_back_store_local(var->index);
+                break;
+            case Symbol_Scope::Field:
+                NOT_IMPL;
+                break;
+        }
     }
 }
 
@@ -504,7 +581,6 @@ void IR_To_Code::visit(IR_Deallocate_Object &n)
 {
     NOT_IMPL;
 }
-
 
 Codegen *IR_To_Code::convert(Malang_IR &ir)
 {

@@ -7,10 +7,8 @@ IR_Label *Label_Map::make_label(const std::string &name, const Source_Location &
     assert(!name.empty());
     assert(get_label(name) == nullptr);
 
-    auto label = new IR_Label{src_loc};
-    label->name = name;
-    label->resolved = false;
-    m_map[label->name] = label;
+    auto label = new IR_Label{src_loc, name};
+    m_map[label->name()] = label;
     return label;
 }
 
@@ -22,12 +20,9 @@ IR_Named_Block *Label_Map::make_named_block(const std::string &name, const std::
     assert(get_label(name) == nullptr);
     assert(get_label(end_name) == nullptr);
 
-    auto block = new IR_Named_Block{src_loc};
-    block->name = name;
-    block->resolved = false;
     auto end = make_label(end_name, src_loc);
-    block->end = end;
-    m_map[block->name] = block;
+    auto block = new IR_Named_Block{src_loc, name, end};
+    m_map[block->name()] = block;
     return block;
 }
 

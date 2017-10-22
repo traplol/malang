@@ -60,12 +60,12 @@ DEF_BINARY_AST_NODE(Modulo_Node);
 
 struct Call_Node : public Ast_RValue
 {
-    Ast_Value *thing; 
+    Ast_Value *callee; 
     List_Node *args;
     ~Call_Node();
-    Call_Node(const Source_Location &src_loc, Ast_Value *thing, List_Node *args)
+    Call_Node(const Source_Location &src_loc, Ast_Value *callee, List_Node *args)
         : Ast_RValue(src_loc)
-        , thing(thing)
+        , callee(callee)
         , args(args)
         {}
     virtual Type_Info *get_type() final;

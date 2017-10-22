@@ -3,11 +3,12 @@
 
 #include <map>
 #include "../source_code.hpp"
+#include "symbol_scope.hpp"
 
 struct Symbol_Map
 {
     Symbol_Map() : m_local_index(0) {}
-    struct IR_Symbol *make_symbol(const std::string &name, struct Type_Info *type, const Source_Location &src_loc, bool is_local);
+    struct IR_Symbol *make_symbol(const std::string &name, struct Type_Info *type, const Source_Location &src_loc, Symbol_Scope scope);
     struct IR_Symbol *get_symbol(const std::string &name);
 private:
     size_t m_local_index;

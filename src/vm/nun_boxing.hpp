@@ -4,11 +4,6 @@
 #include <stdint.h>
 #include <cassert>
 
-inline bool is_negative_zero(double number)
-{
-    return number == 0 && *reinterpret_cast<int64_t *>(&number) != 0;
-}
-
 static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same size");
 
 /*
@@ -113,7 +108,7 @@ struct Value
         static_assert(sizeof(T) == sizeof(uint64_t), "sizeof T must be 8 bytes!");
         auto thing_ptr = reinterpret_cast<uint64_t*>(&thing);
         auto thing_bytes = *thing_ptr;
-        // ensure that the pointer really is only 48 bit
+        // ensure thing fits
         assert((thing_bytes & tag) == 0);
 
         v.as_bits = thing_bytes | tag;
@@ -121,20 +116,8 @@ struct Value
 
     inline void set(double number)
     {
-        int32_t fixnum = static_cast<int32_t>(number);
-
-        // if the double can be losslessly stored as an int32 do so
-        // (int32 doesn't have -0, so check for that too)
-        if (number == fixnum && !is_negative_zero(number))
-        {
-            set(fixnum);
-            assert(as_fixnum() == fixnum);
-        }
-        else
-        {
-            v.as_double = number;
-            assert(as_double() == number);
-        }
+        v.as_double = number;
+        assert(as_double() == number);
     }
 
     inline void set(int32_t number)
@@ -160,6 +143,11 @@ private:
         double as_double;
         uint64_t as_bits;
     } v;
+
+    inline bool is_negative_zero(double number)
+    {
+        return number == 0 && *reinterpret_cast<int64_t *>(&number) != 0;
+    }
 };
 
 static_assert(sizeof(Value<>) == sizeof(uint64_t), "there is some padding in Value struct?");

@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iomanip>
 #include "../vm/vm.hpp"
 #include "disassm.hpp"
 
@@ -22,24 +23,45 @@ static inline Malang_Value fetch_value(byte *p)
     return *reinterpret_cast<Malang_Value*>(p);
 }
 
+using std::setw;
+using std::setfill;
+static inline std::string get_n_bytes(byte *p, size_t n, size_t min_width=10*3)
+{
+    std::stringstream ss;
+    size_t column = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        ss << setfill('0') << setw(2) << std::hex << (int)p[i] << " ";
+        column += 3;
+    }
+    for (; column < min_width; ++column)
+    {
+        ss << ' ';
+    }
+    return ss.str();
+}
+
 std::string Disassembler::dis(std::vector<byte> code)
 {
     std::stringstream ss;
 
     auto p = code.data();
+    auto begin = p;
     auto end = &code[code.size()];
     while (p != end)
     {
         auto ins = static_cast<Instruction>(fetch8(p));
         auto ins_str = to_string(ins);
-        ss << ins_str;
+        ss << setfill('0') << setw(8) << std::hex << p - begin << "  ";
+        ss << setfill(' ');
         switch (ins)
         {
             case Instruction::Literal_8:
             {
+                ss << get_n_bytes(p, 2);
                 ++p;
                 auto n = fetch8(p);
-                ss << " <" << n << ">";
+                ss << ins_str << " <" << n << ">";
                 p += sizeof(n);
             } break;
             case Instruction::Literal_16:
@@ -48,42 +70,43 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Store_Arg:
             case Instruction::Store_Local:
             {
+                ss << get_n_bytes(p, 3);
                 ++p;
                 auto n = fetch16(p);
-                ss << " <" << n << ">";
+                ss << ins_str << " <" << n << ">";
                 p += sizeof(n);
             } break;
             case Instruction::Load_Global:
             case Instruction::Store_Global:
             case Instruction::Literal_32:
-            {
-                ++p;
-                auto n = fetch32(p);
-                ss << " <" << n << ">";
-                p += sizeof(n);
-            } break;
-            case Instruction::Literal_value:
-            {
-                ++p;
-                auto n = fetch_value(p);
-                if (n.is_object())     {ss << " pointer:<" << n.as_object();}
-                else if (n.is_double()) {ss << " double:<" << n.as_double();}
-                else if (n.is_fixnum()) {ss << " fixnum:<" << n.as_fixnum();}
-                ss << ">";
-                p += sizeof(n);
-            } break;
             case Instruction::Branch:
             case Instruction::Branch_If_Zero:
             case Instruction::Branch_If_Not_Zero:
             case Instruction::Call_Primitive:
             {
+                ss << get_n_bytes(p, 5);
                 ++p;
                 auto n = fetch32(p);
-                ss << "<" << n << ">";
+                ss << ins_str <<" <" << n << ">";
+                p += sizeof(n);
+            } break;
+            case Instruction::Literal_value:
+            {
+                ss << get_n_bytes(p, 9);
+                ++p;
+                auto n = fetch_value(p);
+                ss << ins_str;
+                if (n.is_object())     {ss << " pointer:<" << n.as_object();}
+                else if (n.is_double()) {ss << " double:<" << n.as_double();}
+                else if (n.is_fixnum()) {ss << " fixnum:<" << n.as_fixnum();}
+                else {ss << " ??:<" << n.bits();}
+                ss << ">";
                 p += sizeof(n);
             } break;
             default:
             {
+                ss << get_n_bytes(p, 1);
+                ss << ins_str;
                 ++p;
             } break;
         }

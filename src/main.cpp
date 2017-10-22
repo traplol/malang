@@ -379,16 +379,57 @@ void parse_stuff()
     parse_tests();
 }
 
+std::string to_string(const Malang_Value &value)
+{
+    std::stringstream ss;
+    if (value.is_fixnum())
+    {
+        ss << value.as_fixnum();
+    }
+    else if (value.is_double())
+    {
+        ss << value.as_double();
+    }
+    else if (value.is_object())
+    {
+        ss << "Object(" << value.as_object() << ")";
+    }
+    else if (value.is_pointer())
+    {
+        ss << "Pointer(" << value.as_pointer<void>() << ")";
+    }
+    else
+    {
+        ss << "?(" << std::hex << value.bits() << ")";
+    }
+    return ss.str();
+}
+
+void dump(const std::vector<byte> &code, int width)
+{
+    for (size_t i = 0; i < code.size(); ++i)
+    {
+        if (i % width == 0)
+        {
+            printf("%08lx  ", i);
+        }
+        printf("%02x ", code[i]);
+        if ((i+1) % width == 0)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
 void parse_to_code()
 {
     Type_Map types;
     Parser parser(&types);
     auto ast = parser.parse("test.ma", R"(
-x := 10;
-y := 99;
-yy := 11.25;
-z := 2 * (x + yy);
-z;
+1+1;
+sum :: fn(a: int, b: int) -> int { a + b }
+sum(5, 10)
 )"
         );
     if (parser.errors)
@@ -403,40 +444,13 @@ z;
         auto cg = ir_to_code.convert(*ir);
         auto disassembly = Disassembler::dis(cg->code);
         printf("%s\n", disassembly.c_str());
+        dump(cg->code, 16);
         Malang_VM vm{types.primitives()};
         vm.load_code(cg->code);
         vm.run();
-        printf("~>%lf<~\n", vm.pop_data().as_double());
+        printf("code ran successfully.\n");
+        printf("~>%s<~\n", to_string(vm.pop_data()).c_str());
     }
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-*/

@@ -183,7 +183,7 @@ void Ast_Pretty_Printer::visit(Modulo_Node &n)
 }
 void Ast_Pretty_Printer::visit(Call_Node &n)
 {
-    to_string(*n.thing); str << "("; to_string(*n.args); str << ")";
+    to_string(*n.callee); str << "("; to_string(*n.args); str << ")";
 }
 void Ast_Pretty_Printer::visit(Index_Node &n)
 {

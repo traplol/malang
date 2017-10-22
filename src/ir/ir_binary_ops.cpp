@@ -28,7 +28,7 @@ Type_Info *IR_Binary_Operation::get_type() const
 
 
 static inline
-Method_Info *get_bin_method(const std::string &name, IR_Value *lhs, IR_Value *rhs)
+Method_Info *get_bin_method(const std::string &name, const Source_Location &src_loc, IR_Value *lhs, IR_Value *rhs)
 {
     assert(!name.empty());
     assert(lhs);
@@ -45,74 +45,81 @@ Method_Info *get_bin_method(const std::string &name, IR_Value *lhs, IR_Value *rh
         rhs->src_loc.report("error", "Could not deduce type!");
         abort();
     }
-    return lhs_type->get_method(name, {rhs_type});
+    auto method = lhs_type->get_method(name, {rhs_type});
+    if (!method)
+    {
+        src_loc.report("error", "No method `%s' for type `%s' takes a `%s'",
+                       name.c_str(), lhs_type->name().c_str(), rhs_type->name().c_str());
+        abort();
+    }
+    return method;
 }
 
 struct Method_Info *IR_B_Add::get_method_to_call() const
 {
-    return get_bin_method("b_op +", lhs, rhs);
+    return get_bin_method("b_op +", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Subtract::get_method_to_call() const
 {
-    return get_bin_method("b_op -", lhs, rhs);
+    return get_bin_method("b_op -", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Multiply::get_method_to_call() const
 {
-    return get_bin_method("b_op *", lhs, rhs);
+    return get_bin_method("b_op *", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Divide::get_method_to_call() const
 {
-    return get_bin_method("b_op /", lhs, rhs);
+    return get_bin_method("b_op /", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Modulo::get_method_to_call() const
 {
-    return get_bin_method("b_op %", lhs, rhs);
+    return get_bin_method("b_op %", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_And::get_method_to_call() const
 {
-    return get_bin_method("b_op &", lhs, rhs);
+    return get_bin_method("b_op &", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Or::get_method_to_call() const
 {
-    return get_bin_method("b_op |", lhs, rhs);
+    return get_bin_method("b_op |", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Xor::get_method_to_call() const
 {
-    return get_bin_method("b_op ^", lhs, rhs);
+    return get_bin_method("b_op ^", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Left_Shift::get_method_to_call() const
 {
-    return get_bin_method("b_op <<", lhs, rhs);
+    return get_bin_method("b_op <<", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Right_Shift::get_method_to_call() const
 {
-    return get_bin_method("b_op >>", lhs, rhs);
+    return get_bin_method("b_op >>", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Less_Than::get_method_to_call() const
 {
     // @TODO: require b_op < to return bool
-    return get_bin_method("b_op <", lhs, rhs);
+    return get_bin_method("b_op <", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Less_Than_Equals::get_method_to_call() const
 {
     // @TODO: require b_op <= to return bool
-    return get_bin_method("b_op <=", lhs, rhs);
+    return get_bin_method("b_op <=", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Greater_Than::get_method_to_call() const
 {
     // @TODO: require b_op > to return bool
-    return get_bin_method("b_op >", lhs, rhs);
+    return get_bin_method("b_op >", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Greater_Than_Equals::get_method_to_call() const
 {
     // @TODO: require b_op >= to return bool
-    return get_bin_method("b_op >=", lhs, rhs);
+    return get_bin_method("b_op >=", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Equals::get_method_to_call() const
 {
-    return get_bin_method("b_op ==", lhs, rhs);
+    return get_bin_method("b_op ==", src_loc, lhs, rhs);
 }
 struct Method_Info *IR_B_Not_Equals::get_method_to_call() const
 {
-    return get_bin_method("b_op !=", lhs, rhs);
+    return get_bin_method("b_op !=", src_loc, lhs, rhs);
 }

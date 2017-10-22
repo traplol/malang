@@ -59,6 +59,8 @@ struct Codegen
 
     void push_back_call_primitive(const Primitive_Function &primitive);
     void push_back_call_code(int32_t code);
+    void push_back_call_code();
+    void push_back_return();
 
     void push_back_store_arg(uint16_t n);
     void push_back_store_local(uint16_t n);
@@ -72,6 +74,20 @@ struct Codegen
     void push_back_swap();
     void push_back_over();
     void push_back_drop(uint16_t n);
+
+    // Returns the index into the code where the dummy value is.
+    size_t push_back_branch();
+    // Returns the index into the code where the dummy value is.
+    size_t push_back_branch_if_zero();
+    // Returns the index into the code where the dummy value is.
+    size_t push_back_branch_if_not_zero();
+    void push_back_branch(int32_t n);
+    void push_back_branch_if_zero(int32_t n);
+    void push_back_branch_if_not_zero(int32_t n);
+
+    void set_raw_8(size_t index, byte value);
+    void set_raw_16(size_t index, int16_t value);
+    void set_raw_32(size_t index, int32_t value);
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

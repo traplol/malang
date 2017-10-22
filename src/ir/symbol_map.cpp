@@ -2,17 +2,13 @@
 #include "ir_symbol.hpp"
 #include "symbol_map.hpp"
 
-IR_Symbol *Symbol_Map::make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc, bool is_local)
+IR_Symbol *Symbol_Map::make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc, Symbol_Scope scope)
 {
     assert(!name.empty());
     assert(type != nullptr);
     assert(get_symbol(name) == nullptr);
 
-    auto sym = new IR_Symbol{src_loc};
-    sym->symbol = name;
-    sym->index = m_local_index++;
-    sym->type = type;
-    sym->is_local = is_local;
+    auto sym = new IR_Symbol{src_loc, name, m_local_index++, type, scope, false};
     m_map[sym->symbol] = sym;
     return sym;
 }

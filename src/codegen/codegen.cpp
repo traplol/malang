@@ -223,7 +223,14 @@ void Codegen::push_back_call_code(int32_t code)
     push_back_literal_32(code);
     push_back_instruction(Instruction::Call);
 }
-
+void Codegen::push_back_call_code()
+{
+    push_back_instruction(Instruction::Call);
+}
+void Codegen::push_back_return()
+{
+    push_back_instruction(Instruction::Return);
+}
 
 void Codegen::push_back_store_arg(uint16_t n)
 {
@@ -364,4 +371,60 @@ void Codegen::push_back_drop(uint16_t n)
             push_back_raw_16(n);
             break;
     }
+}
+
+size_t Codegen::push_back_branch()
+{
+    push_back_instruction(Instruction::Branch);
+    auto idx = code.size();
+    push_back_raw_32(0);
+    return idx;
+}
+size_t Codegen::push_back_branch_if_zero()
+{
+    push_back_instruction(Instruction::Branch_If_Zero);
+    auto idx = code.size();
+    push_back_raw_32(0);
+    return idx;
+}
+size_t Codegen::push_back_branch_if_not_zero()
+{
+    push_back_instruction(Instruction::Branch_If_Not_Zero);
+    auto idx = code.size();
+    push_back_raw_32(0);
+    return idx;
+}
+void Codegen::push_back_branch(int32_t n)
+{
+    push_back_instruction(Instruction::Branch);
+    push_back_raw_32(n);
+}
+void Codegen::push_back_branch_if_zero(int32_t n)
+{
+    push_back_instruction(Instruction::Branch_If_Zero);
+    push_back_raw_32(n);
+}
+void Codegen::push_back_branch_if_not_zero(int32_t n)
+{
+    push_back_instruction(Instruction::Branch_If_Not_Zero);
+    push_back_raw_32(n);
+}
+
+void Codegen::set_raw_8(size_t index, byte value)
+{
+    assert(index+sizeof(value)-1 < code.size());
+    auto slot = code.data()+index;
+    *slot = value;
+}
+void Codegen::set_raw_16(size_t index, int16_t value)
+{
+    assert(index+sizeof(value)-1 < code.size());
+    auto slot = code.data()+index;
+    *reinterpret_cast<decltype(value)*>(slot) = value;
+}
+void Codegen::set_raw_32(size_t index, int32_t value)
+{
+    assert(index+sizeof(value)-1 < code.size());
+    auto slot = code.data()+index;
+    *reinterpret_cast<decltype(value)*>(slot) = value;
 }

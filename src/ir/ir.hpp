@@ -31,10 +31,13 @@ struct IR_Node : public Metadata
 
 struct Malang_IR
 {
-    std::vector<IR_Node*> roots;
-    Symbol_Map *symbols;
-    Label_Map *labels;
+    Malang_IR(Type_Map *types, Label_Map *labels)
+        : types(types)
+        , labels(labels)
+        {}
     Type_Map *types;
+    Label_Map *labels;
+    std::vector<IR_Node*> roots;
 };
 
 #endif /* MALANG_IR_IR_HPP */

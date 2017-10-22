@@ -408,18 +408,18 @@ static inline void exec_Branch(Malang_VM &vm)
 {
     NEXT8;
     auto n = fetch32(vm);
-    vm.ip += n; // XXX: n-1 to be relative to the branch instruction
+    vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
 }
 
 static inline void exec_Branch_If_Zero(Malang_VM &vm)
 {
     NEXT8;
     auto cond = vm.pop_data();
-    // TODO: should probably have `true', `false', and `nil' value constants?
+    // @TODO: should probably have `true', `false', and `nil' value constants?
     if (cond.bits() == 0)
     {
         auto n = fetch32(vm);
-        vm.ip += n; // XXX: n-1 to be relative to the branch instruction
+        vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
     }
     else
     { // need to skip the offset
@@ -431,11 +431,11 @@ static inline void exec_Branch_If_Not_Zero(Malang_VM &vm)
 {
     NEXT8;
     auto cond = vm.pop_data();
-    // TODO: should probably have `true', `false', and `nil' value constants?
+    // @TODO: should probably have `true', `false', and `nil' value constants?
     if (cond.bits() != 0)
     {
         auto n = fetch32(vm);
-        vm.ip += n; // XXX: n-1 to be relative to the branch instruction
+        vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
     }
     else
     { // need to skip the offset

@@ -65,6 +65,7 @@ private:
     IR_Node *tree;
     Type_Map *types;
     Scope *cur_scope;
+    Symbol_Scope cur_symbol_scope;
     std::vector<Scope*> scopes;
 
     void push_scope();

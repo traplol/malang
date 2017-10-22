@@ -138,8 +138,8 @@ AST_NODE_OVERRIDES_IMPL(Invert_Node)
 AST_NODE_OVERRIDES_IMPL(Call_Node)
 Call_Node::~Call_Node()
 {
-    delete thing;
-    thing = nullptr;
+    delete callee;
+    callee = nullptr;
     delete args;
     args = nullptr;
     PRINT_DTOR;
@@ -147,6 +147,7 @@ Call_Node::~Call_Node()
 Type_Info *Call_Node::get_type()
 {
     // @TODO: get_type for Call_Node
+    printf("%s get_type()\n", type_name().c_str());
     return nullptr;
 }
 
