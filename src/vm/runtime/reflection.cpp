@@ -243,3 +243,9 @@ Type_Info *Function_Type_Info::return_type() const
 {
     return m_return_type;
 }
+
+bool Function_Type_Info::is_native() const
+{
+    return m_is_native;
+}
+

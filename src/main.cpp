@@ -8,7 +8,7 @@
 #include "parser.hpp"
 #include "visitors/ast_pretty_printer.hpp"
 #include "vm/vm.hpp"
-#include "vm/runtime/gc.hpp"
+#include "vm/runtime.hpp"
 #include "codegen/codegen.hpp"
 #include "codegen/disassm.hpp"
 #include "codegen/ir_to_code.hpp"
@@ -262,6 +262,13 @@ void parse_tests()
         {"x:=1.1==2", "x : bool = (1.1 == 2)"},
         {"x:=1.1!=2", "x : bool = (1.1 != 2)"},
 
+
+        // @FixMe: need to parse error on these:
+        /*
+          thing :: = 42
+          xyz :: fn (a: int) -> {}
+         */
+
     };
     size_t total_run = 1;
     for (auto &&it : tests)
@@ -379,59 +386,18 @@ void parse_stuff()
     parse_tests();
 }
 
-std::string to_string(const Malang_Value &value)
-{
-    std::stringstream ss;
-    if (value.is_fixnum())
-    {
-        ss << value.as_fixnum();
-    }
-    else if (value.is_double())
-    {
-        ss << value.as_double();
-    }
-    else if (value.is_object())
-    {
-        ss << "Object(" << value.as_object() << ")";
-    }
-    else if (value.is_pointer())
-    {
-        ss << "Pointer(" << value.as_pointer<void>() << ")";
-    }
-    else
-    {
-        ss << "?(" << std::hex << value.bits() << ")";
-    }
-    return ss.str();
-}
-
-void dump(const std::vector<byte> &code, int width)
-{
-    for (size_t i = 0; i < code.size(); ++i)
-    {
-        if (i % width == 0)
-        {
-            printf("%08lx  ", i);
-        }
-        printf("%02x ", code[i]);
-        if ((i+1) % width == 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n");
-}
 
 void parse_to_code()
 {
+    Primitive_Function_Map primitives;
     Type_Map types;
+    Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);
     auto ast = parser.parse("test.ma", R"(
-1+1;
-sum :: fn(a: int, b: int) -> int { 
-  return a + b;
-}
-sum(5, 10)
+x := 42
+y := 55
+z := 2.8 * x + y
+println(z)
 )"
 );
 
@@ -441,19 +407,17 @@ sum(5, 10)
     }
     else
     {
-        Ast_To_IR ast_to_ir{&types};
+        Malang_Runtime::init_builtins(primitives, types);
+        Ast_To_IR ast_to_ir{&primitives, &types};
         auto ir = ast_to_ir.convert(ast);
         IR_To_Code ir_to_code;
         auto cg = ir_to_code.convert(*ir);
         auto disassembly = Disassembler::dis(cg->code);
         printf("%s\n", disassembly.c_str());
-        dump(cg->code, 16);
-        Malang_VM vm{types.primitives()};
+        Malang_VM vm{primitives.primitives()};
         vm.load_code(cg->code);
         vm.run();
         printf("code ran successfully.\n");
-        printf("~>%s<~\n", to_string(vm.pop_data()).c_str());
+        vm.stack_trace();
     }
 }
-
-

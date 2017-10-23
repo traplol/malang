@@ -71,6 +71,7 @@ using Type_Token = size_t;
 
 struct Type_Info
 {
+    virtual ~Type_Info(){};
     Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name)
         : m_parent(parent)
         , m_type_token(type_token)
@@ -108,19 +109,22 @@ private:
 
 struct Function_Type_Info : Type_Info
 {
-    Function_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *return_type, const std::vector<Type_Info*> parameter_types)
+    virtual ~Function_Type_Info(){};
+    Function_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *return_type, const std::vector<Type_Info*> &parameter_types, bool is_native)
         : Type_Info(parent, type_token, name)
         , m_return_type(return_type)
         , m_parameter_types(std::move(parameter_types))
+        , m_is_native(is_native)
         {}
 
     Type_Info *return_type() const;
     const std::vector<Type_Info*> &parameter_types() const;
-
+    bool is_native() const;
 private:
     Type_Info *m_return_type;
     std::vector<Type_Info *> m_parameter_types;
+    bool m_is_native;
 };
 
-
 #endif /* MALANG_VM_REFLECTION_HPP */
+

@@ -68,8 +68,15 @@ void IR_To_Code::visit(IR_Symbol &n)
 
 void IR_To_Code::visit(struct IR_Callable &n)
 {
-    assert(n.label->is_resolved());
-    cg->push_back_literal_32(n.label->address());
+    if (n.fn_type->is_native())
+    {
+        cg->push_back_literal_32(n.u.index);
+    }
+    else
+    {
+        assert(n.u.label->is_resolved());
+        cg->push_back_literal_32(n.u.label->address());
+    }
 }
 
 void IR_To_Code::visit(IR_Call &n)
@@ -78,8 +85,43 @@ void IR_To_Code::visit(IR_Call &n)
     {
         convert_one(*a);
     }
-    convert_one(*n.callee);
-    cg->push_back_call_code();
+    // Simple optimization if we know ahead of time the thing we're calling is literally
+    // a callable. This is most useful for calling primitive builtin functions directly
+    // otherwise we would waste time pushing a value to the stack before popping it and
+    // finally calling it.
+    if (auto callable = dynamic_cast<IR_Callable*>(n.callee))
+    {
+        if (callable->fn_type->is_native())
+        {
+            cg->push_back_call_primitive(callable->u.index);
+        }
+        else
+        {
+            assert(callable->u.label->is_resolved());
+            cg->push_back_call_code(callable->u.label->address());
+        }
+    }
+    else
+    {
+        convert_one(*n.callee);
+        if (n.get_fn_type()->is_native())
+        {
+            cg->push_back_call_primitive_dyn();
+        }
+        else
+        {
+            cg->push_back_call_code_dyn();
+        }
+    }
+}
+
+void IR_To_Code::visit(IR_Call_Primitive &n)
+{
+    for (auto &&a : n.arguments)
+    {
+        convert_one(*a);
+    }
+    cg->push_back_call_primitive(*n.callee);
 }
 
 void IR_To_Code::visit(IR_Call_Method &n)
@@ -516,8 +558,10 @@ void IR_To_Code::convert_many(const std::vector<IR_Node*> &n, bool drop_unused)
         convert_one(*one);
         if (drop_unused)
         {
-            auto is_expression = nullptr != dynamic_cast<struct IR_Value*>(one);
-            if (is_expression)
+            // @XXX: this is a hack out of sheer laziness and probably needs handling on a
+            // case by case basis.
+            auto expression = dynamic_cast<struct IR_Value*>(one);
+            if (expression && expression->get_type() != ir->types->get_void())
             {   // any tree that results in a value dangling on the stack needs to be pruned
                 cg->push_back_drop(1);
             }

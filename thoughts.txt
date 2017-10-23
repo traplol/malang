@@ -226,3 +226,9 @@ Oct 21, 2017:
     + Basic function code generator
     + Basic call generation
     + IR_Labels have the ability to backfill their addresses after calculation
+
+Oct 22, 2017:
+    + Hackery to call builtin free functions
+    + New VM instruction: Call_Dyn
+    + New VM instruction: Call_Primitive_Dyn
+    

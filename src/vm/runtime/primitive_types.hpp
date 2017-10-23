@@ -21,8 +21,14 @@ using Native_Code = void(*)(struct Malang_VM &vm);
 
 struct Primitive_Function
 {
+    Primitive_Function(Fixnum index, Native_Code native_code, struct Function_Type_Info *fn_type)
+        : index(index)
+        , native_code(native_code)
+        , fn_type(fn_type)
+        {}
     Fixnum index;
     Native_Code native_code;
+    struct Function_Type_Info *fn_type;
 };
 
 

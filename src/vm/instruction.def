@@ -88,15 +88,20 @@ ITEM(Branch_If_Not_Zero)
 // pop IP from return stack, set IP to this value
 ITEM(Return)
 
-// push IP of next instruction to return stack, pop value from datastack and set IP to that
-// value
+// setup call frame, assumes the next 4 bytes of the bytecode is a 32-bit integer
+// representing where to set the IP
 ITEM(Call)
 
-// TODO: describe Call_Virtual
-ITEM(Call_Virtual)
-
-// pop value from datastack as a Primitive_Function and call it
+// setup call frame, assumes the next 4 bytes of the bytecode is a 32-bit integer
+// representing an index into the primitives table, call this primitive
 ITEM(Call_Primitive)
+
+// setup call frame, pop value from datastack and set IP to that value
+ITEM(Call_Dyn)
+
+// setup call frame, pop value from datastack as an index into the primitives table
+// and call this primitive
+ITEM(Call_Primitive_Dyn)
 
 // the next 4 bytes of the bytecode is a 32-bit index into the globals table, push the value
 // pointed at by this index to the top of the datastack

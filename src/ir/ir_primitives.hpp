@@ -113,11 +113,21 @@ struct IR_Callable : IR_RValue
 {
     IR_Callable(const Source_Location &src_loc, struct IR_Label *label, struct Function_Type_Info *fn_type)
         : IR_RValue(src_loc)
-        , label(label)
         , fn_type(fn_type)
-        {}
+        {
+            u.label = label;
+        }
+    IR_Callable(const Source_Location &src_loc, Fixnum index, struct Function_Type_Info *fn_type)
+        : IR_RValue(src_loc)
+        , fn_type(fn_type)
+        {
+            u.index = index;
+        }
 
-    struct IR_Label *label;
+    union {
+        struct IR_Label *label;
+        Fixnum index;
+    } u;
     struct Function_Type_Info *fn_type;
     virtual Type_Info *get_type() const override { return fn_type; }
 

@@ -231,17 +231,43 @@ void Codegen::push_back_raw_32(int32_t n)
 
 void Codegen::push_back_call_primitive(const Primitive_Function &primitive)
 {
+    push_back_call_primitive(primitive.index);
+}
+void Codegen::push_back_call_primitive(int32_t index)
+{
     push_back_instruction(Instruction::Call_Primitive);
-    push_back_raw_32(primitive.index);
+    push_back_raw_32(index);
+}
+void Codegen::push_back_call_primitive_dyn(const Primitive_Function &primitive)
+{
+    push_back_call_primitive_dyn(primitive.index);
+}
+void Codegen::push_back_call_primitive_dyn(int32_t index)
+{
+    push_back_literal_32(index);
+    push_back_call_primitive_dyn();
+}
+void Codegen::push_back_call_primitive_dyn()
+{
+    push_back_instruction(Instruction::Call_Primitive_Dyn);
 }
 void Codegen::push_back_call_code(int32_t code)
 {
-    push_back_literal_32(code);
-    push_back_instruction(Instruction::Call);
+    push_back_call_code();
+    push_back_raw_32(code);
 }
 void Codegen::push_back_call_code()
 {
     push_back_instruction(Instruction::Call);
+}
+void Codegen::push_back_call_code_dyn(int32_t code)
+{
+    push_back_literal_32(code);
+    push_back_call_code_dyn();
+}
+void Codegen::push_back_call_code_dyn()
+{
+    push_back_instruction(Instruction::Call_Dyn);
 }
 void Codegen::push_back_return()
 {

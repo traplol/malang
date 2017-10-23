@@ -42,6 +42,11 @@ struct Malang_VM
     Malang_Value locals[16000];
     Malang_Value data_stack[16000];
 
+    void dump_code(uintptr_t ip, size_t n, int width=30) const;
+    void trace() const;
+    void trace_abort(const char *fmt, ...) const;
+    void stack_trace(uintptr_t n = 16) const;
+
     void add_local(Malang_Value value);
     void add_global(Malang_Value value);
     void add_data(Malang_Value value);

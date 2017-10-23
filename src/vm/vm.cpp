@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <string.h>
+#include <sstream>
 #include "vm.hpp"
 #include "instruction.hpp"
 #include "runtime/gc.hpp"
@@ -46,52 +47,101 @@ static void print(const char *fmt, ...)
     va_end(args);
 }
 
-static void trace(Malang_VM &vm)
+static inline
+std::string to_string(const Malang_Value &value)
 {
-    auto x = std::min(64ul, vm.ip);
-    auto y = std::min(64ul, vm.code.size() - vm.ip);
-
-    auto start = vm.ip - x;
-    auto end = vm.ip + y;
-    auto p = start;
-    print("\nCODE:\n");
-    for (int i = 1; p != end; ++p, ++i)
+    std::stringstream ss;
+    if (value.is_fixnum())
     {
-        print("%02x ", static_cast<int>(vm.code[p]));
-        if (i % 40 == 0)
-        {
-            print("\n");
-        }
+        ss << value.as_fixnum();
     }
-    print("\n\nDATA:\n");
-    auto n = std::min(16ul, vm.data_top);
-    for (auto i = vm.data_top - n; i < vm.data_top; ++i)
+    else if (value.is_double())
     {
-        auto &&e = vm.data_stack[i];
-        if (e.is_pointer())
+        ss << value.as_double();
+    }
+    else if (value.is_object())
+    {
+        auto obj = value.as_object();
+        ss << "Object(" << obj->type->name() << "#" << obj << ")";
+    }
+    else if (value.is_pointer())
+    {
+        ss << "Pointer(" << value.as_pointer<void>() << ")";
+    }
+    else
+    {
+        ss << "?(" << std::hex << value.bits() << ")";
+    }
+    return ss.str();
+}
+
+void Malang_VM::stack_trace(uintptr_t n) const
+{
+    print("\nDATA STACK:\n");
+    n = std::min(n, data_top);
+    for (auto i = data_top - n; i < data_top; ++i)
+    {
+        auto &&e = data_stack[i];
+        if (n-i-1 == 0)
         {
-            print("-%ld: OBJECT: %p\n", i, e.as_object());
+            print("-%ld: %s <-- TOP\n", n-i-1, to_string(e).c_str());
         }
-        else if (e.is_double())
+        else
         {
-            print("-%ld: DOUBLE : %lf\n", i, e.as_double());
-        }
-        else if (e.is_fixnum())
-        {
-            print("-%ld: FIXNUM : %d\n", i, e.as_fixnum());
+            print("-%ld: %s\n", n-i-1, to_string(e).c_str());
         }
     }
     print("\n");
 }
 
-void trace_abort(Malang_VM &vm, const char *fmt, ...)
+void Malang_VM::trace() const
+{
+    auto x = std::min(64ul, ip);
+    auto y = std::min(64ul, code.size() - ip);
+
+    auto start = ip - x;
+    auto end = ip + y;
+    auto p = start;
+    print("\nCODE:\n");
+    for (int i = 1; p != end; ++p, ++i)
+    {
+        print("%02x ", static_cast<int>(code[p]));
+        if (i % 40 == 0)
+        {
+            print("\n");
+        }
+    }
+    print("\n");
+    stack_trace();
+}
+
+void Malang_VM::trace_abort(const char *fmt, ...) const
 {
     va_list args;
     va_start(args, fmt);
     vprint(fmt, args);
     va_end(args);
-    trace(vm);
+    trace();
     abort();
+}
+
+void Malang_VM::dump_code(uintptr_t ip, size_t n, int width) const
+{
+    auto mem = code.data() + ip;
+    n = std::min(ip+n, code.size());
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (i % width == 0)
+        {
+            printf("%08lx  ", i);
+        }
+        printf("%02x ", mem[i]);
+        if ((i+1) % width == 0)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n");
 }
 
 void Malang_VM::add_local(Malang_Value value)
@@ -203,7 +253,7 @@ Malang_Value Malang_VM::pop_data()
     return data;
 }
 
-#define NOT_IMPL {trace_abort(vm, "%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
+#define NOT_IMPL {vm.trace_abort("%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
 
 static inline byte fetch8(Malang_VM &vm)
 {
@@ -443,11 +493,6 @@ static inline void exec_Branch_If_Not_Zero(Malang_VM &vm)
     }
 }
 
-static inline void exec_Leave(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
 static inline void exec_Return(Malang_VM &vm)
 {
     auto frame = vm.pop_call_frame();
@@ -456,14 +501,10 @@ static inline void exec_Return(Malang_VM &vm)
 
 static inline void exec_Call(Malang_VM &vm)
 {
-    auto new_ip = vm.pop_data().as_fixnum();
-    vm.push_call_frame({vm.ip+1, vm.data_top-1});
+    NEXT8;
+    auto new_ip = fetch32(vm);
+    vm.push_call_frame({vm.ip + sizeof(new_ip), vm.data_top-1});
     vm.ip = new_ip;
-}
-
-static inline void exec_Call_Virtual(Malang_VM &vm)
-{
-    NOT_IMPL;
 }
 
 static inline void exec_Call_Primitive(Malang_VM &vm)
@@ -471,6 +512,21 @@ static inline void exec_Call_Primitive(Malang_VM &vm)
     NEXT8;
     auto prim_fn_idx = fetch32(vm);
     vm.push_call_frame({vm.ip + sizeof(prim_fn_idx), vm.data_top-1});
+    vm.primitives[prim_fn_idx](vm);
+    exec_Return(vm);
+}
+
+static inline void exec_Call_Dyn(Malang_VM &vm)
+{
+    auto new_ip = vm.pop_data().as_fixnum();
+    vm.push_call_frame({vm.ip+1, vm.data_top-1});
+    vm.ip = new_ip;
+}
+
+static inline void exec_Call_Primitive_Dyn(Malang_VM &vm)
+{
+    auto prim_fn_idx = vm.pop_data().as_fixnum();
+    vm.push_call_frame({vm.ip+1, vm.data_top-1});
     vm.primitives[prim_fn_idx](vm);
     exec_Return(vm);
 }
@@ -765,6 +821,6 @@ static void run_code(Malang_VM &vm)
             case Instruction::INSTRUCTION_ENUM_SIZE:
                 break;
         }
-        trace_abort(vm, "Unknown instruction: %x\n", static_cast<int>(ins));
+        vm.trace_abort("Unknown instruction: %x\n", static_cast<int>(ins));
     }
 }

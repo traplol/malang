@@ -16,7 +16,7 @@ struct Scope
 
 struct Ast_To_IR : Ast_Visitor
 {
-    Ast_To_IR(Type_Map *types);
+    Ast_To_IR(struct Primitive_Function_Map *primitives, Type_Map *types);
 
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
@@ -62,10 +62,12 @@ struct Ast_To_IR : Ast_Visitor
     Malang_IR *convert(Ast &ast);
 
 private:
-    Malang_IR *ir;
-    IR_Node *tree;
+    Primitive_Function_Map *primitives;
     Type_Map *types;
     Scope *cur_scope;
+    struct Fn_Node *cur_fn;
+    Malang_IR *ir;
+    IR_Node *tree;
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
     std::vector<Scope*> scopes;

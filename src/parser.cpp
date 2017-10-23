@@ -685,7 +685,8 @@ static uptr<Type_Node> parse_type(Parser &parser)
         {
             params_types.push_back(n->type);
         }
-        auto fn_type = parser.types->declare_function(params_types, ret_ty_node->type);
+        const auto is_primitive = false;
+        auto fn_type = parser.types->declare_function(params_types, ret_ty_node->type, is_primitive);
         return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), fn_type));
     }
     else
@@ -775,7 +776,8 @@ static uptr<Fn_Node> parse_fn(Parser &parser)
     {
         p_types.push_back(decl->type->type);
     }
-    auto fn_ty = parser.types->declare_function(p_types, ret_ty->type);
+    const auto is_primitive = false;
+    auto fn_ty = parser.types->declare_function(p_types, ret_ty->type, is_primitive);
     return uptr<Fn_Node>(new Fn_Node(tk_fn.src_loc(), params, ret_ty, body, fn_ty));
 }
 static uptr<Class_Def_Node> parse_class(Parser &parser)

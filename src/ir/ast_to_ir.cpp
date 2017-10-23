@@ -1,11 +1,37 @@
 #include <sstream>
 #include "ast_to_ir.hpp"
 #include "../ast/nodes.hpp"
+#include "../vm/runtime/reflection.hpp"
+#include "../vm/runtime/primitive_function_map.hpp"
 #include "nodes.hpp"
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
 #define _return(x) { tree = (x); return; }
+
+static inline
+bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &values, const std::vector<Type_Info*> &types)
+{
+    if (values.size() != types.size())
+    {
+        src_loc.report("error", "Invalid number of values: expected %d got: %d",
+                       (int)types.size(), (int)values.size()); // @FixMe: type specifier+cast
+        return false;
+    }
+    for (size_t i = 0; i < values.size(); ++i)
+    {
+        auto a_t = values[i]->get_type();
+        auto e_t = types[i];
+
+        if (!a_t->is_assignable_to(e_t))
+        {
+            values[i]->src_loc.report("error", "Type mismatch: cannot convert from type `%s' to `%s'",
+                                      a_t->name().c_str(), e_t->name().c_str());
+            return false;
+        }
+    }
+    return true;
+}
 
 Scope::Scope()
     : labels(new Label_Map)
@@ -20,13 +46,19 @@ Scope::~Scope()
     symbols = nullptr;
 }
 
-Ast_To_IR::Ast_To_IR(Type_Map *types)
-    : types(types)
+Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives, Type_Map *types)
+    : primitives(primitives)
+    , types(types)
     , cur_scope(new Scope)
 {}
 
 void Ast_To_IR::visit(Variable_Node &n)
 {
+    if (auto prim_fn = primitives->get_builtin(n.name))
+    {
+        auto callable = new IR_Callable{n.src_loc, prim_fn->index, prim_fn->fn_type};
+        _return(callable);
+    }
     auto symbol = find_symbol(n.name);
     if (!symbol)
     {
@@ -126,6 +158,8 @@ void Ast_To_IR::visit(Fn_Node &n)
 {
     auto old_scope = cur_symbol_scope;
     auto old_locals_count = cur_locals_count;
+    auto old_fn = cur_fn;
+    cur_fn = &n;
 
     push_scope();
     auto block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
@@ -160,7 +194,11 @@ void Ast_To_IR::visit(Fn_Node &n)
         auto body_node = get(*b);
         block->body().push_back(body_node);
     }
-    if (auto last = block->body().back())
+    if (block->body().empty())
+    {
+        block->body().push_back(new IR_Return{n.src_loc, {}}); // @FixMe: src_loc should be close curly of function def
+    }
+    else if (auto last = block->body().back())
     {
         if (dynamic_cast<IR_Return*>(last) == nullptr)
         {
@@ -176,6 +214,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     pop_scope();
     cur_symbol_scope = old_scope;
     cur_locals_count = old_locals_count;
+    cur_fn = old_fn;
     auto callable = new IR_Callable{n.src_loc, block, n.fn_type};
     _return(callable)
 }
@@ -323,6 +362,18 @@ void Ast_To_IR::visit(Call_Node &n)
         }
     }
     auto callee = get<IR_Value>(*n.callee);
+    assert(callee);
+    auto fn_type = dynamic_cast<Function_Type_Info*>(callee->get_type());
+    if (!fn_type)
+    {
+        n.src_loc.report("error", "Attempted to call non-function type `%s'",
+                 callee->get_type()->name().c_str());
+        abort();
+    }
+    if (!type_check(n.src_loc, args, fn_type->parameter_types()))
+    {
+        abort();
+    }
     auto call = new IR_Call{n.src_loc, callee, args};
     _return(call);
 }
@@ -371,13 +422,54 @@ void Ast_To_IR::visit(Type_Node &n)
 void Ast_To_IR::visit(Return_Node &n)
 {
     assert(n.values); // even an empty return this should not be null...
+
+    if (!cur_fn)
+    {
+        n.src_loc.report("error", "return outside of a function does not make sense.");
+        abort();
+    }
+    if (n.values->contents.size() > 1)
+    { // @FixMe: implement sum types or a similar mechanism to type check multiple return values
+        n.src_loc.report("not implemented", "multiple return types not yet implemented.");
+        abort();
+    }
+
     std::vector<IR_Value*> values;
+    // None
+    if (n.values->contents.empty()
+        && cur_fn->fn_type->return_type() != ir->types->get_void())
+    {
+        n.src_loc.report("error", "Expected value to return in non-void function");
+        abort();
+    }
+    // 1
+    if (n.values->contents.size() == 1)
+    {
+        auto v = n.values->contents[0];
+        auto ret_v = get<IR_Value>(*v);
+        assert(ret_v);
+        if (!ret_v->get_type()->is_assignable_to(cur_fn->fn_type->return_type()))
+        {
+            n.src_loc.report("error", "Function expecting to return type `%s' cannot convert type `%s'",
+                             cur_fn->fn_type->return_type()->name().c_str(),
+                             ret_v->get_type()->name().c_str());
+            abort();
+        }
+        else
+        {
+            values.push_back(ret_v);
+        }
+    }
+
+    /* 
+    // Multi:
     for (auto &&v : n.values->contents)
     {
         auto ret_v = get<IR_Value>(*v);
         assert(ret_v);
         values.push_back(ret_v);
     }
+    */
     auto retn = new IR_Return{n.src_loc, values};
     _return(retn);
 }
@@ -386,6 +478,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
 {
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
+    cur_fn = nullptr;
     for (auto &&n : ast.roots)
     {
         convert_one(*n);

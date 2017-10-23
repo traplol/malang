@@ -19,6 +19,7 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Callable &n) override;
 
     virtual void visit(struct IR_Call &n) override;
+    virtual void visit(struct IR_Call_Primitive &n) override;
     virtual void visit(struct IR_Call_Method &n) override;
     virtual void visit(struct IR_Call_Virtual_Method &n) override;
     virtual void visit(struct IR_Return &n) override;
