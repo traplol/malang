@@ -574,6 +574,7 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
     cg = new Codegen;
     this->ir = &ir;
     convert_many(ir.roots, true);
+    cg->push_back_halt();
     return cg;
 }
 

@@ -10,6 +10,7 @@ struct Codegen
     std::vector<byte> code;
 
     void push_back_instruction(Instruction instruction);
+    void push_back_halt();
     
     void push_back_fixnum_add();
     void push_back_fixnum_subtract();

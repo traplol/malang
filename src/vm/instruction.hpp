@@ -7,6 +7,7 @@ using byte = unsigned char;
 
 enum class Instruction : byte
 {
+    Halt,
 #define ITEM(X) X,
     #include "instruction.def"
     INSTRUCTION_ENUM_SIZE

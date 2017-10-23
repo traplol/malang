@@ -51,26 +51,121 @@ struct Malang_VM
     void add_global(Malang_Value value);
     void add_data(Malang_Value value);
 
-    void push_locals_frame(uintptr_t frame);
-    uintptr_t pop_locals_frame();
-    Malang_Value *current_locals();
-    Malang_Value get_local(intptr_t n);
-    void set_local(intptr_t n, Malang_Value value);
+    //inline void push_locals_frame(uintptr_t frame);
+    //inline uintptr_t pop_locals_frame();
+    //inline Malang_Value *current_locals();
+    //inline Malang_Value get_local(intptr_t n);
+    //inline void set_local(intptr_t n, Malang_Value value);
 
-    void push_call_frame(Call_Frame frame);
-    Call_Frame pop_call_frame();
-    Call_Frame current_call_frame();
-    Malang_Value *current_args();
-    Malang_Value get_arg(intptr_t n);
-    void set_arg(intptr_t n, Malang_Value value);
+    //inline void push_call_frame(Call_Frame frame);
+    //inline Call_Frame pop_call_frame();
+    //inline Call_Frame current_call_frame();
+    //inline Malang_Value *current_args();
+    //inline Malang_Value get_arg(intptr_t n);
+    //inline void set_arg(intptr_t n, Malang_Value value);
 
-    void push_globals(Malang_Value value);
-    Malang_Value pop_globals();
-    void push_locals(Malang_Value value);
-    Malang_Value pop_locals();
-    void push_data(Malang_Value value);
-    Malang_Value pop_data();
+    //inline void push_globals(Malang_Value value);
+    //inline Malang_Value pop_globals();
+    //inline void push_locals(Malang_Value value);
+    //inline Malang_Value pop_locals();
+    //inline void push_data(Malang_Value value);
+    //inline Malang_Value pop_data();
 
+    inline
+    void push_locals_frame(uintptr_t frame)
+    {
+        locals_frames[locals_frames_top++] = frame;
+    }
+    inline
+    uintptr_t pop_locals_frame()
+    {
+        auto frame = locals_frames[--locals_frames_top];
+        return frame;
+    }
+    inline
+    Malang_Value *current_locals()
+    {
+        auto frame = locals_frames[locals_frames_top-1];
+        return &locals[frame];
+    }
+    inline
+    Malang_Value get_local(intptr_t n)
+    {
+        return current_locals()[0+n];
+    }
+    inline
+    void set_local(intptr_t n, Malang_Value value)
+    {
+        current_locals()[0+n] = value;
+    }
+
+    inline
+    void push_call_frame(Call_Frame frame)
+    {
+        call_frames[call_frames_top++] = frame;
+    }
+    inline
+    Call_Frame pop_call_frame()
+    {
+        auto frame = call_frames[--call_frames_top];
+        return frame;
+    }
+    inline
+    Call_Frame current_call_frame()
+    {
+        auto frame = call_frames[call_frames_top-1];
+        return frame;
+    }
+    inline
+    Malang_Value *current_args()
+    {
+        auto frame = call_frames[call_frames_top-1];
+        return &data_stack[frame.args_frame];
+    }
+    inline
+    Malang_Value get_arg(intptr_t n)
+    {
+        return current_args()[0-n];
+    }
+    inline
+    void set_arg(intptr_t n, Malang_Value value)
+    {
+        current_args()[0-n] = value;
+    }
+
+    inline
+    void push_globals(Malang_Value value)
+    {
+        globals[globals_top++] = value;
+    }
+    inline
+    Malang_Value pop_globals()
+    {
+        auto global = globals[--globals_top];
+        return global;
+    }
+    inline
+    void push_locals(Malang_Value value)
+    {
+        locals[locals_top++] = value;
+    }
+    inline
+    Malang_Value pop_locals()
+    {
+        auto local = locals[--locals_top];
+        return local;
+    }
+    inline
+    void push_data(Malang_Value value)
+    {
+        data_stack[data_top++] = value;
+    }
+    inline
+    Malang_Value pop_data()
+    {
+        auto data = data_stack[--data_top];
+        return data;
+    }
 };
 
 #endif /* MALANG_VM_VM_HPP */

@@ -5,6 +5,10 @@ void Codegen::push_back_instruction(Instruction instruction)
 {
     code.push_back(static_cast<byte>(instruction));
 }
+void Codegen::push_back_halt()
+{
+    push_back_instruction(Instruction::Halt);
+}
 void Codegen::push_back_fixnum_add()
 {
     push_back_instruction(Instruction::Fixnum_Add);

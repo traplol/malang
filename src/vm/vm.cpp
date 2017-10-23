@@ -157,101 +157,6 @@ void Malang_VM::add_data(Malang_Value value)
     data_stack[data_top++] = value;
 }
 
-inline
-void Malang_VM::push_locals_frame(uintptr_t frame)
-{
-    locals_frames[locals_frames_top++] = frame;
-}
-inline
-uintptr_t Malang_VM::pop_locals_frame()
-{
-    auto frame = locals_frames[--locals_frames_top];
-    return frame;
-}
-inline
-Malang_Value *Malang_VM::current_locals()
-{
-    auto frame = locals_frames[locals_frames_top-1];
-    return &locals[frame];
-}
-inline
-Malang_Value Malang_VM::get_local(intptr_t n)
-{
-    return current_locals()[0+n];
-}
-inline
-void Malang_VM::set_local(intptr_t n, Malang_Value value)
-{
-    current_locals()[0+n] = value;
-}
-
-inline
-void Malang_VM::push_call_frame(Call_Frame frame)
-{
-    call_frames[call_frames_top++] = frame;
-}
-inline
-Call_Frame Malang_VM::pop_call_frame()
-{
-    auto frame = call_frames[--call_frames_top];
-    return frame;
-}
-inline
-Call_Frame Malang_VM::current_call_frame()
-{
-    auto frame = call_frames[call_frames_top-1];
-    return frame;
-}
-inline
-Malang_Value *Malang_VM::current_args()
-{
-    auto frame = call_frames[call_frames_top-1];
-    return &data_stack[frame.args_frame];
-}
-inline
-Malang_Value Malang_VM::get_arg(intptr_t n)
-{
-    return current_args()[0-n];
-}
-inline
-void Malang_VM::set_arg(intptr_t n, Malang_Value value)
-{
-    current_args()[0-n] = value;
-}
-
-inline
-void Malang_VM::push_globals(Malang_Value value)
-{
-    globals[globals_top++] = value;
-}
-inline
-Malang_Value Malang_VM::pop_globals()
-{
-    auto global = globals[--globals_top];
-    return global;
-}
-inline
-void Malang_VM::push_locals(Malang_Value value)
-{
-    locals[locals_top++] = value;
-}
-inline
-Malang_Value Malang_VM::pop_locals()
-{
-    auto local = locals[--locals_top];
-    return local;
-}
-inline
-void Malang_VM::push_data(Malang_Value value)
-{
-    data_stack[data_top++] = value;
-}
-inline
-Malang_Value Malang_VM::pop_data()
-{
-    auto data = data_stack[--data_top];
-    return data;
-}
 
 #define NOT_IMPL {vm.trace_abort("%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
 
@@ -808,19 +713,53 @@ static inline void exec_Fixnum_Not_Equals(Malang_VM &vm)
 
 static void run_code(Malang_VM &vm)
 {
-    while (vm.ip < vm.code.size())
+#define USE_COMPUTED_GOTO 1
+
+#if USE_COMPUTED_GOTO
+
+  #define ITEM(X) &&computed_##X,
+      void *computed_gotos[] =
+          {
+              &&computed_Halt,
+              #include "instruction.def"
+          };
+
+  #define INIT_EXEC                               \
+      goto *computed_gotos[fetch8(vm)];
+  
+  #define EXEC_ITEM(X)                            \
+      computed_##X: {                             \
+          exec_##X(vm);                           \
+          goto *computed_gotos[fetch8(vm)]; }
+  
+  #define HALT \
+      computed_Halt: \
+      { return; }
+
+#else
+
+  #define EXEC_ITEM(X) \
+      case Instruction::X: exec_##X(vm); continue;
+
+  #define INIT_EXEC                                       \
+      auto ins = static_cast<Instruction>(fetch8(vm));    \
+      switch (ins)
+  
+  #define HALT                                       \
+      case Instruction::Halt: return;                     \
+      default: vm.trace_abort("Unknown instruction");
+
+#endif
+
+
+    while (1)
     {
-        auto ins = static_cast<Instruction>(fetch8(vm));
-        switch (ins)
+        INIT_EXEC
         {
-        // We use continue instead of break so the compiler will warn us when
-        // we forget to add an instruction to our dispatch and so an out-of-
-        // range case will cause a trace_abort
-#define ITEM(X) case Instruction::X: exec_##X(vm); continue;
+#define ITEM(X) EXEC_ITEM(X)
             #include "instruction.def"
-            case Instruction::INSTRUCTION_ENUM_SIZE:
-                break;
+
+        HALT
         }
-        vm.trace_abort("Unknown instruction: %x\n", static_cast<int>(ins));
     }
 }
