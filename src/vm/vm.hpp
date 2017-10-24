@@ -51,26 +51,6 @@ struct Malang_VM
     void add_global(Malang_Value value);
     void add_data(Malang_Value value);
 
-    //inline void push_locals_frame(uintptr_t frame);
-    //inline uintptr_t pop_locals_frame();
-    //inline Malang_Value *current_locals();
-    //inline Malang_Value get_local(intptr_t n);
-    //inline void set_local(intptr_t n, Malang_Value value);
-
-    //inline void push_call_frame(Call_Frame frame);
-    //inline Call_Frame pop_call_frame();
-    //inline Call_Frame current_call_frame();
-    //inline Malang_Value *current_args();
-    //inline Malang_Value get_arg(intptr_t n);
-    //inline void set_arg(intptr_t n, Malang_Value value);
-
-    //inline void push_globals(Malang_Value value);
-    //inline Malang_Value pop_globals();
-    //inline void push_locals(Malang_Value value);
-    //inline Malang_Value pop_locals();
-    //inline void push_data(Malang_Value value);
-    //inline Malang_Value pop_data();
-
     inline
     void push_locals_frame(uintptr_t frame)
     {

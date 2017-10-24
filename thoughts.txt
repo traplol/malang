@@ -232,3 +232,5 @@ Oct 22, 2017:
     + New VM instruction: Call_Dyn
     + New VM instruction: Call_Primitive_Dyn
     
+Oct 23, 2017:
+    + Implemented optional computed gotos for VM dispatch

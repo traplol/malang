@@ -96,7 +96,6 @@ void Parser::report_error(const Token &token, const char *fmt, ...)
     va_list vargs;
     va_start(vargs, fmt);
     token.src_loc().vreport("error", fmt, vargs);
-    //code.vreport_at_src_loc("error", token.src_loc(), fmt, vargs);
     va_end(vargs);
 }
 
@@ -105,14 +104,13 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
     va_list vargs;
     va_start(vargs, fmt);
     token.src_loc().vreport("debug", fmt, vargs);
-    //code.vreport_at_src_loc("debug", token.src_loc(), fmt, vargs);
     va_end(vargs);
 }
 
 // forward decls
 static uptr<Assign_Node> parse_assignment(Parser &parser);
 static uptr<Return_Node> parse_return(Parser &parser);
-static uptr<Decl_Node> parse_declaration(Parser &parser);
+static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required = true);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
 static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser);
@@ -173,18 +171,24 @@ static uptr<Return_Node> parse_return(Parser &parser)
     auto values = parse_expression_list(parser);
     return uptr<Return_Node>(new Return_Node{retn_tk.src_loc(), values.release()});
 }
-static uptr<Decl_Node> parse_declaration(Parser &parser)
+static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
 {   // decl :=
     //     identifier : type
     //     identifier : 
     SAVE;
     Token ident, type_name;
     ACCEPT_OR_FAIL(ident, { Token_Id::Identifier });
-    ACCEPT_OR_FAIL({ Token_Id::Colon });
+    Token colon;
+    ACCEPT_OR_FAIL(colon, { Token_Id::Colon });
     auto type = parse_type(parser);
     if (type)
     {
         return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type.release()));
+    }
+    if (type_required)
+    {
+        parser.report_error(colon, "Type specifier required here");
+        return nullptr;
     }
     return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), nullptr));
 }
@@ -192,11 +196,16 @@ static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
 {   // decl_assign :=
     //     decl = value
     SAVE;
-    auto decl = parse_declaration(parser);
+    auto decl = parse_declaration(parser, false);
     CHECK_OR_FAIL(decl);
-    ACCEPT_OR_FAIL({Token_Id::Equals});
+    Token tk_equals;
+    ACCEPT_OR_FAIL(tk_equals, {Token_Id::Equals});
     auto value = parse_expression(parser);
-    CHECK_OR_FAIL(value);
+    if (!value)
+    {
+        parser.report_error(tk_equals, "Expected expression on right hand side of declaration assignment");
+        return nullptr;
+    }
     if (!decl->type)
     {
         auto val_ty = value->get_type();
@@ -213,11 +222,16 @@ static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
 {   // decl_constant :=
     //     decl : value
     SAVE;
-    auto decl = parse_declaration(parser);
+    auto decl = parse_declaration(parser, false);
     CHECK_OR_FAIL(decl);
-    ACCEPT_OR_FAIL({Token_Id::Colon});
+    Token tk_colon;
+    ACCEPT_OR_FAIL(tk_colon, {Token_Id::Colon});
     auto value = parse_expression(parser);
-    CHECK_OR_FAIL(value);
+    if (!value)
+    {
+        parser.report_error(tk_colon, "Expected expression on right hand side of constant assignment");
+        return nullptr;
+    }
     if (!decl->type)
     {
         auto val_ty = value->get_type();
