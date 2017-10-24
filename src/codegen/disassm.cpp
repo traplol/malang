@@ -25,7 +25,8 @@ static inline Malang_Value fetch_value(byte *p)
 
 using std::setw;
 using std::setfill;
-static inline std::string get_n_bytes(byte *p, size_t n, size_t min_width=10*3)
+static inline
+std::string get_n_bytes(byte *p, size_t n, size_t min_width=10*3)
 {
     std::stringstream ss;
     size_t column = 0;
@@ -70,6 +71,7 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Store_Arg:
             case Instruction::Store_Local:
             case Instruction::Alloc_Locals:
+            case Instruction::Drop_N:
             {
                 ss << get_n_bytes(p, 3);
                 ++p;
@@ -80,6 +82,7 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Load_Global:
             case Instruction::Store_Global:
             case Instruction::Literal_32:
+            case Instruction::Call:
             case Instruction::Call_Primitive:
             {
                 ss << get_n_bytes(p, 5);
@@ -107,10 +110,10 @@ std::string Disassembler::dis(std::vector<byte> code)
                 ++p;
                 auto n = fetch_value(p);
                 ss << ins_str;
-                if (n.is_object())     {ss << " pointer:<" << n.as_object();}
+                if (n.is_object())      {ss << " object:<" << n.as_object();}
                 else if (n.is_double()) {ss << " double:<" << n.as_double();}
                 else if (n.is_fixnum()) {ss << " fixnum:<" << n.as_fixnum();}
-                else {ss << " ??:<" << n.bits();}
+                else                    {ss << " ??:<" << n.bits();}
                 ss << ">";
                 p += sizeof(n);
             } break;

@@ -41,7 +41,6 @@
 
 Type_Info *Logical_Or_Node::get_type()
 {
-    // @TODO: Return type(bool)
     return nullptr;
 }
 BIN_OP_DTOR(Logical_Or_Node)
@@ -49,7 +48,6 @@ AST_NODE_OVERRIDES_IMPL(Logical_Or_Node)
 
 Type_Info *Logical_And_Node::get_type()
 {
-    // @TODO: Return type(bool)
     return nullptr;
 }
 BIN_OP_DTOR(Logical_And_Node)
@@ -146,8 +144,11 @@ Call_Node::~Call_Node()
 }
 Type_Info *Call_Node::get_type()
 {
-    // @TODO: get_type for Call_Node
-    printf("%s get_type()\n", type_name().c_str());
+    auto fn_ty = dynamic_cast<Function_Type_Info*>(callee->get_type());
+    if (fn_ty && fn_ty->return_type())
+    {
+        return fn_ty->return_type();
+    }
     return nullptr;
 }
 
@@ -163,6 +164,7 @@ Index_Node::~Index_Node()
 Type_Info *Index_Node::get_type()
 {
     // @TODO: get_type for Index_Node
+    printf("TODO: %s:%d: %s get_type()\n", __FILE__, __LINE__, type_name().c_str());
     return nullptr;
 }
 

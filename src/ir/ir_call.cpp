@@ -1,7 +1,6 @@
 #include "ir_call.hpp"
 
 IR_NODE_OVERRIDES_IMPL(IR_Call);
-IR_NODE_OVERRIDES_IMPL(IR_Call_Primitive);
 IR_NODE_OVERRIDES_IMPL(IR_Call_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Call_Virtual_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Allocate_Locals);
@@ -24,9 +23,4 @@ struct Function_Type_Info *IR_Call::get_fn_type() const
         abort();
     }
     return fn_ty;
-}
-
-struct Type_Info *IR_Call_Primitive::get_type() const
-{
-    return fn_type->return_type();
 }

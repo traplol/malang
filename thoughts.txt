@@ -57,6 +57,28 @@ VM Calling Convention:
     method calls more fluid because it is a simple Load_Arg_0 before calling a method within
     another method.
 
+    Example of stack after a return:
+
+        rot :: fn (a: int, b: int, c: int) -> int, int, int {
+            return b, c, a
+        }
+        x, _, z := rot(1, 2, 3)
+    
+        after the call to foo data stack:
+        1     <- TOP
+        3
+        2
+        3
+        2
+        1
+
+        ...<code to setup call...
+        Call_Dyn            ; call 'foo
+        Store_Local_2       ; store 1 in 'z
+        Drop_1              ; drop 3
+        Store_Local_0       ; store 2 in 'x
+        Drop_3              ; drop args(3,2,1)
+
 ==============================================================================================
 Object Representation:
     color:
@@ -234,3 +256,6 @@ Oct 22, 2017:
     
 Oct 23, 2017:
     + Implemented optional computed gotos for VM dispatch
+
+Oct 24, 2017:
+    + Calls now drop their arguments when appropriate

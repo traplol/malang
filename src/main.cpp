@@ -31,7 +31,9 @@ struct Parse_Test
 
 std::vector<std::string> get_parse_test_output(Parse_Test &test)
 {
+    Primitive_Function_Map primitives;
     Type_Map types;
+    Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);
     try
     {
@@ -262,12 +264,10 @@ void parse_tests()
         {"x:=1.1==2", "x : bool = (1.1 == 2)"},
         {"x:=1.1!=2", "x : bool = (1.1 != 2)"},
 
-
-        // @FixMe: need to parse error on these:
-        /*
-          thing :: = 42
-          xyz :: fn (a: int) -> {}
-         */
+        //{"x()()", "x()()"},
+        //{"y(1)(2)", "y(1)(2)"},
+        //{"z(y(1)(2))", "z(y(1)(2))"},
+        //{"y(1)[44](2)", "y(1)[44](2)"},
 
     };
     size_t total_run = 1;
@@ -394,7 +394,8 @@ void parse_to_code()
     Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);
     std::string code = R"(
-x :  542
+foo :: fn (a: int, b: int, c: int, d: int, e: int, f: int) -> int { return 42 }
+bar := foo(1,2,3,4,5,6)
 )";
     printf("Input source:\n%s\n", code.c_str());
     auto ast = parser.parse("test.ma", code);

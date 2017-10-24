@@ -99,6 +99,10 @@ void IR_To_Code::visit(IR_Call &n)
         {
             assert(callable->u.label->is_resolved());
             cg->push_back_call_code(callable->u.label->address());
+            if (auto_call_cleanup)
+            {
+                cg->push_back_drop(n.arguments.size());
+            }
         }
     }
     else
@@ -111,17 +115,12 @@ void IR_To_Code::visit(IR_Call &n)
         else
         {
             cg->push_back_call_code_dyn();
+            if (auto_call_cleanup)
+            {
+                cg->push_back_drop(n.arguments.size());
+            }
         }
     }
-}
-
-void IR_To_Code::visit(IR_Call_Primitive &n)
-{
-    for (auto &&a : n.arguments)
-    {
-        convert_one(*a);
-    }
-    cg->push_back_call_primitive(*n.callee);
 }
 
 void IR_To_Code::visit(IR_Call_Method &n)
@@ -207,6 +206,8 @@ void IR_To_Code::visit(IR_Branch_If_False &n)
 
 void IR_To_Code::visit(IR_Assignment &n)
 {
+    auto old_auto_call_cleanup = auto_call_cleanup;
+    auto_call_cleanup = false;
     // @TODO: how will array assignment be handled?
     auto lval = dynamic_cast<IR_LValue*>(n.lhs);
     assert(lval);
@@ -216,17 +217,17 @@ void IR_To_Code::visit(IR_Assignment &n)
         n.lhs->src_loc.report("error", "Could not deduce type.\n");
         abort();
     }
-    auto val_ty = n.rhs->get_type();
-    if (!val_ty)
+    auto rval_ty = n.rhs->get_type();
+    if (!rval_ty)
     {
         n.rhs->src_loc.report("error", "Could not deduce type.\n");
         abort();
     }
 
-    if (!val_ty->is_assignable_to(lval_ty))
+    if (!rval_ty->is_assignable_to(lval_ty))
     {
         n.src_loc.report("error", "Cannot assign from type `%s' to `%s'\n",
-                         val_ty->name().c_str(), lval_ty->name().c_str());
+                         rval_ty->name().c_str(), lval_ty->name().c_str());
         abort();
     }
 
@@ -252,6 +253,17 @@ void IR_To_Code::visit(IR_Assignment &n)
                 break;
         }
     }
+
+    if (auto call = dynamic_cast<IR_Call*>(n.rhs))
+    {   // Assignment from a call, we need to cleanup arguments passed.
+        // Native functions maniplate the stack directly and don't need their arguments
+        // dropped
+        if (!call->get_fn_type()->is_native())
+        {
+            cg->push_back_drop(call->arguments.size());
+        }
+    }
+    auto_call_cleanup = old_auto_call_cleanup;
 }
 
 inline
@@ -573,6 +585,7 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
     cg = new Codegen;
     this->ir = &ir;
+    auto_call_cleanup = true;
     convert_many(ir.roots, true);
     cg->push_back_halt();
     return cg;

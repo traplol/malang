@@ -62,7 +62,7 @@ void Ast_To_IR::visit(Variable_Node &n)
     auto symbol = find_symbol(n.name);
     if (!symbol)
     {
-        n.src_loc.report("error", "Use of undeclared symbol");
+        n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
         abort();
     }
     _return(symbol);
@@ -121,6 +121,7 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     }
     auto variable = get<IR_Symbol>(*n.decl);
     assert(variable);
+    variable->is_initialized = true;
     auto assign = new IR_Assignment{n.src_loc, variable, value, variable->scope};
     _return(assign);
 }
@@ -142,6 +143,7 @@ void Ast_To_IR::visit(Decl_Constant_Node &n)
     }
     auto variable = get<IR_Symbol>(*n.decl);
     assert(variable);
+    variable->is_initialized = true;
     auto assign = new IR_Assignment{n.src_loc, variable, value, variable->scope};
     _return(assign);
 }
@@ -159,6 +161,11 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto old_scope = cur_symbol_scope;
     auto old_locals_count = cur_locals_count;
     auto old_fn = cur_fn;
+    if (old_fn)
+    {
+        n.src_loc.report("NYI", "Support for closures is not yet implemented");
+        abort();
+    }
     cur_fn = &n;
 
     push_scope();

@@ -38,6 +38,7 @@ void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
     indent();
     for (auto &&n : body)
     {
+        assert(n);
         do_indention();
         to_string(*n);
         str << "\n";
@@ -52,6 +53,8 @@ void Ast_Pretty_Printer::visit(Variable_Node &n)
 }
 void Ast_Pretty_Printer::visit(Assign_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     to_string(*n.lhs);
     str << " = ";
     to_string(*n.rhs);
@@ -69,6 +72,7 @@ void Ast_Pretty_Printer::visit(Fn_Node &n)
     str << "fn (";
     for (size_t i = 0; i < n.params.size(); ++i)
     {
+        assert(n.params[i]);
         to_string(*n.params[i]);
         if (i + 1 < n.params.size())
         {
@@ -76,6 +80,7 @@ void Ast_Pretty_Printer::visit(Fn_Node &n)
         }
     }
     str << ") -> ";
+    assert(n.return_type);
     to_string(*n.return_type);
     do_body(n.body);
 }
@@ -83,6 +88,7 @@ void Ast_Pretty_Printer::visit(List_Node &n)
 {
     for (size_t i = 0; i < n.contents.size(); ++i)
     {
+        assert(n.contents[i]);
         to_string(*n.contents[i]);
         if (i + 1 < n.contents.size())
         {
@@ -111,106 +117,153 @@ void Ast_Pretty_Printer::visit(Boolean_Node &n)
 
 void Ast_Pretty_Printer::visit(Logical_Or_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "||");
 }
 void Ast_Pretty_Printer::visit(Logical_And_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "&&");
 }
 void Ast_Pretty_Printer::visit(Inclusive_Or_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "|");
 }
 void Ast_Pretty_Printer::visit(Exclusive_Or_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "^");
 }
 void Ast_Pretty_Printer::visit(And_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "&");
 }
 void Ast_Pretty_Printer::visit(Equals_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "==");
 }
 void Ast_Pretty_Printer::visit(Not_Equals_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "!=");
 }
 void Ast_Pretty_Printer::visit(Less_Than_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "<");
 }
 void Ast_Pretty_Printer::visit(Less_Than_Equals_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "<=");
 }
 void Ast_Pretty_Printer::visit(Greater_Than_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, ">");
 }
 void Ast_Pretty_Printer::visit(Greater_Than_Equals_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, ">=");
 }
 void Ast_Pretty_Printer::visit(Left_Shift_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "<<");
 }
 void Ast_Pretty_Printer::visit(Right_Shift_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, ">>");
 }
 void Ast_Pretty_Printer::visit(Add_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "+");
 }
 void Ast_Pretty_Printer::visit(Subtract_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "-");
 }
 void Ast_Pretty_Printer::visit(Multiply_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "*");
 }
 void Ast_Pretty_Printer::visit(Divide_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "/");
 }
 void Ast_Pretty_Printer::visit(Modulo_Node &n)
 {
+    assert(n.lhs);
+    assert(n.rhs);
     BIN_OP_PP(n, "%");
 }
 void Ast_Pretty_Printer::visit(Call_Node &n)
 {
+    assert(n.callee);
+    assert(n.args);
     to_string(*n.callee); str << "("; to_string(*n.args); str << ")";
 }
 void Ast_Pretty_Printer::visit(Index_Node &n)
 {
+    assert(n.thing);
+    assert(n.subscript);
     to_string(*n.thing); str << "["; to_string(*n.subscript); str << "]";
 }
 void Ast_Pretty_Printer::visit(Field_Accessor_Node &n)
 {
+    assert(n.thing);
+    assert(n.member);
     to_string(*n.thing); str << "."; to_string(*n.member);
 }
 void Ast_Pretty_Printer::visit(Negate_Node &n)
 {
+    assert(n.operand);
     str << "(-"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Positive_Node &n)
 {
+    assert(n.operand);
     str << "(+"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Not_Node &n)
 {
+    assert(n.operand);
     str << "(!"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Invert_Node &n)
 {
+    assert(n.operand);
     str << "(~"; to_string(*n.operand); str << ")";
 }
 void Ast_Pretty_Printer::visit(Class_Def_Node &n)
 {
+    assert(n.type_info);
     str << "class " << n.type_info->name();
     if (n.has_explicit_supertype)
     {
@@ -221,18 +274,21 @@ void Ast_Pretty_Printer::visit(Class_Def_Node &n)
     for (auto &&f : n.fields)
     {
         do_indention();
+        assert(f);
         to_string(*f);
         str << "\n";
     }
     for (auto &&c : n.constructors)
     {
         do_indention();
+        assert(c);
         to_string(*c);
         str << "\n";
     }
     for (auto &&m : n.methods)
     {
         do_indention();
+        assert(m);
         to_string(*m);
         str << "\n";
     }
@@ -248,12 +304,16 @@ void Ast_Pretty_Printer::visit(Type_Node &n)
 }
 void Ast_Pretty_Printer::visit(Decl_Assign_Node &n)
 {
+    assert(n.decl);
+    assert(n.value);
     to_string(*n.decl);
     str << " = ";
     to_string(*n.value);
 }
 void Ast_Pretty_Printer::visit(Decl_Constant_Node &n)
 {
+    assert(n.decl);
+    assert(n.value);
     to_string(*n.decl);
     str << " : ";
     to_string(*n.value);

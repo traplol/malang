@@ -555,6 +555,11 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
     //     postfix ( expression_list )
     //     postfix [ expression_list ]
     //     postfix . identifier
+
+    // @FixMe: x()()() does not parse
+    // @FixMe: x()[...]() does not parse
+    // @FixMe: x[...]() does not parse
+
     SAVE;
     auto prim = parse_primary(parser);
     Token tok;
@@ -618,10 +623,6 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     {
         return uptr<Ast_Value>(new Variable_Node(token.src_loc(), token.to_string()));
     }
-    //if (auto tk = parser.peek())
-    //{
-    //    parser.report_error(*tk, "Unexpected %s\n", tk->debug().c_str());
-    //}
     PARSE_FAIL;
 }
 static uptr<List_Node> parse_expression_list(Parser &parser)

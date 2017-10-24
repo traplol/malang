@@ -397,7 +397,7 @@ void Codegen::push_back_over()
 }
 void Codegen::push_back_drop(uint16_t n)
 {
-    assert(n != 0);
+    if (n == 0) return;
     switch (n)
     {
         case 1:

@@ -21,23 +21,6 @@ struct IR_Call : IR_RValue
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Call_Primitive : IR_RValue
-{
-    virtual ~IR_Call_Primitive() {}
-    IR_Call_Primitive(Primitive_Function *callee, Function_Type_Info *fn_type, const std::vector<IR_Value*> &arguments)
-        : IR_RValue({})
-        , callee(callee)
-        , fn_type(fn_type)
-        , arguments(arguments)
-        {}
-    virtual struct Type_Info *get_type() const override;
-
-    Primitive_Function *callee;
-    Function_Type_Info *fn_type;
-    std::vector<IR_Value*> arguments;
-    IR_NODE_OVERRIDES;
-};
-
 struct IR_Call_Method : IR_Call
 {
     virtual ~IR_Call_Method() {}
