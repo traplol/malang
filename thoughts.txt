@@ -27,6 +27,7 @@ TODO:
 
 
 ==============================================================================================
+@FixMe: THIS ENTIRE SECTION IS OUTDATED AN NEEDS TO BE UPDATED
 VM Calling Convention:
 
     Arguments:
@@ -73,8 +74,8 @@ VM Calling Convention:
         1
 
         ...<code to setup call...
-        Call_Dyn            ; call 'foo
-        Store_Local_2       ; store 1 in 'z
+        Call_Dyn            ; call 'rot
+        Store_Local_1       ; store 1 in 'z
         Drop_1              ; drop 3
         Store_Local_0       ; store 2 in 'x
         Drop_3              ; drop args(3,2,1)
@@ -259,3 +260,17 @@ Oct 23, 2017:
 
 Oct 24, 2017:
     + Calls now drop their arguments when appropriate
+    + Implemented While loop
+    + Converted VM to hand-inlined instruction dispatch (~10% speedup)
+    + Implemented If/Else
+    + Implemented Logical And
+
+Oct 25, 2017:
+    + Changed the way arguments are handled making it more natural:
+        *OPTIMIZATION POTENTIAL*
+        Arguments are now immediatly transferred from the stack to locals in bytecode
+        this leaves them accessible from 0 in the order they are declared
+        fn (a: int, b: int, c: int)
+           L0      L1      L2
+    + To compensate for combining arguments into the locals, the Load/Store_Arg instructions
+    have been replaced with Load/Store_Local_4,5,6,7,8, and 9

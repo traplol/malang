@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <streambuf>
 #include <vector>
-#include <stdint.h>
 #include <iostream>
 
 #include "parser.hpp"
@@ -269,6 +271,20 @@ void parse_tests()
         //{"z(y(1)(2))", "z(y(1)(2))"},
         //{"y(1)[44](2)", "y(1)[44](2)"},
 
+        {"while 1 { }",
+         "while 1 {\n"
+         "}"},
+
+        {"while true { print(42) }",
+         "while true {\n"
+         "    print(42)\n"
+         "}"},
+
+        {"while 1 && 2 { print(42) }",
+         "while (1 && 2) {\n"
+         "    print(42)\n"
+         "}"},
+
     };
     size_t total_run = 1;
     for (auto &&it : tests)
@@ -302,8 +318,9 @@ void parse_tests()
 void parse_one()
 {
     Parse_Test pt =
-        {"x := 5 + 2",
-         "x : int = (5 + 2)"};
+        {"while 1 { }",
+         "while 1 {\n"
+         "}"};
     auto actual = get_parse_test_output(pt);
     if (actual.size() != pt.expected.size())
     {
@@ -327,15 +344,43 @@ void parse_one()
 void codegen_stuff();
 void gc_stuff();
 void parse_stuff();
-void parse_to_code();
+void parse_to_code(const std::string &);
 
-int main()
+bool read_file(const std::string &filename, std::string &contents)
 {
-    parse_to_code();
-    //parse_tests();
-    //parse_one();
-    //gc_stuff();
-    return 0;
+    std::ifstream inf(filename);
+    if (inf)
+    {
+        contents.assign(std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    if (argc != 2)
+    {
+        printf("no input file, running parse tests.\n");
+        parse_tests();
+        //parse_one();
+        //gc_stuff();
+        return 0;
+    }
+    std::string file_contents;
+    if (read_file(argv[1], file_contents))
+    {
+        parse_to_code(file_contents);
+        return 0;
+    }
+    else
+    {
+        printf("no input file.");
+        return -1;
+    }
 }
 
 void codegen_stuff()
@@ -387,18 +432,22 @@ void parse_stuff()
 }
 
 
-void parse_to_code()
+void parse_to_code(const std::string &code)
 {
     Primitive_Function_Map primitives;
     Type_Map types;
     Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);
-    std::string code = R"(
-foo :: fn (a: int, b: int, c: int, d: int, e: int, f: int) -> int { return 42 }
-bar := foo(1,2,3,4,5,6)
-)";
     printf("Input source:\n%s\n", code.c_str());
     auto ast = parser.parse("test.ma", code);
+
+    printf("\nGenerated AST\n");
+    for (auto &&n : ast.roots)
+    {
+        Ast_Pretty_Printer pp;
+        printf("%s\n", pp.to_string(*n).c_str());
+    }
+    printf("\n");
 
     if (parser.errors)
     {

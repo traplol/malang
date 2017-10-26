@@ -110,6 +110,7 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
 // forward decls
 static uptr<Assign_Node> parse_assignment(Parser &parser);
 static uptr<Return_Node> parse_return(Parser &parser);
+static uptr<While_Node> parse_while(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required = true);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
 static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
@@ -139,6 +140,7 @@ static uptr<Class_Def_Node> parse_class(Parser &parser);
 #define PARSE_FAIL {RESTORE; return nullptr;}
 #define ACCEPT_OR_FAIL(...) if (!parser.accept(__VA_ARGS__)) { PARSE_FAIL; }
 #define CHECK_OR_FAIL(check) if (!(check)) PARSE_FAIL;
+#define CHECK_OR_ERROR(check, ...) if (!(check)) { parser.report_error(__VA_ARGS__); PARSE_FAIL; }
 //#define DEBUG(tk, ...) parser.report_debug(tk, __VA_ARGS__)
 #define DEBUG(tk, ...)
 
@@ -150,11 +152,7 @@ static uptr<Assign_Node> parse_assignment(Parser &parser)
     CHECK_OR_FAIL(lhs);
     Token eq_tk;
     ACCEPT_OR_FAIL(eq_tk, { Token_Id::Equals });
-    if (!lhs->can_lvalue())
-    {
-        parser.report_error(eq_tk, "LHS of assignment is not an lvalue.");
-        PARSE_FAIL;
-    }
+    CHECK_OR_ERROR(lhs->can_lvalue(), eq_tk, "LHS of assignment is not an lvalue.");
     auto rhs = parse_expression(parser);
     CHECK_OR_FAIL(rhs);
     return uptr<Assign_Node>(new Assign_Node(eq_tk.src_loc(),
@@ -170,6 +168,63 @@ static uptr<Return_Node> parse_return(Parser &parser)
     ACCEPT_OR_FAIL(retn_tk, { Token_Id::K_return });
     auto values = parse_expression_list(parser);
     return uptr<Return_Node>(new Return_Node{retn_tk.src_loc(), values.release()});
+}
+static uptr<If_Else_Node> parse_if_else(Parser &parser)
+{
+    SAVE;
+    Token if_tk;
+    ACCEPT_OR_FAIL(if_tk, { Token_Id::K_if });
+    auto condition = parse_expression(parser);
+    CHECK_OR_ERROR(condition, if_tk, "Couldn't parse if conditional");
+    std::vector<Ast_Node*> consequence, alternative;
+    if (parser.peek_id() == Token_Id::Open_Curly)
+    {
+        CHECK_OR_FAIL(parse_body(parser, consequence));
+    }
+    else
+    {
+        auto single = parse_expression(parser);
+        if (single)
+        {
+            consequence.push_back(single.release());
+        }
+        else
+        {
+            // empty if leg
+        }
+    }
+
+    if (parser.accept({Token_Id::K_else}))
+    {
+        if (parser.peek_id() == Token_Id::K_if)
+        {
+            auto single = parse_if_else(parser);
+            CHECK_OR_FAIL(single);
+            alternative.push_back(single.release());
+        }
+        else if (parser.peek_id() == Token_Id::Open_Curly)
+        {
+            CHECK_OR_FAIL(parse_body(parser, alternative));
+        }
+        else
+        {
+            auto single = parse_expression(parser);
+            CHECK_OR_FAIL(single);
+            alternative.push_back(single.release());
+        }
+    }
+    return uptr<If_Else_Node>(new If_Else_Node{if_tk.src_loc(), condition.release(), consequence, alternative, parser.types->get_void()});
+}
+static uptr<While_Node> parse_while(Parser &parser)
+{   // while :=
+    //     while expression { body }
+    SAVE;
+    Token while_tk;
+    ACCEPT_OR_FAIL(while_tk, { Token_Id::K_while});
+    auto condition = parse_expression(parser);
+    std::vector<Ast_Node*> body;
+    CHECK_OR_FAIL(parse_body(parser, body));
+    return uptr<While_Node>(new While_Node{while_tk.src_loc(), condition.release(), body});
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
 {   // decl :=
@@ -664,6 +719,10 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
     {
         return parse_fn(parser);
     }
+    if (tk->id() == Token_Id::K_if)
+    {
+        return parse_if_else(parser);
+    }
     return parse_logical_or_exp(parser);
 }
 static uptr<Type_Node> parse_type(Parser &parser)
@@ -881,6 +940,11 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
         parser.accept({Token_Id::Semicolon});
         return retn;
+    }
+    if (auto whil = parse_while(parser))
+    {
+        parser.accept({Token_Id::Semicolon});
+        return whil;
     }
     if (auto expr = parse_expression(parser))
     {

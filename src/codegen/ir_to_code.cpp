@@ -6,6 +6,16 @@
 
 #define NOT_IMPL {printf("IR_To_Code visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
+void IR_To_Code::visit(IR_Noop &n)
+{
+    cg->push_back_noop();
+}
+
+void IR_To_Code::visit(IR_Block &n)
+{
+    convert_many(n.nodes);
+}
+
 void IR_To_Code::visit(IR_Boolean &n)
 {
     cg->push_back_literal_value(n.value);
@@ -54,9 +64,6 @@ void IR_To_Code::visit(IR_Symbol &n)
         case Symbol_Scope::Global:
             cg->push_back_load_global(n.index);
             break;
-        case Symbol_Scope::Argument:
-            cg->push_back_load_arg(n.index);
-            break;
         case Symbol_Scope::Local:
             cg->push_back_load_local(n.index);
             break;
@@ -85,6 +92,7 @@ void IR_To_Code::visit(IR_Call &n)
     {
         convert_one(*a);
     }
+
     // Simple optimization if we know ahead of time the thing we're calling is literally
     // a callable. This is most useful for calling primitive builtin functions directly
     // otherwise we would waste time pushing a value to the stack before popping it and
@@ -99,10 +107,6 @@ void IR_To_Code::visit(IR_Call &n)
         {
             assert(callable->u.label->is_resolved());
             cg->push_back_call_code(callable->u.label->address());
-            if (auto_call_cleanup)
-            {
-                cg->push_back_drop(n.arguments.size());
-            }
         }
     }
     else
@@ -115,12 +119,9 @@ void IR_To_Code::visit(IR_Call &n)
         else
         {
             cg->push_back_call_code_dyn();
-            if (auto_call_cleanup)
-            {
-                cg->push_back_drop(n.arguments.size());
-            }
         }
     }
+
 }
 
 void IR_To_Code::visit(IR_Call_Method &n)
@@ -139,7 +140,8 @@ void IR_To_Code::visit(IR_Return &n)
     {
         convert_one(*v);
     }
-    cg->push_back_return();
+    bool fast = !n.should_leave;
+    cg->push_back_return(fast);
 }
 
 void IR_To_Code::visit(IR_Label &n)
@@ -152,20 +154,20 @@ void IR_To_Code::visit(IR_Label &n)
 void IR_To_Code::visit(IR_Named_Block &n)
 {
     visit(static_cast<IR_Label&>(n));
-    convert_many(n.body(), true);
+    convert_many(n.body());
     convert_one(*n.end());
 }
 
 void IR_To_Code::visit(IR_Branch &n)
 {
     assert(n.destination);
+    auto from = cg->code.size();
     if (n.destination->is_resolved())
     {
-        cg->push_back_branch(n.destination->address());
+        cg->push_back_branch(n.destination->address() - from);
     }
     else
     {
-        auto from = cg->code.size();
         auto idx = cg->push_back_branch();
         n.destination->please_backfill_on_resolve_rel(cg, idx, from);
     }
@@ -174,40 +176,35 @@ void IR_To_Code::visit(IR_Branch &n)
 void IR_To_Code::visit(IR_Branch_If_True &n)
 {
     assert(n.destination);
-    // @FixMe: does this need to generate a check against the "true" instance?
     if (n.destination->is_resolved())
     {
-        cg->push_back_branch_if_not_zero(n.destination->address());
+        cg->push_back_branch_if_not_zero(n.destination->address(), n.consume_cond);
     }
     else
     {
         auto from = cg->code.size();
-        auto idx = cg->push_back_branch();
+        auto idx = cg->push_back_branch_if_not_zero(n.consume_cond);
         n.destination->please_backfill_on_resolve_rel(cg, idx, from);
     }
 }
 
 void IR_To_Code::visit(IR_Branch_If_False &n)
 {
-    NOT_IMPL;
     assert(n.destination);
-    // @FixMe: does this need to generate a check against the "false" instance?
     if (n.destination->is_resolved())
     {
-        cg->push_back_branch_if_zero(n.destination->address());
+        cg->push_back_branch_if_zero(n.destination->address(), n.consume_cond);
     }
     else
     {
         auto from = cg->code.size();
-        auto idx = cg->push_back_branch();
+        auto idx = cg->push_back_branch_if_zero(n.consume_cond);
         n.destination->please_backfill_on_resolve_rel(cg, idx, from);
     }
 }
 
 void IR_To_Code::visit(IR_Assignment &n)
 {
-    auto old_auto_call_cleanup = auto_call_cleanup;
-    auto_call_cleanup = false;
     // @TODO: how will array assignment be handled?
     auto lval = dynamic_cast<IR_LValue*>(n.lhs);
     assert(lval);
@@ -231,8 +228,7 @@ void IR_To_Code::visit(IR_Assignment &n)
         abort();
     }
 
-    auto var = dynamic_cast<IR_Symbol*>(lval);
-    if (var)
+    if (auto var = dynamic_cast<IR_Symbol*>(lval))
     {
         var->is_initialized = true;
         convert_one(*n.rhs);
@@ -242,8 +238,35 @@ void IR_To_Code::visit(IR_Assignment &n)
             case Symbol_Scope::Global:
                 cg->push_back_store_global(var->index);
                 break;
-            case Symbol_Scope::Argument:
-                cg->push_back_store_arg(var->index);
+            case Symbol_Scope::Local:
+                cg->push_back_store_local(var->index);
+                break;
+            case Symbol_Scope::Field:
+                NOT_IMPL;
+                break;
+        }
+    }
+}
+
+void IR_To_Code::visit(IR_Assign_Top &n)
+{
+    // @TODO: how will array assignment be handled?
+    auto lval = dynamic_cast<IR_LValue*>(n.lhs);
+    assert(lval);
+    auto lval_ty = lval->get_type();
+    if (!lval_ty)
+    {
+        n.lhs->src_loc.report("error", "Could not deduce type.\n");
+        abort();
+    }
+    if (auto var = dynamic_cast<IR_Symbol*>(lval))
+    {
+        var->is_initialized = true;
+        switch (var->scope)
+        {
+            default: printf("don't know this scope!\n"); abort();
+            case Symbol_Scope::Global:
+                cg->push_back_store_global(var->index);
                 break;
             case Symbol_Scope::Local:
                 cg->push_back_store_local(var->index);
@@ -253,17 +276,6 @@ void IR_To_Code::visit(IR_Assignment &n)
                 break;
         }
     }
-
-    if (auto call = dynamic_cast<IR_Call*>(n.rhs))
-    {   // Assignment from a call, we need to cleanup arguments passed.
-        // Native functions maniplate the stack directly and don't need their arguments
-        // dropped
-        if (!call->get_fn_type()->is_native())
-        {
-            cg->push_back_drop(call->arguments.size());
-        }
-    }
-    auto_call_cleanup = old_auto_call_cleanup;
 }
 
 inline
@@ -274,14 +286,14 @@ void IR_To_Code::binary_op_helper(struct IR_Binary_Operation &bop)
     {
         if (m->is_native())
         {
-            convert_one(*bop.rhs);
             convert_one(*bop.lhs);
+            convert_one(*bop.rhs);
             cg->push_back_call_primitive(*m->primitive_function());
         }
         else
         {
-            convert_one(*bop.rhs);
             convert_one(*bop.lhs);
+            convert_one(*bop.rhs);
             cg->push_back_call_code(m->code_function());
         }
     }
@@ -563,21 +575,11 @@ void IR_To_Code::visit(struct IR_Allocate_Locals &n)
     cg->push_back_alloc_locals(n.num_to_alloc);
 }
 
-void IR_To_Code::convert_many(const std::vector<IR_Node*> &n, bool drop_unused)
+void IR_To_Code::convert_many(const std::vector<IR_Node*> &n)
 {
     for (auto &&one : n)
     {
         convert_one(*one);
-        if (drop_unused)
-        {
-            // @XXX: this is a hack out of sheer laziness and probably needs handling on a
-            // case by case basis.
-            auto expression = dynamic_cast<struct IR_Value*>(one);
-            if (expression && expression->get_type() != ir->types->get_void())
-            {   // any tree that results in a value dangling on the stack needs to be pruned
-                cg->push_back_drop(1);
-            }
-        }
     }
 }
 
@@ -585,8 +587,7 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
     cg = new Codegen;
     this->ir = &ir;
-    auto_call_cleanup = true;
-    convert_many(ir.roots, true);
+    convert_many(ir.roots);
     cg->push_back_halt();
     return cg;
 }

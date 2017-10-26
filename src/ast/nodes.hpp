@@ -14,6 +14,8 @@
 #include "ast_class_def.hpp"
 #include "ast_type.hpp"
 #include "ast_return.hpp"
+#include "ast_loop.hpp"
+#include "ast_if_else.hpp"
 
 
 #endif /* MALANG_AST_NODES_HPP */

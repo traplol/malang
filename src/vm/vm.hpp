@@ -8,12 +8,6 @@
 
 using byte = unsigned char;
 
-struct Call_Frame
-{
-    uintptr_t return_ip;
-    uintptr_t args_frame;
-};
-
 struct Malang_VM
 {
     Malang_VM(const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50);
@@ -26,8 +20,6 @@ struct Malang_VM
     std::vector<byte> code;
     std::vector<Native_Code> primitives;
 
-    uintptr_t ip;
-
     uintptr_t locals_frames_top;
     uintptr_t call_frames_top;
 
@@ -35,17 +27,20 @@ struct Malang_VM
     uintptr_t locals_top;
     uintptr_t data_top;
 
-    uintptr_t locals_frames[256];
-    Call_Frame call_frames[256];
+    static constexpr size_t n_frames = 256;
+    static constexpr size_t n_vars = 16000;
 
-    Malang_Value globals[16000];
-    Malang_Value locals[16000];
-    Malang_Value data_stack[16000];
+    uintptr_t locals_frames[n_frames];
+    byte *call_frames[n_frames];
+
+    Malang_Value globals[n_vars];
+    Malang_Value locals[n_vars];
+    Malang_Value data_stack[n_vars];
 
     void dump_code(uintptr_t ip, size_t n, int width=30) const;
-    void trace() const;
-    void trace_abort(const char *fmt, ...) const;
-    void stack_trace(uintptr_t n = 16) const;
+    void trace(uintptr_t ip) const;
+    void trace_abort(uintptr_t ip, const char *fmt, ...) const;
+    void stack_trace() const;
 
     void add_local(Malang_Value value);
     void add_global(Malang_Value value);
@@ -54,17 +49,20 @@ struct Malang_VM
     inline
     void push_locals_frame(uintptr_t frame)
     {
+        assert(locals_frames_top+1 < n_frames);
         locals_frames[locals_frames_top++] = frame;
     }
     inline
     uintptr_t pop_locals_frame()
     {
+        assert(locals_frames_top > 0);
         auto frame = locals_frames[--locals_frames_top];
         return frame;
     }
     inline
     Malang_Value *current_locals()
     {
+        assert(locals_frames_top > 0);
         auto frame = locals_frames[locals_frames_top-1];
         return &locals[frame];
     }
@@ -80,37 +78,24 @@ struct Malang_VM
     }
 
     inline
-    void push_call_frame(Call_Frame frame)
+    void push_call_frame(byte *frame)
     {
+        assert(call_frames_top+1 < n_frames);
         call_frames[call_frames_top++] = frame;
     }
     inline
-    Call_Frame pop_call_frame()
+    byte *pop_call_frame()
     {
+        assert(call_frames_top > 0);
         auto frame = call_frames[--call_frames_top];
         return frame;
     }
     inline
-    Call_Frame current_call_frame()
+    byte *current_call_frame()
     {
+        assert(call_frames_top > 0);
         auto frame = call_frames[call_frames_top-1];
         return frame;
-    }
-    inline
-    Malang_Value *current_args()
-    {
-        auto frame = call_frames[call_frames_top-1];
-        return &data_stack[frame.args_frame];
-    }
-    inline
-    Malang_Value get_arg(intptr_t n)
-    {
-        return current_args()[0-n];
-    }
-    inline
-    void set_arg(intptr_t n, Malang_Value value)
-    {
-        current_args()[0-n] = value;
     }
 
     inline
@@ -144,6 +129,12 @@ struct Malang_VM
     Malang_Value pop_data()
     {
         auto data = data_stack[--data_top];
+        return data;
+    }
+    inline
+    Malang_Value peek_data()
+    {
+        auto data = data_stack[data_top-1];
         return data;
     }
 };

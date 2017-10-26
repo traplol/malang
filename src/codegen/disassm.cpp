@@ -66,9 +66,7 @@ std::string Disassembler::dis(std::vector<byte> code)
                 p += sizeof(n);
             } break;
             case Instruction::Literal_16:
-            case Instruction::Load_Arg:
             case Instruction::Load_Local:
-            case Instruction::Store_Arg:
             case Instruction::Store_Local:
             case Instruction::Alloc_Locals:
             case Instruction::Drop_N:
@@ -93,7 +91,9 @@ std::string Disassembler::dis(std::vector<byte> code)
             } break;
             case Instruction::Branch:
             case Instruction::Branch_If_Zero:
+            case Instruction::Pop_Branch_If_Zero:
             case Instruction::Branch_If_Not_Zero:
+            case Instruction::Pop_Branch_If_Not_Zero:
             {
                 ss << get_n_bytes(p, 5);
                 ++p;

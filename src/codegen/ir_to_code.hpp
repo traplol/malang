@@ -8,6 +8,9 @@
 
 struct IR_To_Code : IR_Visitor
 {
+    virtual void visit(struct IR_Noop &n) override;
+    virtual void visit(struct IR_Block &n) override;
+
     virtual void visit(struct IR_Boolean &n) override;
     virtual void visit(struct IR_Char &n) override;
     virtual void visit(struct IR_Fixnum &n) override;
@@ -28,6 +31,7 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Branch_If_True &n) override;
     virtual void visit(struct IR_Branch_If_False &n) override;
     virtual void visit(struct IR_Assignment &n) override;
+    virtual void visit(struct IR_Assign_Top &n) override;
 
     virtual void visit(struct IR_B_Add &n) override;
     virtual void visit(struct IR_B_Subtract &n) override;
@@ -61,8 +65,9 @@ private:
     Codegen *cg;
     Malang_IR *ir;
     bool auto_call_cleanup;
+    size_t auto_drop;
     void convert_one(IR_Node &n);
-    void convert_many(const std::vector<IR_Node*> &n, bool drop_unused);
+    void convert_many(const std::vector<IR_Node*> &n);
     void binary_op_helper(struct IR_Binary_Operation &bop);
 
 };

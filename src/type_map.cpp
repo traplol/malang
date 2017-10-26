@@ -15,30 +15,37 @@ Type_Map::Type_Map()
 
 Type_Info *Type_Map::get_void() const
 {
+    assert(m_void);
     return m_void;
 }
 Type_Info *Type_Map::get_object() const
 {
+    assert(m_object);
     return m_object;
 }
 Type_Info *Type_Map::get_int() const
 {
+    assert(m_int);
     return m_int;
 }
 //Type_Info *Type_Map::get_char() const
 //{
+//    assert(m_char);
 //    return m_char;
 //}
 Type_Info *Type_Map::get_double() const
 {
+    assert(m_double);
     return m_double;
 }
 Type_Info *Type_Map::get_string() const
 {
+    assert(m_string);
     return m_string;
 }
 Type_Info *Type_Map::get_bool() const
 {
+    assert(m_bool);
     return m_bool;
 }
 

@@ -23,7 +23,6 @@ void Malang_VM::load_code(const std::vector<byte> &code)
 static void run_code(Malang_VM&);
 void Malang_VM::run()
 {
-    ip = 0;
     locals_frames_top = 0;
     call_frames_top = 0;
     globals_top = 0;
@@ -75,26 +74,38 @@ std::string to_string(const Malang_Value &value)
     return ss.str();
 }
 
-void Malang_VM::stack_trace(uintptr_t n) const
+void Malang_VM::stack_trace() const
 {
     print("\nDATA STACK:\n");
-    n = std::min(n, data_top);
-    for (auto i = data_top - n; i < data_top; ++i)
+    for (auto i = data_top; i > 0; --i)
     {
-        auto &&e = data_stack[i];
-        if (n-i-1 == 0)
+        auto &&e = data_stack[i-1];
+        if (i == data_top)
         {
-            print("-%ld: %s <-- TOP\n", n-i-1, to_string(e).c_str());
+            print("%ld: %s <-- TOP\n", data_top-i, to_string(e).c_str());
         }
         else
         {
-            print("-%ld: %s\n", n-i-1, to_string(e).c_str());
+            print("-%ld: %s\n", data_top-i, to_string(e).c_str());
+        }
+    }
+    print("\nLOCALS:\n");
+    for (auto i = locals_top; i > 0; --i)
+    {
+        auto &&e = locals[i-1];
+        if (i == locals_top)
+        {
+            print("%ld: %s <-- TOP\n", locals_top-i, to_string(e).c_str());
+        }
+        else
+        {
+            print("-%ld: %s\n", locals_top-i, to_string(e).c_str());
         }
     }
     print("\n");
 }
 
-void Malang_VM::trace() const
+void Malang_VM::trace(uintptr_t ip) const
 {
     auto x = std::min(64ul, ip);
     auto y = std::min(64ul, code.size() - ip);
@@ -115,13 +126,13 @@ void Malang_VM::trace() const
     stack_trace();
 }
 
-void Malang_VM::trace_abort(const char *fmt, ...) const
+void Malang_VM::trace_abort(uintptr_t ip, const char *fmt, ...) const
 {
     va_list args;
     va_start(args, fmt);
     vprint(fmt, args);
     va_end(args);
-    trace();
+    trace(ip);
     abort();
 }
 
@@ -158,608 +169,629 @@ void Malang_VM::add_data(Malang_Value value)
 }
 
 
-#define NOT_IMPL {vm.trace_abort("%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
+#define NOT_IMPL {vm.trace_abort(ip-vm.code.data(), "%s:%d `%s()` not implemented\n", __FILE__, __LINE__, __FUNCTION__);}
 
-static inline byte fetch8(Malang_VM &vm)
+static inline
+byte fetch8(byte *p)
 {
-    auto p = &(vm.code[vm.ip]);
     return *p;
 }
 
-static inline int16_t fetch16(Malang_VM &vm)
+static inline
+int16_t fetch16(byte *p)
 {
-    auto p = &(vm.code[vm.ip]);
     return *reinterpret_cast<int16_t*>(p);
 }
 
-static inline int32_t fetch32(Malang_VM &vm)
+static inline
+int32_t fetch32(byte *p)
 {
-    auto p = &(vm.code[vm.ip]);
     return *reinterpret_cast<int32_t*>(p);
 }
 
-static inline Malang_Value fetch_value(Malang_VM &vm)
+static inline
+Malang_Value fetch_value(byte *p)
 {
-    auto p = &(vm.code[vm.ip]);
     return *reinterpret_cast<Malang_Value*>(p);
-}
-
-#define NEXT8   vm.ip += sizeof(byte)
-#define NEXT16  vm.ip += sizeof(int16_t)
-#define NEXT32  vm.ip += sizeof(int32_t)
-#define NEXT_N(n) vm.ip += sizeof(n)
-
-static inline void exec_Fixnum_Add(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() + b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Subtract(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() - b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Multiply(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() * b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Divide(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() / b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Modulo(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() % b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_And(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() & b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Or(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() | b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Xor(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() ^ b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Left_Shift(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() << b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Right_Shift(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() >> b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Greater_Than(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() > b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Greater_Than_Equals(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() >= b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Less_Than(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() < b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Less_Than_Equals(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() <= b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Negate(Malang_VM &vm)
-{
-    auto a = vm.pop_data();
-    vm.push_data(-a.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Invert(Malang_VM &vm)
-{
-    auto a = vm.pop_data();
-    vm.push_data(~a.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Noop(Malang_VM &vm)
-{
-    NEXT8;
-}
-
-static inline void exec_Literal_8(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch8(vm);
-    vm.push_data(n);
-    NEXT8;
-}
-
-static inline void exec_Literal_16(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch16(vm);
-    vm.push_data(n);
-    NEXT_N(n);
-}
-
-static inline void exec_Literal_32(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch32(vm);
-    vm.push_data(n);
-    NEXT_N(n);
-}
-
-static inline void exec_Literal_value(Malang_VM &vm)
-{
-    // @Audit: something feels off about this, why would there every be a literal pointer?
-    //         `Value`s might be in code by why would there be a pointer?
-    NEXT8;
-    auto n = fetch_value(vm);
-    vm.push_data(n);
-    NEXT_N(n);
-}
-
-static inline void exec_Get_Type(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
-static inline void exec_Branch(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch32(vm);
-    vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
-}
-
-static inline void exec_Branch_If_Zero(Malang_VM &vm)
-{
-    NEXT8;
-    auto cond = vm.pop_data();
-    // @TODO: should probably have `true', `false', and `nil' value constants?
-    if (cond.bits() == 0)
-    {
-        auto n = fetch32(vm);
-        vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
-    }
-    else
-    { // need to skip the offset
-        NEXT32;
-    }
-}
-
-static inline void exec_Branch_If_Not_Zero(Malang_VM &vm)
-{
-    NEXT8;
-    auto cond = vm.pop_data();
-    // @TODO: should probably have `true', `false', and `nil' value constants?
-    if (cond.bits() != 0)
-    {
-        auto n = fetch32(vm);
-        vm.ip += n-1; // @XXX: n-1 to be relative to the branch instruction
-    }
-    else
-    { // need to skip the offset
-        NEXT32;
-    }
-}
-
-static inline void exec_Return(Malang_VM &vm)
-{
-    auto frame = vm.pop_call_frame();
-    vm.ip = frame.return_ip;
-}
-
-static inline void exec_Call(Malang_VM &vm)
-{
-    NEXT8;
-    auto new_ip = fetch32(vm);
-    vm.push_call_frame({vm.ip + sizeof(new_ip), vm.data_top-1});
-    vm.ip = new_ip;
-}
-
-static inline void exec_Call_Primitive(Malang_VM &vm)
-{
-    NEXT8;
-    auto prim_fn_idx = fetch32(vm);
-    vm.push_call_frame({vm.ip + sizeof(prim_fn_idx), vm.data_top-1});
-    vm.primitives[prim_fn_idx](vm);
-    exec_Return(vm);
-}
-
-static inline void exec_Call_Dyn(Malang_VM &vm)
-{
-    auto new_ip = vm.pop_data().as_fixnum();
-    vm.push_call_frame({vm.ip+1, vm.data_top-1});
-    vm.ip = new_ip;
-}
-
-static inline void exec_Call_Primitive_Dyn(Malang_VM &vm)
-{
-    auto prim_fn_idx = vm.pop_data().as_fixnum();
-    vm.push_call_frame({vm.ip+1, vm.data_top-1});
-    vm.primitives[prim_fn_idx](vm);
-    exec_Return(vm);
-}
-
-static inline void exec_Load_Global(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch32(vm);
-    vm.push_data(vm.globals[n]);
-    NEXT_N(n);
-}
-
-static inline void exec_Store_Global(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch32(vm);
-    vm.globals[n] = vm.pop_data();
-    NEXT_N(n);
-}
-
-static inline void exec_Load_Field(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
-static inline void exec_Store_Field(Malang_VM &vm)
-{
-    NOT_IMPL;
-}
-
-static inline void exec_Load_Local(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch16(vm);
-    auto local = vm.get_local(n);
-    vm.push_data(local);
-    NEXT_N(n);
-}
-
-static inline void exec_Load_Local_0(Malang_VM &vm)
-{
-    auto local = vm.get_local(0);
-    vm.push_data(local);
-    NEXT8;
-}
-
-static inline void exec_Load_Local_1(Malang_VM &vm)
-{
-    auto local = vm.get_local(1);
-    vm.push_data(local);
-    NEXT8;
-}
-
-static inline void exec_Load_Local_2(Malang_VM &vm)
-{
-    auto local = vm.get_local(2);
-    vm.push_data(local);
-    NEXT8;
-}
-
-static inline void exec_Load_Local_3(Malang_VM &vm)
-{
-    auto local = vm.get_local(3);
-    vm.push_data(local);
-    NEXT8;
-}
-
-static inline void exec_Store_Local(Malang_VM &vm)
-{
-    NEXT8;
-    auto value = vm.data_stack[--vm.data_top];
-    auto n = fetch16(vm);
-    vm.set_local(n, value);
-    NEXT_N(n);
-}
-
-static inline void exec_Store_Local_0(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_local(0, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Local_1(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_local(1, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Local_2(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_local(2, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Local_3(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_local(3, value);
-    NEXT8;
-}
-
-static inline void exec_Load_Arg(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch16(vm);
-    auto arg = vm.get_arg(n);
-    vm.push_data(arg);
-    NEXT_N(n);
-}
-
-static inline void exec_Load_Arg_0(Malang_VM &vm)
-{
-    auto arg = vm.get_arg(0);
-    vm.push_data(arg);
-    NEXT8;
-}
-
-static inline void exec_Load_Arg_1(Malang_VM &vm)
-{
-    auto arg = vm.get_arg(1);
-    vm.push_data(arg);
-    NEXT8;
-}
-
-static inline void exec_Load_Arg_2(Malang_VM &vm)
-{
-    auto arg = vm.get_arg(2);
-    vm.push_data(arg);
-    NEXT8;
-}
-
-static inline void exec_Load_Arg_3(Malang_VM &vm)
-{
-    auto arg = vm.get_arg(3);
-    vm.push_data(arg);
-    NEXT8;
-}
-
-static inline void exec_Store_Arg(Malang_VM &vm)
-{
-    NEXT8;
-    auto value = vm.data_stack[--vm.data_top];
-    auto n = fetch16(vm);
-    vm.set_arg(n, value);
-    NEXT_N(n);
-}
-
-static inline void exec_Store_Arg_0(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_arg(0, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Arg_1(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_arg(1, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Arg_2(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_arg(2, value);
-    NEXT8;
-}
-
-static inline void exec_Store_Arg_3(Malang_VM &vm)
-{
-    auto value = vm.pop_data();
-    vm.set_arg(3, value);
-    NEXT8;
-}
-
-static inline void exec_Alloc_Locals(Malang_VM &vm)
-{
-    NEXT8;
-    vm.locals_frames[vm.locals_frames_top++] = vm.locals_top;
-    auto n = fetch16(vm);
-    vm.locals_top += n;
-    NEXT_N(n);
-}
-
-static inline void exec_Free_Locals(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch16(vm);
-    vm.locals_top -= n;
-    NEXT_N(n);
-}
-
-static inline void exec_Dup_1(Malang_VM &vm)
-{
-    auto a = vm.pop_data();
-    vm.push_data(a);
-    vm.push_data(a);
-    NEXT8;
-}
-
-static inline void exec_Dup_2(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a);
-    vm.push_data(b);
-    vm.push_data(a);
-    vm.push_data(b);
-    NEXT8;
-}
-
-static inline void exec_Swap_1(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(b);
-    vm.push_data(a);
-    NEXT8;
-}
-
-static inline void exec_Over_1(Malang_VM &vm)
-{
-    auto a = vm.data_stack[vm.data_top-2];
-    vm.push_data(a);
-    NEXT8;
-}
-
-static inline void exec_Drop_1(Malang_VM &vm)
-{
-    vm.data_top -= 1;
-    NEXT8;
-}
-
-static inline void exec_Drop_2(Malang_VM &vm)
-{
-    vm.data_top -= 2;
-    NEXT8;
-}
-
-static inline void exec_Drop_3(Malang_VM &vm)
-{
-    vm.data_top -= 3;
-    NEXT8;
-}
-
-static inline void exec_Drop_4(Malang_VM &vm)
-{
-    vm.data_top -= 4;
-    NEXT8;
-}
-
-static inline void exec_Drop_N(Malang_VM &vm)
-{
-    NEXT8;
-    auto n = fetch16(vm);
-    vm.data_top -= n;
-    NEXT_N(n);
-}
-
-static inline void exec_Fixnum_Equals(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() == b.as_fixnum());
-    NEXT8;
-}
-
-static inline void exec_Fixnum_Not_Equals(Malang_VM &vm)
-{
-    auto b = vm.pop_data();
-    auto a = vm.pop_data();
-    vm.push_data(a.as_fixnum() != b.as_fixnum());
-    NEXT8;
 }
 
 
 static void run_code(Malang_VM &vm)
 {
+#ifndef USE_COMPUTED_GOTO
 #define USE_COMPUTED_GOTO 1
+#endif
 
 #if USE_COMPUTED_GOTO
 
-  #define ITEM(X) &&computed_##X,
-      void *computed_gotos[] =
-          {
-              &&computed_Halt,
-              #include "instruction.def"
-          };
+#define ITEM(X) &&computed_##X,
+    void *computed_gotos[] =
+        {
+            &&computed_Halt,
+#include "instruction.def"
+        };
 
-  #define INIT_EXEC                               \
-      goto *computed_gotos[fetch8(vm)];
+#define EXEC                               \
+    goto *computed_gotos[fetch8(ip)];
   
-  #define EXEC_ITEM(X)                            \
-      computed_##X: {                             \
-          exec_##X(vm);                           \
-          goto *computed_gotos[fetch8(vm)]; }
+#define DISPATCH(X) computed_##X:
   
-  #define HALT \
-      computed_Halt: \
-      { return; }
+#define HALT                                    \
+    computed_Halt:                              \
+        { return; }
+
+#define DISPATCH_NEXT \
+        goto *computed_gotos[fetch8(ip)]
+
+#define VM_INIT auto ip = vm.code.data(); \
+    auto first_ip = ip;
 
 #else
 
-  #define EXEC_ITEM(X) \
-      case Instruction::X: exec_##X(vm); continue;
+#define DISPATCH(X) case Instruction::X: 
 
-  #define INIT_EXEC                                       \
-      auto ins = static_cast<Instruction>(fetch8(vm));    \
-      switch (ins)
+#define DISPATCH_NEXT continue
+
+#define EXEC                                       \
+    auto ins = static_cast<Instruction>(fetch8(ip));    \
+    switch (ins)
   
-  #define HALT                                       \
-      case Instruction::Halt: return;                     \
-      default: vm.trace_abort("Unknown instruction");
+#define HALT                                            \
+    default: vm.trace_abort(ip - first_ip, "Unknown instruction");   \
+    case Instruction::Halt: return;                     \
+
+#define VM_INIT auto ip = vm.code.data(); \
+    auto first_ip = ip; \
+    for (;;)
 
 #endif
 
-
-    while (1)
+    VM_INIT
     {
-        INIT_EXEC
+        EXEC
         {
-#define ITEM(X) EXEC_ITEM(X)
-            #include "instruction.def"
-
-        HALT
+            HALT;
+            DISPATCH(Fixnum_Add)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a+b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Subtract)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a-b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Multiply)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a*b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Divide)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a/b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Modulo)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a%b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_And)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a&b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Or)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a|b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Xor)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a^b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Left_Shift)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a<<b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Right_Shift)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a>>b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Equals)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a==b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Not_Equals)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a!=b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Greater_Than)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a>b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Greater_Than_Equals)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a>=b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Less_Than)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a<b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Less_Than_Equals)
+            {
+                ip++;
+                auto b = vm.pop_data().as_fixnum();
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(a<=b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Negate)
+            {
+                ip++;
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(-a);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Fixnum_Invert)
+            {
+                ip++;
+                auto a = vm.pop_data().as_fixnum();
+                vm.push_data(-a);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Noop)
+            {
+                ip++;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Literal_8)
+            {
+                ip++;
+                auto n = fetch8(ip);
+                vm.push_data(n);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Literal_16)
+            {
+                ip++;
+                auto n = fetch16(ip);
+                vm.push_data(n);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Literal_32)
+            {
+                ip++;
+                auto n = fetch32(ip);
+                vm.push_data(n);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Literal_value)
+            {
+                ip++;
+                auto n = fetch_value(ip);
+                vm.push_data(n);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Get_Type)
+            {
+                NOT_IMPL;
+            }
+            DISPATCH(Branch)
+            {
+                ip++;
+                ip += fetch32(ip) - 1;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Pop_Branch_If_Zero)
+            {
+                ip++;
+                if (vm.pop_data().as_fixnum() == 0)
+                {
+                    ip += fetch32(ip) - 1;
+                }
+                else
+                {
+                    ip += 4;
+                }
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Pop_Branch_If_Not_Zero)
+            {
+                ip++;
+                if (vm.pop_data().as_fixnum() != 0)
+                {
+                    ip += fetch32(ip) - 1;
+                }
+                else
+                {
+                    ip += 4;
+                }
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Branch_If_Zero)
+            {
+                ip++;
+                if (vm.peek_data().as_fixnum() == 0)
+                {
+                    ip += fetch32(ip) - 1;
+                }
+                else
+                {
+                    ip += 4;
+                }
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Branch_If_Not_Zero)
+            {
+                ip++;
+                if (vm.peek_data().as_fixnum() != 0)
+                {
+                    ip += fetch32(ip) - 1;
+                }
+                else
+                {
+                    ip += 4;
+                }
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Return)
+            {
+                vm.locals_top = vm.pop_locals_frame();
+                ip = vm.pop_call_frame();
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Return_Fast)
+            {
+                ip = vm.pop_call_frame();
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Call)
+            {
+                ip++;
+                auto idx = fetch32(ip);
+                vm.push_call_frame(ip + sizeof(idx));
+                ip = first_ip + idx;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Call_Primitive)
+            {
+                ip++;
+                auto idx = fetch32(ip);
+                ip += sizeof(idx);
+                vm.primitives[idx](vm);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Call_Dyn)
+            {
+                auto new_ip = vm.pop_data().as_fixnum();
+                vm.push_call_frame(ip + 1);
+                ip = first_ip + new_ip;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Call_Primitive_Dyn)
+            {
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                vm.primitives[idx](vm);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Global)
+            {
+                ip++;
+                auto n = fetch32(ip);
+                auto v = vm.globals[n];
+                vm.push_data(v);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Global)
+            {
+                ip++;
+                auto n = fetch32(ip);
+                vm.globals[n] = vm.pop_data();
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Field)
+            {
+                NOT_IMPL;
+            }
+            DISPATCH(Store_Field)
+            {
+                NOT_IMPL;
+            }
+            DISPATCH(Load_Local)
+            {
+                ip++;
+                auto n = fetch16(ip);
+                auto v = vm.get_local(n);
+                vm.push_data(v);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_0)
+            {
+                ip++;
+                auto v = vm.get_local(0);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_1)
+            {
+                ip++;
+                auto v = vm.get_local(1);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_2)
+            {
+                ip++;
+                auto v = vm.get_local(2);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_3)
+            {
+                ip++;
+                auto v = vm.get_local(3);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_4)
+            {
+                ip++;
+                auto v = vm.get_local(4);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_5)
+            {
+                ip++;
+                auto v = vm.get_local(5);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_6)
+            {
+                ip++;
+                auto v = vm.get_local(6);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_7)
+            {
+                ip++;
+                auto v = vm.get_local(7);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_8)
+            {
+                ip++;
+                auto v = vm.get_local(8);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_Local_9)
+            {
+                ip++;
+                auto v = vm.get_local(9);
+                vm.push_data(v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local)
+            {
+                ip++;
+                auto n = fetch16(ip);
+                auto v = vm.pop_data();
+                vm.set_local(n, v);
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_0)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(0, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_1)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(1, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_2)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(2, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_3)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(3, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_4)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(4, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_5)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(5, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_6)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(6, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_7)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(7, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_8)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(8, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Store_Local_9)
+            {
+                ip++;
+                auto v = vm.pop_data();
+                vm.set_local(9, v);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Alloc_Locals)
+            {
+                ip++;
+                vm.push_locals_frame(vm.locals_top);
+                auto n = fetch16(ip);
+                vm.locals_top += n;
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Dup_1)
+            {
+                ip++;
+                auto a = vm.pop_data();
+                vm.push_data(a);
+                vm.push_data(a);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Dup_2)
+            {
+                ip++;
+                auto b = vm.pop_data();
+                auto a = vm.pop_data();
+                vm.push_data(a);
+                vm.push_data(b);
+                vm.push_data(a);
+                vm.push_data(b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Swap_1)
+            {
+                ip++;
+                auto b = vm.pop_data();
+                auto a = vm.pop_data();
+                vm.push_data(b);
+                vm.push_data(a);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Over_1)
+            {
+                ip++;
+                auto a = vm.data_stack[vm.data_top-2];
+                vm.push_data(a);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Drop_1)
+            {
+                ip++;
+                vm.data_top -= 1;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Drop_2)
+            {
+                ip++;
+                vm.data_top -= 2;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Drop_3)
+            {
+                ip++;
+                vm.data_top -= 3;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Drop_4)
+            {
+                ip++;
+                vm.data_top -= 4;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Drop_N)
+            {
+                ip++;
+                auto n = fetch16(ip);
+                vm.data_top -= n;
+                ip += sizeof(n);
+                DISPATCH_NEXT;
+            }
         }
     }
 }

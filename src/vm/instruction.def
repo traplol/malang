@@ -77,6 +77,16 @@ ITEM(Get_Type)
 // assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
 ITEM(Branch)
 
+// pops the top of the stack
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the value popped is zero
+ITEM(Pop_Branch_If_Zero)
+
+// pops the top of the stack
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the value popped is not zero
+ITEM(Pop_Branch_If_Not_Zero)
+
 // assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
 // if the top of stack is zero
 ITEM(Branch_If_Zero)
@@ -85,8 +95,11 @@ ITEM(Branch_If_Zero)
 // if the top of stack is not zero
 ITEM(Branch_If_Not_Zero)
 
-// pop IP from return stack, set IP to this value
+// restore previous locals frame, pop IP from return stack, set IP to this value
 ITEM(Return)
+
+// pop IP from return stack, set IP to this value
+ITEM(Return_Fast)
 
 // setup call frame, assumes the next 4 bytes of the bytecode is a 32-bit integer
 // representing where to set the IP
@@ -126,15 +139,15 @@ ITEM(Load_Local)
 
 // push the value of variable 0 to the top of the datastack
 ITEM(Load_Local_0)
-
-// push the value of variable 1 to the top of the datastack
 ITEM(Load_Local_1)
-
-// push the value of variable 2 to the top of the datastack
 ITEM(Load_Local_2)
-
-// push the value of variable 3 to the top of the datastack
 ITEM(Load_Local_3)
+ITEM(Load_Local_4)
+ITEM(Load_Local_5)
+ITEM(Load_Local_6)
+ITEM(Load_Local_7)
+ITEM(Load_Local_8)
+ITEM(Load_Local_9)
 
 // the next 2 bytes of the bytecode is a 16-bit index into the locals table, pop the top
 // of the datastack into variable #index
@@ -142,55 +155,19 @@ ITEM(Store_Local)
 
 // pop the top of the datastack into variable 0
 ITEM(Store_Local_0)
-
-// pop the top of the datastack into variable 1
 ITEM(Store_Local_1)
-
-// pop the top of the datastack into variable 2
 ITEM(Store_Local_2)
-
-// pop the top of the datastack into variable 3
 ITEM(Store_Local_3)
-
-// the next 2 bytes of the bytecode is a 16-bit index into the locals table, push the
-// value of argument #index to the top of the datastack
-ITEM(Load_Arg)
-
-// push the value of argument 0 to the top of the datastack
-ITEM(Load_Arg_0)
-
-// push the value of argument 1 to the top of the datastack
-ITEM(Load_Arg_1)
-
-// push the value of argument 2 to the top of the datastack
-ITEM(Load_Arg_2)
-
-// push the value of argument 3 to the top of the datastack
-ITEM(Load_Arg_3)
-
-// the next 2 bytes of the bytecode is a 16-bit index into the locals table, pop the top
-// of the datastack into argument #index
-ITEM(Store_Arg)
-
-// pop the top of the datastack into argument 0
-ITEM(Store_Arg_0)
-
-// pop the top of the datastack into argument 1
-ITEM(Store_Arg_1)
-
-// pop the top of the datastack into argument 2
-ITEM(Store_Arg_2)
-
-// pop the top of the datastack into argument 3
-ITEM(Store_Arg_3)
+ITEM(Store_Local_4)
+ITEM(Store_Local_5)
+ITEM(Store_Local_6)
+ITEM(Store_Local_7)
+ITEM(Store_Local_8)
+ITEM(Store_Local_9)
 
 // the next 2 bytes of the bytecode is a 16-bit integer representing how many locals to
 // allocate for this frame
 ITEM(Alloc_Locals)
-
-// the next 2 bytes of the bytecode is a 16-bit integer representing how many locals to
-// allow the garbage collector to free
-ITEM(Free_Locals)
 
 // before: a
 // after:  a a

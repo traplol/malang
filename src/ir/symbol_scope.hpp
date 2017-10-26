@@ -4,7 +4,6 @@
 enum class Symbol_Scope
 {
     Global,
-    Argument,
     Local,
     Field
 };

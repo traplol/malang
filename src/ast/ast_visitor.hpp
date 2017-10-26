@@ -43,6 +43,8 @@ struct Ast_Visitor
     virtual void visit(struct Decl_Assign_Node&) = 0;
     virtual void visit(struct Decl_Constant_Node&) = 0;
     virtual void visit(struct Return_Node&) = 0;
+    virtual void visit(struct While_Node&) = 0;
+    virtual void visit(struct If_Else_Node&) = 0;
 };
 
 #endif /* AST_VISITOR_H */

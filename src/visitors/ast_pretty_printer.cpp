@@ -34,7 +34,7 @@ void Ast_Pretty_Printer::do_indention()
 void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
 {
     // I don't think this will work for nested bodies?
-    str << " {" << "\n";
+    str << " {\n";
     indent();
     for (auto &&n : body)
     {
@@ -44,6 +44,7 @@ void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
         str << "\n";
     }
     dedent();
+    do_indention();
     str << "}";
 }
 
@@ -269,7 +270,7 @@ void Ast_Pretty_Printer::visit(Class_Def_Node &n)
     {
         str << " : " << n.type_info->get_parent()->name();
     }
-    str << " {" << "\n";
+    str << " {\n";
     indent();
     for (auto &&f : n.fields)
     {
@@ -325,5 +326,32 @@ void Ast_Pretty_Printer::visit(struct Return_Node &n)
     {
         str << " ";
         to_string(*n.values);
+    }
+}
+void Ast_Pretty_Printer::visit(struct While_Node &n)
+{
+    assert(n.condition);
+    do_indention();
+    str << "while "; to_string(*n.condition); do_body(n.body);
+}
+void Ast_Pretty_Printer::visit(struct If_Else_Node &n)
+{
+    assert(n.condition);
+    str << "if "; to_string(*n.condition);
+    do_body(n.consequence);
+    If_Else_Node *elseif = nullptr;
+    if (n.alternative.size() == 1 && (elseif = dynamic_cast<If_Else_Node*>(n.alternative[0])))
+    {
+        str << "\n";
+        do_indention();
+        str << "else ";
+        to_string(*elseif);
+    }
+    else if (!n.alternative.empty())
+    {
+        str << "\n";
+        do_indention();
+        str << "else";
+        do_body(n.alternative);
     }
 }

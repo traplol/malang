@@ -273,53 +273,15 @@ void Codegen::push_back_call_code_dyn()
 {
     push_back_instruction(Instruction::Call_Dyn);
 }
-void Codegen::push_back_return()
+void Codegen::push_back_return(bool fast)
 {
-    push_back_instruction(Instruction::Return);
-}
-
-void Codegen::push_back_store_arg(uint16_t n)
-{
-    switch (n)
+    if (fast)
     {
-        case 0:
-            push_back_instruction(Instruction::Store_Arg_0);
-            break;
-        case 1:
-            push_back_instruction(Instruction::Store_Arg_1);
-            break;
-        case 2:
-            push_back_instruction(Instruction::Store_Arg_2);
-            break;
-        case 3:
-            push_back_instruction(Instruction::Store_Arg_3);
-            break;
-        default:
-            push_back_instruction(Instruction::Store_Arg);
-            push_back_raw_16(n);
-            break;
+        push_back_instruction(Instruction::Return_Fast);
     }
-}
-void Codegen::push_back_load_arg(uint16_t n)
-{
-    switch (n)
+    else
     {
-        case 0:
-            push_back_instruction(Instruction::Load_Arg_0);
-            break;
-        case 1:
-            push_back_instruction(Instruction::Load_Arg_1);
-            break;
-        case 2:
-            push_back_instruction(Instruction::Load_Arg_2);
-            break;
-        case 3:
-            push_back_instruction(Instruction::Load_Arg_3);
-            break;
-        default:
-            push_back_instruction(Instruction::Load_Arg);
-            push_back_raw_16(n);
-            break;
+        push_back_instruction(Instruction::Return);
     }
 }
 
@@ -338,6 +300,24 @@ void Codegen::push_back_store_local(uint16_t n)
             break;
         case 3:
             push_back_instruction(Instruction::Store_Local_3);
+            break;
+        case 4:
+            push_back_instruction(Instruction::Store_Local_4);
+            break;
+        case 5:
+            push_back_instruction(Instruction::Store_Local_5);
+            break;
+        case 6:
+            push_back_instruction(Instruction::Store_Local_6);
+            break;
+        case 7:
+            push_back_instruction(Instruction::Store_Local_7);
+            break;
+        case 8:
+            push_back_instruction(Instruction::Store_Local_8);
+            break;
+        case 9:
+            push_back_instruction(Instruction::Store_Local_9);
             break;
         default:
             push_back_instruction(Instruction::Store_Local);
@@ -360,6 +340,24 @@ void Codegen::push_back_load_local(uint16_t n)
             break;
         case 3:
             push_back_instruction(Instruction::Load_Local_3);
+            break;
+        case 4:
+            push_back_instruction(Instruction::Load_Local_4);
+            break;
+        case 5:
+            push_back_instruction(Instruction::Load_Local_5);
+            break;
+        case 6:
+            push_back_instruction(Instruction::Load_Local_6);
+            break;
+        case 7:
+            push_back_instruction(Instruction::Load_Local_7);
+            break;
+        case 8:
+            push_back_instruction(Instruction::Load_Local_8);
+            break;
+        case 9:
+            push_back_instruction(Instruction::Load_Local_9);
             break;
         default:
             push_back_instruction(Instruction::Load_Local);
@@ -426,16 +424,30 @@ size_t Codegen::push_back_branch()
     push_back_raw_32(0);
     return idx;
 }
-size_t Codegen::push_back_branch_if_zero()
+size_t Codegen::push_back_branch_if_zero(bool pop)
 {
-    push_back_instruction(Instruction::Branch_If_Zero);
+    if (pop)
+    {
+        push_back_instruction(Instruction::Pop_Branch_If_Zero);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Branch_If_Zero);
+    }
     auto idx = code.size();
     push_back_raw_32(0);
     return idx;
 }
-size_t Codegen::push_back_branch_if_not_zero()
+size_t Codegen::push_back_branch_if_not_zero(bool pop)
 {
-    push_back_instruction(Instruction::Branch_If_Not_Zero);
+    if (pop)
+    {
+        push_back_instruction(Instruction::Pop_Branch_If_Not_Zero);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Branch_If_Not_Zero);
+    }
     auto idx = code.size();
     push_back_raw_32(0);
     return idx;
@@ -445,14 +457,28 @@ void Codegen::push_back_branch(int32_t n)
     push_back_instruction(Instruction::Branch);
     push_back_raw_32(n);
 }
-void Codegen::push_back_branch_if_zero(int32_t n)
+void Codegen::push_back_branch_if_zero(int32_t n, bool pop)
 {
-    push_back_instruction(Instruction::Branch_If_Zero);
+    if (pop)
+    {
+        push_back_instruction(Instruction::Pop_Branch_If_Zero);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Branch_If_Zero);
+    }
     push_back_raw_32(n);
 }
-void Codegen::push_back_branch_if_not_zero(int32_t n)
+void Codegen::push_back_branch_if_not_zero(int32_t n, bool pop)
 {
-    push_back_instruction(Instruction::Branch_If_Not_Zero);
+    if (pop)
+    {
+        push_back_instruction(Instruction::Pop_Branch_If_Not_Zero);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Branch_If_Not_Zero);
+    }
     push_back_raw_32(n);
 }
 

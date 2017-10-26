@@ -6,10 +6,10 @@
 #include "../ast/ast.hpp"
 #include "ir.hpp"
 
-struct Scope
+struct Locality
 {
-    Scope();
-    ~Scope();
+    Locality();
+    ~Locality();
     Label_Map *labels;
     Symbol_Map *symbols;
 };
@@ -57,6 +57,8 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Decl_Assign_Node&n) override;
     virtual void visit(struct Decl_Constant_Node&n) override;
     virtual void visit(struct Return_Node&n) override;
+    virtual void visit(struct While_Node&n) override;
+    virtual void visit(struct If_Else_Node&n) override;
 
     Malang_IR *convert_one(Ast_Node &n);
     Malang_IR *convert(Ast &ast);
@@ -64,16 +66,17 @@ struct Ast_To_IR : Ast_Visitor
 private:
     Primitive_Function_Map *primitives;
     Type_Map *types;
-    Scope *cur_scope;
+    Locality *locality;
     struct Fn_Node *cur_fn;
+    IR_Label *cur_false_label;
     Malang_IR *ir;
     IR_Node *tree;
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
-    std::vector<Scope*> scopes;
+    std::vector<Locality*> scopes;
 
-    void push_scope();
-    void pop_scope();
+    void push_locality();
+    void pop_locality();
     IR_Symbol *find_symbol(const std::string &name);
 
     template<typename T = IR_Node>

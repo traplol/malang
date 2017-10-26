@@ -2,6 +2,8 @@
 #define MALANG_IR_NODES_HPP
 
 #include "ir.hpp"
+#include "ir_noop.hpp"
+#include "ir_block.hpp"
 #include "ir_assignment.hpp"
 #include "ir_binary_ops.hpp"
 #include "ir_branch.hpp"
