@@ -223,8 +223,7 @@ static void run_code(Malang_VM &vm)
 #define DISPATCH_NEXT \
         goto *computed_gotos[fetch8(ip)]
 
-#define VM_INIT auto ip = vm.code.data(); \
-    auto first_ip = ip;
+#define VM_INIT // empty
 
 #else
 
@@ -240,12 +239,14 @@ static void run_code(Malang_VM &vm)
     default: vm.trace_abort(ip - first_ip, "Unknown instruction");   \
     case Instruction::Halt: return;                     \
 
-#define VM_INIT auto ip = vm.code.data(); \
-    auto first_ip = ip; \
-    for (;;)
-
+#define VM_INIT for (;;)
 #endif
 
+    if (vm.code.empty())
+        return;
+    auto ip = vm.code.data();
+    auto first_ip = ip;
+    auto fast_locals = vm.locals;
     VM_INIT
     {
         EXEC
@@ -495,6 +496,7 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Return)
             {
                 vm.locals_top = vm.pop_locals_frame();
+                fast_locals = vm.current_locals();
                 ip = vm.pop_call_frame();
                 DISPATCH_NEXT;
             }
@@ -562,7 +564,7 @@ static void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch16(ip);
-                auto v = vm.get_local(n);
+                auto v = fast_locals[n];
                 vm.push_data(v);
                 ip += sizeof(n);
                 DISPATCH_NEXT;
@@ -570,70 +572,70 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Load_Local_0)
             {
                 ip++;
-                auto v = vm.get_local(0);
+                auto v = fast_locals[0];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_1)
             {
                 ip++;
-                auto v = vm.get_local(1);
+                auto v = fast_locals[1];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_2)
             {
                 ip++;
-                auto v = vm.get_local(2);
+                auto v = fast_locals[2];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_3)
             {
                 ip++;
-                auto v = vm.get_local(3);
+                auto v = fast_locals[3];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_4)
             {
                 ip++;
-                auto v = vm.get_local(4);
+                auto v = fast_locals[4];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_5)
             {
                 ip++;
-                auto v = vm.get_local(5);
+                auto v = fast_locals[5];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_6)
             {
                 ip++;
-                auto v = vm.get_local(6);
+                auto v = fast_locals[6];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_7)
             {
                 ip++;
-                auto v = vm.get_local(7);
+                auto v = fast_locals[7];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_8)
             {
                 ip++;
-                auto v = vm.get_local(8);
+                auto v = fast_locals[8];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_9)
             {
                 ip++;
-                auto v = vm.get_local(9);
+                auto v = fast_locals[9];
                 vm.push_data(v);
                 DISPATCH_NEXT;
             }
@@ -642,7 +644,7 @@ static void run_code(Malang_VM &vm)
                 ip++;
                 auto n = fetch16(ip);
                 auto v = vm.pop_data();
-                vm.set_local(n, v);
+                fast_locals[n] = v;
                 ip += sizeof(n);
                 DISPATCH_NEXT;
             }
@@ -650,70 +652,70 @@ static void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(0, v);
+                fast_locals[0] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_1)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(1, v);
+                fast_locals[1] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_2)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(2, v);
+                fast_locals[2] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_3)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(3, v);
+                fast_locals[3] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_4)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(4, v);
+                fast_locals[4] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_5)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(5, v);
+                fast_locals[5] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_6)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(6, v);
+                fast_locals[6] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_7)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(7, v);
+                fast_locals[7] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_8)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(8, v);
+                fast_locals[8] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_9)
             {
                 ip++;
                 auto v = vm.pop_data();
-                vm.set_local(9, v);
+                fast_locals[9] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Alloc_Locals)
@@ -722,6 +724,7 @@ static void run_code(Malang_VM &vm)
                 vm.push_locals_frame(vm.locals_top);
                 auto n = fetch16(ip);
                 vm.locals_top += n;
+                fast_locals = vm.current_locals();
                 ip += sizeof(n);
                 DISPATCH_NEXT;
             }

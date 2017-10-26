@@ -183,7 +183,7 @@ static uptr<If_Else_Node> parse_if_else(Parser &parser)
     }
     else
     {
-        auto single = parse_expression(parser);
+        auto single = parse_statement(parser);
         if (single)
         {
             consequence.push_back(single.release());
@@ -208,7 +208,7 @@ static uptr<If_Else_Node> parse_if_else(Parser &parser)
         }
         else
         {
-            auto single = parse_expression(parser);
+            auto single = parse_statement(parser);
             CHECK_OR_FAIL(single);
             alternative.push_back(single.release());
         }
@@ -223,7 +223,16 @@ static uptr<While_Node> parse_while(Parser &parser)
     ACCEPT_OR_FAIL(while_tk, { Token_Id::K_while});
     auto condition = parse_expression(parser);
     std::vector<Ast_Node*> body;
-    CHECK_OR_FAIL(parse_body(parser, body));
+    if (parser.peek_id() == Token_Id::Open_Curly)
+    {
+        CHECK_OR_FAIL(parse_body(parser, body));
+    }
+    else
+    {
+        auto single = parse_statement(parser);
+        CHECK_OR_FAIL(single);
+        body.push_back(single.release());
+    }
     return uptr<While_Node>(new While_Node{while_tk.src_loc(), condition.release(), body});
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
