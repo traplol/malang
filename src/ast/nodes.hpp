@@ -16,6 +16,7 @@
 #include "ast_return.hpp"
 #include "ast_loop.hpp"
 #include "ast_if_else.hpp"
+#include "ast_array.hpp"
 
 
 #endif /* MALANG_AST_NODES_HPP */

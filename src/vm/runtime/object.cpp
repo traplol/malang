@@ -4,15 +4,19 @@
 void Malang_Object::gc_mark()
 {
     assert(free == false);
+    assert(type);
+    assert(allocator);
 
-    if (color == black)
+    // marking or already marked, this also serves as a cycle check
+    if (color != white)
     {
         return;
     }
 
     color = grey;
-    for (auto &&value : fields)
+    for (size_t i = 0; i < type->fields().size(); ++i)
     {
+        auto value = fields[i];
         if (value.is_object())
         {
             value.as_object()->gc_mark();

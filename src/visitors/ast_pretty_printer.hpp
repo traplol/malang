@@ -52,6 +52,8 @@ struct Ast_Pretty_Printer : Ast_Visitor
     virtual void visit(struct Return_Node&) override;
     virtual void visit(struct While_Node&) override;
     virtual void visit(struct If_Else_Node&) override;
+    virtual void visit(struct Array_Literal_Node&) override;
+    virtual void visit(struct New_Array_Node&) override;
 
     std::string to_string(struct Ast_Node& n);
     void reset();

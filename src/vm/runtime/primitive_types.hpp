@@ -4,19 +4,10 @@
 #include <stdint.h>
 #include "../nun_boxing.hpp"
 
+using Malang_Value = Value<struct Malang_Object>;
 using Fixnum = int32_t;
 using Double = double;
 using Char = char;
-
-template<typename T>
-struct Array
-{
-    Fixnum length;
-    const T *data;
-};
-
-using String = Array<Char>;
-using Malang_Value = Value<struct Malang_Object>;
 using Native_Code = void(*)(struct Malang_VM &vm);
 
 struct Primitive_Function

@@ -657,6 +657,15 @@ void Ast_To_IR::visit(If_Else_Node &n)
     _return(ret);
 }
 
+void Ast_To_IR::visit(struct Array_Literal_Node&n)
+{
+    NOT_IMPL;
+}
+void Ast_To_IR::visit(struct New_Array_Node&n)
+{
+    NOT_IMPL;
+}
+
 Malang_IR *Ast_To_IR::convert(Ast &ast)
 {
     cur_symbol_scope = Symbol_Scope::Global;

@@ -55,6 +55,7 @@ struct Codegen
     void push_back_literal_8(byte n);
     void push_back_literal_16(int16_t n);
     void push_back_literal_32(int32_t n);
+    void push_back_literal_double(Double n);
     void push_back_literal_value(Malang_Value value);
     void push_back_raw_8(byte n);
     void push_back_raw_16(int16_t n);
@@ -97,6 +98,12 @@ struct Codegen
     void set_raw_32(size_t index, int32_t value);
 
     void push_back_alloc_locals(uint16_t num_to_alloc);
+
+    void push_back_array_new(Type_Token type, int32_t length);
+    void push_back_array_new();
+    void push_back_array_load(bool checked = true);
+    void push_back_array_store(bool checked = true);
+    void push_back_array_length();
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

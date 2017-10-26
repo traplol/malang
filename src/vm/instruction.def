@@ -200,4 +200,38 @@ ITEM(Drop_4)
 // the next 2 bytes of the bytecode represent a 16-bit integer 'N; discard the top 'N of the datastack
 ITEM(Drop_N)
 
+// push literal value 0.0
+ITEM(Literal_Double_0)
+// push literal value 1.0
+ITEM(Literal_Double_1)
+// push literal value 2.0
+ITEM(Literal_Double_2)
+// push literal value -1
+ITEM(Literal_Fixnum_m1)
+// push literal value 0
+ITEM(Literal_Fixnum_0)
+// push literal value 1
+ITEM(Literal_Fixnum_1)
+// push literal value 2
+ITEM(Literal_Fixnum_2)
+// push literal value 3
+ITEM(Literal_Fixnum_3)
+// push literal value 4
+ITEM(Literal_Fixnum_4)
+// push literal value 5
+ITEM(Literal_Fixnum_5)
+
+// type_token, length -> array_ref
+ITEM(Array_New)
+// array_ref index -> value
+ITEM(Array_Load_Checked)
+// array_ref index value ->
+ITEM(Array_Store_Checked)
+// array_ref index -> value
+ITEM(Array_Load_Unchecked)
+// array_ref index value ->
+ITEM(Array_Store_Unchecked)
+// array_ref -> length
+ITEM(Array_Length)
+
 #undef ITEM

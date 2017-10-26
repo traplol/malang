@@ -355,3 +355,16 @@ void Ast_Pretty_Printer::visit(struct If_Else_Node &n)
         do_body(n.alternative);
     }
 }
+
+void Ast_Pretty_Printer::visit(struct Array_Literal_Node &n)
+{
+    assert(n.values);
+    str << "["; to_string(*n.values); str << "]";
+}
+
+void Ast_Pretty_Printer::visit(struct New_Array_Node &n)
+{
+    assert(n.size);
+    assert(n.of_type);
+    str << "["; to_string(*n.size); str << "]" << n.of_type->name();
+}

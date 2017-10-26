@@ -58,6 +58,8 @@ enum class Token_Id : size_t
     K_fn,
     K_class,
     K_match,
+    K_true,
+    K_false,
 
     NUM_TOKEN_TYPES
 };

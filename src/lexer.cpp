@@ -91,6 +91,8 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_fn);
         SET_TK_TYPE_MAP(K_class);
         SET_TK_TYPE_MAP(K_match);
+        SET_TK_TYPE_MAP(K_true);
+        SET_TK_TYPE_MAP(K_false);
 #undef SET_TK_TYPE_MAP
         // this is a runtime check that will warn if we forgot any
         for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
@@ -198,6 +200,8 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("else", K_else);
         PUSH_KEY_IDENT("class", K_class);
         PUSH_KEY_IDENT("match", K_match);
+        PUSH_KEY_IDENT("true", K_true);
+        PUSH_KEY_IDENT("false", K_false);
         if (is_ident_start_char(src->peek()))
         {
             std::stringstream ident;

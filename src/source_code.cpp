@@ -118,6 +118,110 @@ void Source_Code::report_at_src_loc(const char *type, const Source_Location &src
     va_end(vargs);
 }
 
+static
+bool find_matching_bracket_right(const std::string &s, size_t start, char open, char close, size_t &out)
+{
+    int pcount = 1;
+    bool found = false;
+    size_t found_idx;
+    for (auto i = start; i < s.size(); ++i)
+    {
+        if (pcount == 0)
+        {
+            found = true;
+            found_idx = i;
+            break;
+        }
+        if (s[i] == close)
+        {
+            --pcount;
+        }
+        else if (s[i] == open)
+        {
+            ++pcount;
+        }
+    }
+    if (found)
+    {
+        out = found_idx;
+    }
+    return found;
+}
+
+static
+bool find_matching_bracket_left(const std::string &s, size_t start, char open, char close, size_t &out)
+{
+    int pcount = 1;
+    bool found = false;
+    size_t found_idx;
+    for (auto i = start; i != static_cast<size_t>(-1); --i)
+    {
+        if (pcount == 0)
+        {
+            found = true;
+            found_idx = i;
+            break;
+        }
+        if (s[i] == close)
+        {
+            ++pcount;
+        }
+        else if (s[i] == open)
+        {
+            --pcount;
+        }
+    }
+    if (found)
+    {
+        out = found_idx;
+    }
+    return found;
+}
+
+static
+bool find_wspace_right(const std::string &s, size_t start, size_t &out)
+{
+    bool found = false;
+    size_t found_idx;
+    for (auto i = start; i < s.size(); ++i)
+    {
+        if (iswspace(s[i]))
+        {
+            found_idx = i;
+            found = true;
+            break;
+        }
+    }
+    if (found)
+    {
+        out = found_idx-1;
+    }
+    return found;
+}
+
+static
+bool find_wspace_left(const std::string &s, size_t start, size_t &out)
+{
+    bool found = false;
+    size_t found_idx;
+    for (auto i = start; i != static_cast<size_t>(-1); --i)
+    {
+        if (iswspace(s[i]))
+        {
+            found_idx = i;
+            found = true;
+            break;
+        }
+    }
+    if (found)
+    {
+        out = found_idx;
+    }
+    return found;
+}
+
+
+
 void Source_Code::vreport_at_src_loc(const char *type, const Source_Location &src_loc, const char *fmt, va_list vargs) const
 {
     printf("%s: %s:%d:%d\n\n", type, m_filename.c_str(), src_loc.line_no, src_loc.char_no);
@@ -153,10 +257,66 @@ void Source_Code::vreport_at_src_loc(const char *type, const Source_Location &sr
     auto reported_line = m_code.substr(line_idx, i - line_idx);
     printf("\t%s\n", reported_line.c_str());
     printf("\t");
-    auto char_idx = src_loc.char_no - 1;
-    while (char_idx-- > 0)
+    auto const x = src_loc.char_no-1;
+    auto c = reported_line[x];
+    size_t u_line_start = 0;
+    size_t u_line_end = 0;
+    if (c == '(')
     {
-        printf("~");
+        u_line_start = x;
+        if (!find_matching_bracket_right(reported_line, x, '(', ')', u_line_end))
+        {
+            u_line_end = reported_line.size();
+        }
     }
-    printf("^\n\n");
+    else if (c == '[')
+    {
+        u_line_start = x;
+        if (!find_matching_bracket_right(reported_line, x, '[', ']', u_line_end))
+        {
+            u_line_end = reported_line.size();
+        }
+    }
+    else if (c == ')')
+    {
+        u_line_end = x;
+        if (!find_matching_bracket_left(reported_line, x, '(', ')', u_line_start))
+        {
+            u_line_start = 0;
+        }
+    }
+    else if (c == ']')
+    {
+        u_line_end = x;
+        if (!find_matching_bracket_left(reported_line, x, '[', ']', u_line_start))
+        {
+            u_line_start = 0;
+        }
+    }
+    else
+    {
+        if (!find_wspace_left(reported_line, x, u_line_start))
+        {
+            u_line_start = 0;
+        }
+        if (!find_wspace_right(reported_line, x, u_line_end))
+        {
+            u_line_end = 0;
+        }
+    }
+    for (size_t i = 0; i <= u_line_start; ++i)
+    {
+        printf(" ");
+    }
+    for (size_t i = u_line_start; i < u_line_end; ++i)
+    {
+        printf("-");
+    }
+    printf("\n\n");
+    //auto char_idx = src_loc.char_no - 1;
+    //while (char_idx-- > 0)
+    //{
+    //    printf("~");
+    //}
+    //printf("^\n\n");
 }

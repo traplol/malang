@@ -45,6 +45,8 @@ struct Ast_Visitor
     virtual void visit(struct Return_Node&) = 0;
     virtual void visit(struct While_Node&) = 0;
     virtual void visit(struct If_Else_Node&) = 0;
+    virtual void visit(struct Array_Literal_Node&) = 0;
+    virtual void visit(struct New_Array_Node&) = 0;
 };
 
 #endif /* AST_VISITOR_H */

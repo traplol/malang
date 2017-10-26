@@ -59,6 +59,8 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Return_Node&n) override;
     virtual void visit(struct While_Node&n) override;
     virtual void visit(struct If_Else_Node&n) override;
+    virtual void visit(struct Array_Literal_Node&n) override;
+    virtual void visit(struct New_Array_Node&n) override;
 
     Malang_IR *convert_one(Ast_Node &n);
     Malang_IR *convert(Ast &ast);

@@ -78,9 +78,9 @@ void Malang_GC::sweep()
 void Malang_GC::construct(Malang_Object &obj, Type_Info *type)
 {
     assert(type);
+    obj.type = type;
     obj.allocator = this;
     obj.free = false;
-    obj.type = type;
     // don't want to immediately free this object...
     obj.color = Malang_Object::grey;
     // @TODO: reserve fields and such 

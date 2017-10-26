@@ -107,6 +107,12 @@ void parse_tests()
         {"_",
          "_"},
 
+        {"true", "true"},
+        {"false", "false"},
+
+        {"x := true", "x : bool = true"},
+        {"x := false", "x : bool = false"},
+
         {"print",
          "print"},
 
@@ -285,6 +291,24 @@ void parse_tests()
          "    print(42)\n"
          "}"},
 
+        // Array literal
+        {"[1,2,3,4]", "[1, 2, 3, 4]"},
+        {"[4]", "[4]"},
+        {"[[4]]", "[[4]]"},
+        {"x := [1,2,3,4]", "x : = [1, 2, 3, 4]"},
+        {"x := [4]", "x : = [4]"},
+        {"x := [[4]]", " x : = [[4]]"},
+        // Array type signature
+        {"[]int", "[]int"},
+        {"[][]int", "[][]int"},
+        // New array
+        {"x : [][]int = [10][]int",
+         "x : [][]int = [10][]int"},
+        {"y : []int = [n]int",
+         "y : []int = [n]int"},
+        {"y := [n]int",
+         "y : []int = [n]int"},
+         
     };
     size_t total_run = 1;
     for (auto &&it : tests)
@@ -292,7 +316,8 @@ void parse_tests()
         auto actual = get_parse_test_output(it);
         if (actual.size() != it.expected.size())
         {
-            printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
+            //printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
+            printf("x");
         }
         auto n = std::min(actual.size(), it.expected.size());
         for (size_t i = 0; i < n; ++i, ++total_run)

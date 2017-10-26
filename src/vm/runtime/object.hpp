@@ -21,7 +21,7 @@ struct Malang_Object
     // the VM will need a "Call_Virtual_Method" instruction that takes an index into
     // this table and calls that
 
-    std::vector<Malang_Value> fields;
+    Malang_Value *fields;
 
     void gc_mark();
 };

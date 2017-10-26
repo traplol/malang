@@ -141,8 +141,8 @@ static uptr<Class_Def_Node> parse_class(Parser &parser);
 #define ACCEPT_OR_FAIL(...) if (!parser.accept(__VA_ARGS__)) { PARSE_FAIL; }
 #define CHECK_OR_FAIL(check) if (!(check)) PARSE_FAIL;
 #define CHECK_OR_ERROR(check, ...) if (!(check)) { parser.report_error(__VA_ARGS__); PARSE_FAIL; }
-//#define DEBUG(tk, ...) parser.report_debug(tk, __VA_ARGS__)
-#define DEBUG(tk, ...)
+//#define DPRINT(tk, ...) parser.report_debug(tk, __VA_ARGS__)
+#define DPRINT(tk, ...)
 
 static uptr<Assign_Node> parse_assignment(Parser &parser)
 {   // assignment :=
@@ -518,12 +518,12 @@ static uptr<Ast_Value> parse_additive_exp(Parser &parser)
         CHECK_OR_FAIL(rhs);
         if (tok.id() == Token_Id::Plus)
         {
-            DEBUG(tok, "Add");
+            DPRINT(tok, "Add");
             lhs = uptr<Ast_Value>(new Add_Node(tok.src_loc(), lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Minus)
         {
-            DEBUG(tok, "Subtract");
+            DPRINT(tok, "Subtract");
             lhs = uptr<Ast_Value>(new Subtract_Node(tok.src_loc(), lhs.release(), rhs.release()));
         }
     }
@@ -549,17 +549,17 @@ static uptr<Ast_Value> parse_multiplicative_exp(Parser &parser)
         CHECK_OR_FAIL(rhs);
         if (tok.id() == Token_Id::Star)
         {
-            DEBUG(tok, "Multiply");
+            DPRINT(tok, "Multiply");
             lhs = uptr<Ast_Value>(new Multiply_Node(tok.src_loc(), lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Slash)
         {
-            DEBUG(tok, "Divide");
+            DPRINT(tok, "Divide");
             lhs = uptr<Ast_Value>(new Divide_Node(tok.src_loc(), lhs.release(), rhs.release()));
         }
         else if (tok.id() == Token_Id::Mod)
         {
-            DEBUG(tok, "Modulo");
+            DPRINT(tok, "Modulo");
             lhs = uptr<Ast_Value>(new Modulo_Node(tok.src_loc(), lhs.release(), rhs.release()));
         }
     }
@@ -591,22 +591,22 @@ static uptr<Ast_Value> parse_unary_exp(Parser &parser)
         auto unary = parse_unary_exp(parser);
         if (tok.id() == Token_Id::Minus)
         {
-            DEBUG(tok, "Negate");
+            DPRINT(tok, "Negate");
             return uptr<Ast_Value>(new Negate_Node(tok.src_loc(), unary.release()));
         }
         if (tok.id() == Token_Id::Plus)
         {
-            DEBUG(tok, "Positive");
+            DPRINT(tok, "Positive");
             return uptr<Ast_Value>(new Positive_Node(tok.src_loc(), unary.release()));
         }
         if (tok.id() == Token_Id::Not)
         {
-            DEBUG(tok, "Not");
+            DPRINT(tok, "Not");
             return uptr<Ast_Value>(new Not_Node(tok.src_loc(), unary.release()));
         }
         if (tok.id() == Token_Id::Invert)
         {
-            DEBUG(tok, "Invert");
+            DPRINT(tok, "Invert");
             return uptr<Ast_Value>(new Invert_Node(tok.src_loc(), unary.release()));
         }
     }
@@ -626,6 +626,7 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
 
     SAVE;
     auto prim = parse_primary(parser);
+    CHECK_OR_FAIL(prim);
     Token tok;
     if (parser.accept(tok, {Token_Id::Open_Paren}))
     {
@@ -668,7 +669,7 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
         }
         if (expr)
         {
-            DEBUG(token, "%s", expr->type_name().c_str());
+            DPRINT(token, "%s", expr->type_name().c_str());
             return expr;
         }
         PARSE_FAIL;
@@ -682,6 +683,12 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     {
         return uptr<Ast_Value>(
             new Real_Node(token.src_loc(), token.to_real(), parser.types->get_double()));
+    }
+    if (parser.accept(token, { Token_Id::K_true, Token_Id::K_false }))
+    {
+        auto value = token.id() == Token_Id::K_true;
+        return uptr<Ast_Value>(
+            new Boolean_Node(token.src_loc(), value, parser.types->get_bool()));
     }
     if (parser.accept(token, { Token_Id::Identifier }))
     {
@@ -842,9 +849,11 @@ static uptr<Fn_Node> parse_fn(Parser &parser)
     Token close_paren_tk;
     CHECK_OR_FAIL(parser.expect(close_paren_tk, Token_Id::Close_Paren));
     Type_Node *ret_ty = nullptr;
-    if (parser.accept({Token_Id::Right_Arrow}))
+    Token arrow_tk;
+    if (parser.accept(arrow_tk, {Token_Id::Right_Arrow}))
     {
         ret_ty = parse_type(parser).release();
+        CHECK_OR_ERROR(ret_ty, arrow_tk, "Expected type signature for function's return type");
     }
     else
     {

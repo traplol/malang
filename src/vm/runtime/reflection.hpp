@@ -87,18 +87,27 @@ struct Type_Info
 
     bool add_field(Field_Info *field);
     const std::vector<Field_Info*> &fields() const;
+    std::vector<Field_Info*> all_fields() const;
 
     bool add_method(Method_Info *method);
     const std::vector<Method_Info*> &methods() const;
+    std::vector<Method_Info*> all_methods() const;
 
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
 
-    Method_Info *get_method(const std::string &name, std::vector<Type_Info*> param_types) const;
+    Method_Info *get_method(const std::string &name, const std::vector<Type_Info*> &param_types) const;
     std::vector<Method_Info*> get_methods(const std::string &name) const;
     Field_Info *get_field(const std::string &name) const;
+    bool get_field_index(const std::string &name, size_t &index) const;
 
 private:
+    void fill_methods(std::vector<Method_Info*> &v) const;
+    void fill_fields(std::vector<Field_Info*> &v) const;
+    bool has_method(Method_Info *method) const;
+    bool has_field(const std::string &name) const;
+    Method_Info *find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const;
+    Field_Info *find_field(const std::string &name, size_t &index) const;
     Type_Info *m_parent;
     Type_Token m_type_token;
     std::string m_name;

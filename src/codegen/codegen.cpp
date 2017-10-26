@@ -191,20 +191,90 @@ void Codegen::push_back_noop()
 {
     push_back_instruction(Instruction::Noop);
 }
+static inline
+bool push_back_fast_constant(Codegen &cg, int32_t n)
+{
+    switch (n)
+    {
+        case -1:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_m1);
+            return true;
+        case 0:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_0);
+            return true;
+        case 1:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_1);
+            return true;
+        case 2:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_2);
+            return true;
+        case 3:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_3);
+            return true;
+        case 4:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_4);
+            return true;
+        case 5:
+            cg.push_back_instruction(Instruction::Literal_Fixnum_5);
+            return true;
+    }
+    return false;
+}
 void Codegen::push_back_literal_8(byte n)
 {
-    push_back_instruction(Instruction::Literal_8);
-    push_back_raw_8(n);
+    if (!push_back_fast_constant(*this, n))
+    {
+        push_back_instruction(Instruction::Literal_8);
+        push_back_raw_8(n);
+    }
 }
 void Codegen::push_back_literal_16(int16_t n)
 {
-    push_back_instruction(Instruction::Literal_16);
-    push_back_raw_16(n);
+    if (!push_back_fast_constant(*this, n))
+    {
+        push_back_instruction(Instruction::Literal_16);
+        push_back_raw_16(n);
+    }
 }
 void Codegen::push_back_literal_32(int32_t n)
 {
-    push_back_instruction(Instruction::Literal_32);
-    push_back_raw_32(n);
+    if (!push_back_fast_constant(*this, n))
+    {
+        push_back_instruction(Instruction::Literal_32);
+        push_back_raw_32(n);
+    }
+}
+void Codegen::push_back_literal_double(Double n)
+{
+    if (sizeof(uint64_t) != sizeof(Double))
+    {
+        push_back_literal_value(n);
+        return;
+    }
+
+    union {Double d; uint64_t i;} zero, one, two, _n;
+    zero.d = 0.0;
+    one.d = 1.0;
+    two.d = 2.0;
+    _n.d = n;
+
+
+    if (_n.i == zero.i)
+    {
+        push_back_instruction(Instruction::Literal_Double_0);
+    }
+    else if (_n.i == one.i)
+    {
+        push_back_instruction(Instruction::Literal_Double_1);
+    }
+    else if (_n.i == two.i)
+    {
+        push_back_instruction(Instruction::Literal_Double_2);
+    }
+    else
+    {
+        push_back_literal_value(n);
+    }
 }
 void Codegen::push_back_literal_value(Malang_Value value)
 {
@@ -505,4 +575,45 @@ void Codegen::push_back_alloc_locals(uint16_t num_to_alloc)
 {
     push_back_instruction(Instruction::Alloc_Locals);
     push_back_raw_16(num_to_alloc);
+}
+
+void Codegen::push_back_array_new(Type_Token type, int32_t length)
+{
+    push_back_literal_32(type);
+    push_back_literal_32(length);
+    push_back_array_new();
+}
+
+void Codegen::push_back_array_new()
+{
+    push_back_instruction(Instruction::Array_New);
+}
+
+void Codegen::push_back_array_load(bool checked)
+{
+    if (checked)
+    {
+        push_back_instruction(Instruction::Array_Load_Checked);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Array_Store_Checked);
+    }
+}
+
+void Codegen::push_back_array_store(bool checked)
+{
+    if (checked)
+    {
+        push_back_instruction(Instruction::Array_Store_Checked);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Array_Store_Checked);
+    }
+}
+
+void Codegen::push_back_array_length()
+{
+    push_back_instruction(Instruction::Array_Length);
 }
