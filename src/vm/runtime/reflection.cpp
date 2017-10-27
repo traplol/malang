@@ -1,6 +1,15 @@
 #include <cassert>
 #include "reflection.hpp"
 
+Method_Info::~Method_Info()
+{
+    if (m_is_native)
+    {
+        delete m_fn.prim;
+        m_fn.prim = nullptr;
+    }
+}
+
 Function_Type_Info *Method_Info::type() const
 {
     return m_fn_type;
@@ -60,6 +69,20 @@ Type_Info *Field_Info::type() const
 const std::string &Field_Info::name() const
 {
     return m_name;
+}
+
+Type_Info::~Type_Info()
+{
+    for (auto &&f : m_fields)
+    {
+        delete f;
+    }
+    m_fields.clear();
+    for (auto &&m : m_methods)
+    {
+        delete m;
+    }
+    m_methods.clear();
 }
 
 Type_Info *Type_Info::get_parent() const

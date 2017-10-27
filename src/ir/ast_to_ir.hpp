@@ -5,17 +5,18 @@
 #include "../ast/ast_visitor.hpp"
 #include "../ast/ast.hpp"
 #include "ir.hpp"
+#include "symbol_map.hpp"
 
 struct Locality
 {
     Locality();
     ~Locality();
-    Label_Map *labels;
     Symbol_Map *symbols;
 };
 
 struct Ast_To_IR : Ast_Visitor
 {
+    ~Ast_To_IR();
     Ast_To_IR(struct Primitive_Function_Map *primitives, Type_Map *types);
 
     virtual void visit(struct Variable_Node&n) override;
@@ -62,7 +63,6 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Array_Literal_Node&n) override;
     virtual void visit(struct New_Array_Node&n) override;
 
-    Malang_IR *convert_one(Ast_Node &n);
     Malang_IR *convert(Ast &ast);
 
 private:
@@ -81,12 +81,12 @@ private:
     void pop_locality();
     IR_Symbol *find_symbol(const std::string &name);
 
-    template<typename T = IR_Node>
-    T *get(Ast_Node &n)
+    template<typename T = IR_Node*>
+    T get(Ast_Node &n)
     {
         tree = nullptr;
         n.accept(*this);
-        return dynamic_cast<T*>(tree);
+        return dynamic_cast<T>(tree);
     }
 };
 

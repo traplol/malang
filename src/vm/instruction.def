@@ -221,15 +221,15 @@ ITEM(Literal_Fixnum_4)
 // push literal value 5
 ITEM(Literal_Fixnum_5)
 
-// type_token, length -> array_ref
+// length -> array_ref
 ITEM(Array_New)
 // array_ref index -> value
 ITEM(Array_Load_Checked)
-// array_ref index value ->
+// value array_ref index ->
 ITEM(Array_Store_Checked)
 // array_ref index -> value
 ITEM(Array_Load_Unchecked)
-// array_ref index value ->
+// value array_ref index ->
 ITEM(Array_Store_Unchecked)
 // array_ref -> length
 ITEM(Array_Length)

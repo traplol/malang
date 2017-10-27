@@ -41,9 +41,10 @@ void IR_To_Code::visit(IR_Double &n)
     cg->push_back_literal_value(n.value);
 }
 
-void IR_To_Code::visit(IR_Array &n)
+void IR_To_Code::visit(IR_New_Array &n)
 {
-    NOT_IMPL;
+    convert_one(*n.size);
+    cg->push_back_array_new(n.of_type);
 }
 
 void IR_To_Code::visit(IR_String &n)
@@ -84,6 +85,13 @@ void IR_To_Code::visit(struct IR_Callable &n)
         assert(n.u.label->is_resolved());
         cg->push_back_literal_32(n.u.label->address());
     }
+}
+
+void IR_To_Code::visit(struct IR_Indexable &n)
+{
+    convert_one(*n.thing);
+    convert_one(*n.index);
+    cg->push_back_array_load();
 }
 
 void IR_To_Code::visit(IR_Call &n)
@@ -245,6 +253,17 @@ void IR_To_Code::visit(IR_Assignment &n)
                 NOT_IMPL;
                 break;
         }
+    }
+    else if (auto idx = dynamic_cast<IR_Indexable*>(lval))
+    {
+        convert_one(*n.rhs);
+        convert_one(*idx->thing);
+        convert_one(*idx->index);
+        cg->push_back_array_store();
+    }
+    else
+    {
+        NOT_IMPL;
     }
 }
 

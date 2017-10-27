@@ -2,6 +2,16 @@
 #include <sstream>
 #include "type_map.hpp"
 
+Type_Map::~Type_Map()
+{
+    for (auto &&t : m_types_fast)
+    {
+        delete t;
+    }
+    m_types_fast.clear();
+    m_types.clear();
+}
+
 Type_Map::Type_Map()
 {
     m_void   = declare_type("void", nullptr);
@@ -103,7 +113,8 @@ Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &pa
         assert(fn_ty);
         return fn_ty;
     }
-    auto fn_type = new Function_Type_Info{nullptr, m_types_fast.size(), type_name, return_type, parameter_types, is_primitive};
+    auto type_token = static_cast<Type_Token>(m_types_fast.size());
+    auto fn_type = new Function_Type_Info{nullptr, type_token, type_name, return_type, parameter_types, is_primitive};
     m_types[fn_type->name()] = fn_type;
     m_types_fast.push_back(fn_type);
     assert(m_types_fast[fn_type->type_token()] == fn_type);
@@ -130,7 +141,8 @@ Array_Type_Info *Type_Map::get_array_type(Type_Info *of_type)
         assert(arr_ty);
         return arr_ty;
     }
-    auto arr_type = new Array_Type_Info{nullptr, m_types_fast.size(), array_type_name, of_type};
+    auto type_token = static_cast<Type_Token>(m_types_fast.size());
+    auto arr_type = new Array_Type_Info{nullptr, type_token, array_type_name, of_type};
     m_types[arr_type->name()] = arr_type;
     m_types_fast.push_back(arr_type);
     assert(m_types_fast[arr_type->type_token()] == arr_type);
@@ -150,6 +162,8 @@ Type_Info *Type_Map::get_type(const std::string &name)
 
 Type_Info *Type_Map::get_type(Type_Token type_token)
 {
-    assert(type_token < m_types_fast.size());
-    return m_types_fast[type_token];
+    auto size = m_types_fast.size();
+    auto idx = static_cast<decltype(size)>(type_token);
+    assert(idx < size);
+    return m_types_fast[idx];
 }

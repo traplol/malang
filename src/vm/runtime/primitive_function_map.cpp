@@ -1,6 +1,16 @@
 #include <stdio.h>
 #include "primitive_function_map.hpp"
 
+Primitive_Function_Map::~Primitive_Function_Map()
+{
+    for (auto &&kvp : m_builtins)
+    {
+        delete kvp.second;
+    }
+    m_builtins.clear();
+    m_primitives.clear();
+}
+
 Primitive_Function *Primitive_Function_Map::add_builtin(const std::string &name, struct Function_Type_Info *fn_type, Native_Code native_code)
 {
     auto it = m_builtins.find(name);

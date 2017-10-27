@@ -6,7 +6,8 @@
 
 struct IR_Return : IR_Node
 {
-    IR_Return(const Source_Location &src_loc, const std::vector<struct IR_Value*> values, bool should_leave)
+    virtual ~IR_Return();
+    IR_Return(const Source_Location &src_loc, const std::vector<struct IR_Value*> &values, bool should_leave)
         : IR_Node(src_loc)
         , values(std::move(values))
         , should_leave(should_leave)

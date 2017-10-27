@@ -24,10 +24,6 @@ static std::string to_string(Malang_Value &value)
     {
         ss << value.as_double();
     }
-    else if (value.is_pointer())
-    {
-        ss << value.as_pointer<void>();
-    }
     else
     {
         ss << value.bits();

@@ -10,13 +10,12 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
  * This implementation also works for 32-bit on x86 because sizeof(void*) == sizeof(int32_t)
  * on 32-bit, the downside is that each Value still requires 8 bytes
  */
-template<typename ObjectType = void>
+template<typename ObjectType>
 struct Value
 {
     static constexpr uint64_t max_double  = 0xfff8000000000000;
     static constexpr uint64_t fixnum_tag   = 0xfff9000000000000;
     static constexpr uint64_t object_tag = 0xfffa000000000000;
-    static constexpr uint64_t pointer_tag = 0xfffb000000000000;
 
     inline Value()
     {
@@ -36,12 +35,6 @@ struct Value
     inline Value(ObjectType *object)
     {
         set<ObjectType*, object_tag>(object);
-    }
-
-    template<typename T>
-    inline Value(T *pointer)
-    {
-        set<T>(pointer);
     }
 
     template<uint64_t tag>
@@ -67,11 +60,6 @@ struct Value
         return is<fixnum_tag>();
     }
 
-    inline bool is_pointer() const
-    {
-        return is<pointer_tag>();
-    }
-
     inline bool is_object() const
     {
         return is<object_tag>();
@@ -87,13 +75,6 @@ struct Value
     {
         assert(is_fixnum());
         return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
-    }
-
-    template<typename T>
-    inline T *as_pointer() const
-    {
-        assert(is_pointer());
-        return as<T*, pointer_tag>();
     }
 
     inline ObjectType *as_object() const
@@ -150,6 +131,6 @@ private:
     }
 };
 
-static_assert(sizeof(Value<>) == sizeof(uint64_t), "there is some padding in Value struct?");
+static_assert(sizeof(Value<int>) == sizeof(uint64_t), "there is some padding in Value struct?");
 
 #endif /* NUN_BOXING_H */

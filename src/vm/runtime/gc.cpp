@@ -1,8 +1,16 @@
 #include <stdio.h>
 #include "../vm.hpp"
+#include "../../type_map.hpp"
 #include "gc.hpp"
 
-#define offsetof(a,b) __builtin_offsetof(a,b)
+GC_List::~GC_List()
+{
+}
+
+Malang_GC::~Malang_GC()
+{
+    printf("TODO: Cleanup GC\n");
+}
 
 void Malang_GC::disable_automatic()
 {
@@ -60,14 +68,14 @@ void Malang_GC::sweep()
     while (cur)
     {
         auto next = cur->next;
-        if (cur->obj.color == Malang_Object::white)
+        if (cur->u.object.header.color == Malang_Object::white)
         {
             free(cur);
             ++freed;
         }
         else
         {
-            cur->obj.color = Malang_Object::white;
+            cur->u.object.header.color = Malang_Object::white;
         }
         cur = next;
         ++visited;
@@ -75,18 +83,40 @@ void Malang_GC::sweep()
     printf("GC sweep: visited: %ld freed: %ld\n", visited, freed);
 }
 
-void Malang_GC::construct(Malang_Object &obj, Type_Info *type)
+void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
 {
     assert(type);
-    obj.type = type;
-    obj.allocator = this;
-    obj.free = false;
+    obj.header.type = type;
+    obj.header.allocator = this;
+    obj.header.free = false;
+    obj.header.is_array = false;
     // don't want to immediately free this object...
-    obj.color = Malang_Object::grey;
+    obj.header.color = Malang_Object::grey;
     // @TODO: reserve fields and such 
 }
 
-Malang_Object *Malang_GC::allocate(Type_Info *type)
+void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum length)
+{
+    assert(type);
+    arr.header.type = type;
+    arr.header.allocator = this;
+    arr.header.free = false;
+    arr.header.is_array = true;
+    // don't want to immediately free this array...
+    arr.header.color = Malang_Object::grey;
+    arr.size = length;
+    if (length)
+    {
+        // @FixMe: should initialization be handled? maybe call ctor for every element
+        arr.data = new Malang_Value[length];
+    }
+    else
+    {
+        arr.data = nullptr;
+    }
+}
+
+GC_Node *Malang_GC::alloc_intern()
 {
     if (!m_is_paused && m_num_allocated > m_next_run)
     {
@@ -100,10 +130,53 @@ Malang_Object *Malang_GC::allocate(Type_Info *type)
         gc_node = new GC_Node;
         gc_node->next = nullptr;
     }
-    construct(gc_node->obj, type);
+    return gc_node;
+}
+
+Malang_Object *Malang_GC::allocate_object(Type_Token type_token)
+{
+    auto gc_node = alloc_intern();
+    auto type = m_types->get_type(type_token);
+    construct_object(gc_node->u.object, type);
     m_allocated.append(gc_node);
     m_num_allocated++;
-    return &(gc_node->obj);
+    return &(gc_node->u.object.header);
+}
+
+Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum length)
+{
+    auto gc_node = alloc_intern();
+    auto type = m_types->get_type(of_type_token);
+    construct_array(gc_node->u.array, type, length);
+    m_allocated.append(gc_node);
+    m_num_allocated++;
+    return &(gc_node->u.array.header);
+}
+
+void Malang_GC::free_object(Malang_Object_Body *obj)
+{
+    if (obj->header.free)
+    {
+        return;
+    }
+    if (obj->fields)
+    {
+        delete[] obj->fields;
+        obj->fields = nullptr;
+    }
+}
+void Malang_GC::free_array(Malang_Array *arr)
+{
+    if (arr->header.free)
+    {
+        return;
+    }
+    if (arr->data)
+    {
+        delete[] arr->data;
+        arr->data = nullptr;
+    }
+    arr->size = 0;
 }
 
 void Malang_GC::free(GC_Node *gc_node)
@@ -116,10 +189,18 @@ void Malang_GC::free(GC_Node *gc_node)
 void Malang_GC::free(Malang_Object *obj)
 {
     assert(obj->allocator == this);
-    if (obj->free) return;
+    assert(obj->free == false);
+    if (obj->is_array)
+    {
+        free_array(reinterpret_cast<Malang_Array*>(obj));
+    }
+    else
+    {
+        free_object(reinterpret_cast<Malang_Object_Body*>(obj));
+    }
     obj->free = true;
     auto ptr = reinterpret_cast<uintptr_t>(obj);
-    ptr -= offsetof(GC_Node, obj);
+    ptr -= offsetof(GC_Node, u);
 
     free(reinterpret_cast<GC_Node*>(ptr));
 }

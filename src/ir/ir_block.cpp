@@ -2,10 +2,6 @@
 
 IR_Block::~IR_Block()
 {
-    for (auto &&n : nodes)
-    {
-        delete n;
-    }
     nodes.clear();
 }
 

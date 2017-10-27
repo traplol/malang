@@ -7,7 +7,7 @@
 
 struct IR_Call : IR_RValue
 {
-    virtual ~IR_Call() {}
+    virtual ~IR_Call();
     IR_Call(const Source_Location &src_loc, struct IR_Value *callee, const std::vector<IR_Value*> &arguments)
         : IR_RValue(src_loc)
         , callee(callee)
@@ -23,7 +23,7 @@ struct IR_Call : IR_RValue
 
 struct IR_Call_Method : IR_Call
 {
-    virtual ~IR_Call_Method() {}
+    virtual ~IR_Call_Method() = default;
     IR_Call_Method(const Source_Location &src_loc, struct IR_Value *callee, const std::vector<IR_Value*> &arguments)
         : IR_Call(src_loc, callee, arguments)
         {}
@@ -32,7 +32,7 @@ struct IR_Call_Method : IR_Call
 
 struct IR_Call_Virtual_Method : IR_Call
 {
-    virtual ~IR_Call_Virtual_Method() {}
+    virtual ~IR_Call_Virtual_Method() = default;
     IR_Call_Virtual_Method(const Source_Location &src_loc, struct IR_Value *callee, const std::vector<IR_Value*> &arguments)
         : IR_Call(src_loc, callee, arguments)
         {}
@@ -41,7 +41,7 @@ struct IR_Call_Virtual_Method : IR_Call
 
 struct IR_Allocate_Locals : IR_Node
 {
-    virtual ~IR_Allocate_Locals() {}
+    virtual ~IR_Allocate_Locals() = default;
     IR_Allocate_Locals(const Source_Location &src_loc, uint16_t num_to_alloc)
         : IR_Node(src_loc)
         , num_to_alloc(num_to_alloc)

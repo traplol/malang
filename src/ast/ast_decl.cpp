@@ -5,6 +5,7 @@
 Decl_Node::~Decl_Node()
 {
     delete type;
+    type = nullptr;
     PRINT_DTOR;
 }
 
@@ -23,7 +24,9 @@ AST_NODE_OVERRIDES_IMPL(Decl_Node);
 Decl_Assign_Node::~Decl_Assign_Node()
 {
     delete decl;
+    decl = nullptr;
     delete value;
+    value = nullptr;
     PRINT_DTOR;
 }
 AST_NODE_OVERRIDES_IMPL(Decl_Assign_Node);
@@ -31,7 +34,9 @@ AST_NODE_OVERRIDES_IMPL(Decl_Assign_Node);
 Decl_Constant_Node::~Decl_Constant_Node()
 {
     delete decl;
+    decl = nullptr;
     delete value;
+    value = nullptr;
     PRINT_DTOR;
 }
 AST_NODE_OVERRIDES_IMPL(Decl_Constant_Node);

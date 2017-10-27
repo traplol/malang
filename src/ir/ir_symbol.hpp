@@ -8,6 +8,7 @@
 
 struct IR_Symbol : IR_LValue
 {
+    virtual ~IR_Symbol() = default;
     IR_Symbol(const Source_Location &src_loc, const std::string &symbol, size_t index,
               Type_Info *type, Symbol_Scope scope = Symbol_Scope::Global, bool is_initialized = false)
         : IR_LValue(src_loc)

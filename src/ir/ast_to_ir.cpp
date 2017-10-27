@@ -34,22 +34,23 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
 }
 
 Locality::Locality()
-    : labels(new Label_Map)
-    , symbols(new Symbol_Map)
+    : symbols(new Symbol_Map)
 {}
 Locality::~Locality()
 {
-    delete labels;
-    labels = nullptr;
-
     delete symbols;
     symbols = nullptr;
 }
-
+Ast_To_IR::~Ast_To_IR()
+{
+    delete locality;
+    locality = nullptr;
+}
 Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives, Type_Map *types)
     : primitives(primitives)
     , types(types)
     , locality(new Locality)
+    , ir(nullptr)
 {}
 
 void Ast_To_IR::visit(Variable_Node &n)
@@ -70,14 +71,18 @@ void Ast_To_IR::visit(Variable_Node &n)
 
 void Ast_To_IR::visit(Assign_Node &n)
 {
-    auto value = get<IR_Value>(*n.rhs);
+    auto value = get<IR_Value*>(*n.rhs);
     assert(value);
-    auto lval = get<IR_LValue>(*n.lhs);
+    auto lval = get<IR_LValue*>(*n.lhs);
     assert(lval);
-    auto sym = dynamic_cast<IR_Symbol*>(lval);
-    if (sym)
+    if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {
         auto assign = new IR_Assignment{n.src_loc, sym, value, sym->scope};
+        _return(assign);
+    }
+    else if (auto idx = dynamic_cast<IR_Indexable*>(lval))
+    {
+        auto assign = new IR_Assignment{n.src_loc, idx, value, Symbol_Scope::None};
         _return(assign);
     }
     else
@@ -107,7 +112,7 @@ void Ast_To_IR::visit(Decl_Node &n)
 
 void Ast_To_IR::visit(Decl_Assign_Node &n)
 {
-    auto value = get<IR_Value>(*n.value);
+    auto value = get<IR_Value*>(*n.value);
     assert(value);
     auto val_ty = value->get_type();
     if (!val_ty)
@@ -119,7 +124,7 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     {
         n.decl->type = new Type_Node{n.src_loc, val_ty};
     }
-    auto variable = get<IR_Symbol>(*n.decl);
+    auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
     variable->is_initialized = true;
     auto assign = new IR_Assignment{n.src_loc, variable, value, variable->scope};
@@ -129,10 +134,10 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
 void Ast_To_IR::visit(Decl_Constant_Node &n)
 {
     // @TODO: Decl_Constant_Node needs to generate an IR_Set_Constant
-    auto variable = get<IR_Symbol>(*n.decl);
+    auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
     variable->is_initialized = true;
-    auto value = get<IR_Value>(*n.value);
+    auto value = get<IR_Value*>(*n.value);
     assert(value);
     auto val_ty = value->get_type();
     if (!val_ty)
@@ -182,7 +187,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     for (auto &&it = n.params.rbegin(); it != n.params.rend(); ++it)
     {   // Args are pushed on the stack from left to right so they need to be pulled out
         // in the reverse order they were declared.
-        auto p_sym = get<IR_Symbol>(**it);
+        auto p_sym = get<IR_Symbol*>(**it);
         assert(p_sym);
         auto assign_arg_to_local = new IR_Assign_Top{p_sym->src_loc, p_sym, cur_symbol_scope};
         fn_body->body().push_back(assign_arg_to_local);
@@ -250,7 +255,8 @@ void Ast_To_IR::visit(String_Node &n)
 
 void Ast_To_IR::visit(Boolean_Node &n)
 {
-    NOT_IMPL;
+    auto boolean = new IR_Boolean{n.src_loc, types->get_bool(), n.value};
+    _return(boolean);
 }
 
 void Ast_To_IR::visit(Logical_Or_Node &n)
@@ -273,7 +279,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     // Label(exit)
 
     std::vector<IR_Node*> block;
-    auto lhs = get<IR_Value>(*n.lhs);
+    auto lhs = get<IR_Value*>(*n.lhs);
     assert(lhs);
     if (lhs->get_type() != types->get_bool())
     {
@@ -282,7 +288,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
         abort();
     }
 
-    auto rhs = get<IR_Value>(*n.rhs);
+    auto rhs = get<IR_Value*>(*n.rhs);
     assert(rhs);
     if (rhs->get_type() != types->get_bool())
     {
@@ -299,7 +305,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     }
     else
     {
-        short_circuit_label = locality->labels->make_label(label_name_gen(), n.src_loc);
+        short_circuit_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     }
     auto short_circuit = new IR_Branch_If_False{n.src_loc, short_circuit_label};
     block.push_back(short_circuit);
@@ -311,11 +317,11 @@ void Ast_To_IR::visit(Logical_And_Node &n)
 
 
 #define BINARY_OP_CONVERT(ir_b_class_name) \
-    auto lhs = get<IR_Value>(*n.lhs); \
+    auto lhs = get<IR_Value*>(*n.lhs); \
     if (!lhs) { \
         n.lhs->src_loc.report("error", "Expected a value"); \
         abort();} \
-    auto rhs = get<IR_Value>(*n.rhs); \
+    auto rhs = get<IR_Value*>(*n.rhs); \
     if (!rhs) { \
         n.rhs->src_loc.report("error", "Expected a value"); \
         abort();} \
@@ -409,12 +415,12 @@ void Ast_To_IR::visit(Call_Node &n)
     {
         for (auto &&a : n.args->contents)
         {
-            auto val = get<IR_Value>(*a);
+            auto val = get<IR_Value*>(*a);
             assert(val);
             args.push_back(val);
         }
     }
-    auto callee = get<IR_Value>(*n.callee);
+    auto callee = get<IR_Value*>(*n.callee);
     assert(callee);
     auto fn_type = dynamic_cast<Function_Type_Info*>(callee->get_type());
     if (!fn_type)
@@ -433,7 +439,22 @@ void Ast_To_IR::visit(Call_Node &n)
 
 void Ast_To_IR::visit(Index_Node &n)
 {
-    NOT_IMPL;
+    auto thing = get<IR_Value*>(*n.thing);
+    assert(thing);
+
+    auto thing_ty = thing->get_type();
+    assert(thing_ty);
+    if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
+    {
+        auto index = get<IR_Value*>(*n.subscript);
+        auto indexable = new IR_Indexable{n.src_loc, thing, index, arr_ty->of_type()};
+        _return(indexable);
+    }
+    else
+    {
+        printf("calling index method not impl yet.\n");
+        abort();
+    }
 }
 
 void Ast_To_IR::visit(Field_Accessor_Node &n)
@@ -499,7 +520,7 @@ void Ast_To_IR::visit(Return_Node &n)
     if (n.values->contents.size() == 1)
     {
         auto v = n.values->contents[0];
-        auto ret_v = get<IR_Value>(*v);
+        auto ret_v = get<IR_Value*>(*v);
         assert(ret_v);
         if (!ret_v->get_type()->is_assignable_to(cur_fn->fn_type->return_type()))
         {
@@ -518,7 +539,7 @@ void Ast_To_IR::visit(Return_Node &n)
     // Multi:
     for (auto &&v : n.values->contents)
     {
-        auto ret_v = get<IR_Value>(*v);
+        auto ret_v = get<IR_Value*>(*v);
         assert(ret_v);
         values.push_back(ret_v);
     }
@@ -530,16 +551,16 @@ void Ast_To_IR::visit(Return_Node &n)
 void Ast_To_IR::visit(While_Node &n)
 {
     std::vector<IR_Node*> block;
-    auto condition_check_label = locality->labels->make_label(label_name_gen(), n.src_loc);
+    auto condition_check_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     assert(condition_check_label);
     block.push_back(condition_check_label);
-    auto loop_block = locality->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
+    auto loop_block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(loop_block);
     auto old_cur_false_label = cur_false_label;
     cur_false_label = loop_block->end();
 
     assert(n.condition);
-    auto cond = get<IR_Value>(*n.condition);
+    auto cond = get<IR_Value*>(*n.condition);
     assert(cond);
     if (cond->get_type() != types->get_bool())
     {
@@ -607,12 +628,12 @@ Type_Info *deduce_type(Type_Info *default_type, IR_Value *cons, IR_Value *alt)
 void Ast_To_IR::visit(If_Else_Node &n)
 {
     auto old_cur_false_label = cur_false_label;
-    auto alt_begin_label = locality->labels->make_label(label_name_gen(), n.src_loc);
+    auto alt_begin_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     assert(alt_begin_label);
     cur_false_label = alt_begin_label;
     std::vector<IR_Node*> block;
     assert(n.condition);
-    auto cond = get<IR_Value>(*n.condition);
+    auto cond = get<IR_Value*>(*n.condition);
     assert(cond);
     if (cond->get_type() != types->get_bool())
     {
@@ -634,7 +655,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
     }
     if (!n.alternative.empty())
     {
-        auto end_label = locality->labels->make_label(label_name_gen(), n.src_loc);
+        auto end_label = ir->labels->make_label(label_name_gen(), n.src_loc);
         auto branch_to_end = new IR_Branch{n.src_loc, end_label};
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
@@ -657,13 +678,31 @@ void Ast_To_IR::visit(If_Else_Node &n)
     _return(ret);
 }
 
-void Ast_To_IR::visit(struct Array_Literal_Node&n)
+void Ast_To_IR::visit(struct Array_Literal_Node &n)
 {
     NOT_IMPL;
 }
-void Ast_To_IR::visit(struct New_Array_Node&n)
+void Ast_To_IR::visit(struct New_Array_Node &n)
 {
-    NOT_IMPL;
+    auto size = get<IR_Value*>(*n.size);
+    assert(size);
+    auto size_ty = size->get_type();
+    if (!size_ty)
+    {
+        n.size->src_loc.report("error", "Could not deduce type of array size");
+        abort();
+    }
+    if (!size_ty->is_assignable_to(types->get_int()))
+    {
+        size->src_loc.report("error", "Array size must be an integer type, got `%s'",
+                             size_ty->name().c_str());
+        abort();
+    }
+    auto new_array = new IR_New_Array{n.src_loc,
+                                      n.array_type,
+                                      n.of_type->type->type_token(),
+                                      size};
+    _return(new_array);
 }
 
 Malang_IR *Ast_To_IR::convert(Ast &ast)
@@ -672,20 +711,12 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_locals_count = 0;
     cur_fn = nullptr;
     cur_false_label = nullptr;
+    ir = new Malang_IR{types};
     for (auto &&n : ast.roots)
     {
-        convert_one(*n);
+        auto node = get(*n);
+        ir->roots.push_back(node);
     }
-    return ir;
-}
-
-Malang_IR *Ast_To_IR::convert_one(Ast_Node &n)
-{
-    if (!ir)
-    {
-        ir = new Malang_IR{types, new Label_Map};
-    }
-    ir->roots.push_back(get(n));
     return ir;
 }
 

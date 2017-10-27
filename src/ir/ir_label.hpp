@@ -15,6 +15,7 @@ struct Backfill_On_Resolve
 
 struct IR_Label : IR_Node
 {
+    virtual ~IR_Label() = default;
     IR_Label(const Source_Location &src_loc, const std::string &name)
         : IR_Node(src_loc)
         , m_name(name)
@@ -40,6 +41,7 @@ private:
 
 struct IR_Named_Block : IR_Label
 {
+    virtual ~IR_Named_Block() = default;
     IR_Named_Block(const Source_Location &src_loc, const std::string &name, IR_Label *end)
         : IR_Label(src_loc, name)
         , m_end(end)

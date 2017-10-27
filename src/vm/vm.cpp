@@ -8,10 +8,20 @@
 #include "instruction.hpp"
 #include "runtime/gc.hpp"
 
-Malang_VM::Malang_VM(const std::vector<Native_Code> &primitives, size_t gc_run_interval)
+Malang_VM::~Malang_VM()
+{
+    locals_frames_top = 0;
+    call_frames_top = 0;
+    globals_top = 0;
+    locals_top = 0;
+    data_top = 0;
+    delete gc;
+}
+
+Malang_VM::Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval)
     : primitives(std::move(primitives))
 {
-    gc = new Malang_GC{this, gc_run_interval};
+    gc = new Malang_GC{this, types, gc_run_interval};
 }
 
 void Malang_VM::load_code(const std::vector<byte> &code)
@@ -63,10 +73,6 @@ std::string to_string(const Malang_Value &value)
         auto obj = value.as_object();
         ss << "Object(" << obj->type->name() << "#" << obj << ")";
     }
-    else if (value.is_pointer())
-    {
-        ss << "Pointer(" << value.as_pointer<void>() << ")";
-    }
     else
     {
         ss << "?(" << std::hex << value.bits() << ")";
@@ -77,7 +83,7 @@ std::string to_string(const Malang_Value &value)
 void Malang_VM::stack_trace() const
 {
     print("\nDATA STACK:\n");
-    for (auto i = data_top; i > 0; --i)
+    for (auto i = data_top; i != 0; --i)
     {
         auto &&e = data_stack[i-1];
         if (i == data_top)
@@ -90,7 +96,7 @@ void Malang_VM::stack_trace() const
         }
     }
     print("\nLOCALS:\n");
-    for (auto i = locals_top; i > 0; --i)
+    for (auto i = locals_top; i != 0; --i)
     {
         auto &&e = locals[i-1];
         if (i == locals_top)
@@ -857,27 +863,78 @@ static void run_code(Malang_VM &vm)
             }
             DISPATCH(Array_New)
             {
-                NOT_IMPL;
+                ip++;
+                auto type_token = fetch32(ip);
+                auto size = vm.pop_data();
+                ip += sizeof(type_token);
+                auto array_ref = vm.gc->allocate_array(type_token, size.as_fixnum());
+                vm.push_data(array_ref);
+                DISPATCH_NEXT;
             }
             DISPATCH(Array_Load_Checked)
             {
-                NOT_IMPL;
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                assert(obj_ref->is_array);
+                auto array = reinterpret_cast<Malang_Array*>(obj_ref);
+                if (idx < 0 || idx > array->size)
+                {
+                    // @TODO: panic helper
+                    print("panic! array index out of bounds. index was %d but array size is %d\n",
+                          idx, array->size);
+                    abort();
+                }
+                vm.push_data(array->data[idx]);
+                DISPATCH_NEXT;
             }
             DISPATCH(Array_Store_Checked)
             {
-                NOT_IMPL;
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                auto value = vm.pop_data();
+                assert(obj_ref->is_array);
+                auto array = reinterpret_cast<Malang_Array*>(obj_ref);
+                if (idx < 0 || idx > array->size)
+                {
+                    // @TODO: panic helper
+                    print("panic! array index out of bounds. index was %d but array size is %d\n",
+                          idx, array->size);
+                    abort();
+                }
+                array->data[idx] = value;
+                DISPATCH_NEXT;
             }
             DISPATCH(Array_Load_Unchecked)
             {
-                NOT_IMPL;
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                assert(obj_ref->is_array);
+                auto array = reinterpret_cast<Malang_Array*>(obj_ref);
+                vm.push_data(array->data[idx]);
+                DISPATCH_NEXT;
             }
             DISPATCH(Array_Store_Unchecked)
             {
-                NOT_IMPL;
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                auto value = vm.pop_data();
+                assert(obj_ref->is_array);
+                auto array = reinterpret_cast<Malang_Array*>(obj_ref);
+                array->data[idx] = value;
+                DISPATCH_NEXT;
             }
             DISPATCH(Array_Length)
             {
-                NOT_IMPL;
+                ip++;
+                auto obj_ref = vm.pop_data().as_object();
+                assert(obj_ref->is_array);
+                auto array = reinterpret_cast<Malang_Array*>(obj_ref);
+                vm.push_data(array->size);
+                DISPATCH_NEXT;
             }
         }
     }

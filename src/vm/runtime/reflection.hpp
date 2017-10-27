@@ -8,9 +8,11 @@
 struct Function_Type_Info;
 struct Array_Type_Info;
 struct Type_Info;
+using Type_Token = Fixnum;
 
 struct Method_Info
 {
+    ~Method_Info();
     Method_Info(const std::string &name, Function_Type_Info *fn_type)
         : m_name(name)
         , m_fn_type(fn_type)
@@ -68,11 +70,9 @@ private:
 };
 
 
-using Type_Token = size_t;
-
 struct Type_Info
 {
-    virtual ~Type_Info(){};
+    virtual ~Type_Info();
     Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name)
         : m_parent(parent)
         , m_type_token(type_token)

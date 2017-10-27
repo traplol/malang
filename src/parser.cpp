@@ -4,8 +4,6 @@
 #include "parser.hpp"
 #include "ast/nodes.hpp"
 
-template<typename... T>
-using uptr = std::unique_ptr<T...>;
 
 Ast Parser::parse(const std::string &filename)
 {
@@ -108,6 +106,16 @@ void Parser::report_debug(const Token &token, const char *fmt, ...) const
 }
 
 // forward decls
+/*
+ * This may look odd because this is the only place in this codebase that uses unique_ptr
+ * but that is because an AST node may be partially contructed by the time an error is seen
+ * or the parser has decided the current parse doesn't match. This is abused by wrapping
+ * most of the parsing assertions in macros that automatically report on error or fail fast.
+ * This is where the unique_ptr becomes useful as it will automatically delete any partially
+ * constructed nodes.
+ */
+template<typename... T>
+using uptr = std::unique_ptr<T...>;
 static uptr<Assign_Node> parse_assignment(Parser &parser);
 static uptr<Return_Node> parse_return(Parser &parser);
 static uptr<While_Node> parse_while(Parser &parser);
@@ -674,12 +682,12 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
     }
     if (parser.accept(tok, {Token_Id::Open_Square}))
     {
-        auto args = parse_expression_list(parser);
+        auto index = parse_expression(parser);
         if (!parser.expect(tok, Token_Id::Close_Square))
         {
             PARSE_FAIL;
         }
-        return uptr<Ast_Value>(new Index_Node(tok.src_loc(), prim.release(), args.release()));
+        return uptr<Ast_Value>(new Index_Node(tok.src_loc(), prim.release(), index.release()));
     }
     //if (parser.accept(tok, {Token_Id::Dot}))
     //{

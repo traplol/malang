@@ -13,10 +13,11 @@ struct IR_Visitor
     virtual void visit(struct IR_Fixnum&) = 0;
     virtual void visit(struct IR_Single&) = 0;
     virtual void visit(struct IR_Double&) = 0;
-    virtual void visit(struct IR_Array&) = 0;
+    virtual void visit(struct IR_New_Array&) = 0;
     virtual void visit(struct IR_String&) = 0;
     virtual void visit(struct IR_Symbol&) = 0;
     virtual void visit(struct IR_Callable&) = 0;
+    virtual void visit(struct IR_Indexable&) = 0;
 
     virtual void visit(struct IR_Call&) = 0;
     virtual void visit(struct IR_Call_Method&) = 0;

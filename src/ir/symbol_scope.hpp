@@ -3,6 +3,7 @@
 
 enum class Symbol_Scope
 {
+    None,    // arrays
     Global,
     Local,
     Field

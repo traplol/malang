@@ -331,7 +331,6 @@ void Ast_Pretty_Printer::visit(struct Return_Node &n)
 void Ast_Pretty_Printer::visit(struct While_Node &n)
 {
     assert(n.condition);
-    do_indention();
     str << "while "; to_string(*n.condition); do_body(n.body);
 }
 void Ast_Pretty_Printer::visit(struct If_Else_Node &n)

@@ -5,6 +5,12 @@ IR_NODE_OVERRIDES_IMPL(IR_Call_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Call_Virtual_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Allocate_Locals);
 
+IR_Call::~IR_Call()
+{
+    callee = nullptr;
+    arguments.clear();
+}
+
 struct Type_Info *IR_Call::get_type() const
 {
     auto fn_ty = get_fn_type();

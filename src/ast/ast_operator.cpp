@@ -29,15 +29,15 @@
         if (!lhs_type || !rhs_type) {return nullptr;}               \
         auto m = lhs_type->get_method((method_name), {rhs_type});   \
         if (!m) {return nullptr;}                                   \
-            return m->type()->return_type();}
+        return m->type()->return_type();}
 
 #define UNARY_OP_GET_TYPE(class_name, method_name)                      \
-            Type_Info *class_name::get_type() {                         \
-                auto operand_type = operand->get_type();                \
-                if (!operand_type) {return nullptr;}                    \
-                auto m = operand_type->get_method((method_name), {});   \
-                if (!m) {return nullptr;}                               \
-                return m->type()->return_type();}
+    Type_Info *class_name::get_type() {                         \
+        auto operand_type = operand->get_type();                \
+        if (!operand_type) {return nullptr;}                    \
+        auto m = operand_type->get_method((method_name), {});   \
+        if (!m) {return nullptr;}                               \
+        return m->type()->return_type();}
 
 Type_Info *Logical_Or_Node::get_type()
 {

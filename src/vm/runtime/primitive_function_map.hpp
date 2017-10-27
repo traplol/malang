@@ -9,6 +9,7 @@
 
 struct Primitive_Function_Map
 {
+    ~Primitive_Function_Map();
     std::vector<Native_Code> primitives() const;
     Primitive_Function *add_primitive(struct Function_Type_Info *fn_type, Native_Code native_code);
     Primitive_Function *add_builtin(const std::string &name, struct Function_Type_Info *fn_type, Native_Code native_code);

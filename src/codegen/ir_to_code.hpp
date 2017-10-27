@@ -16,10 +16,11 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Fixnum &n) override;
     virtual void visit(struct IR_Single &n) override;
     virtual void visit(struct IR_Double &n) override;
-    virtual void visit(struct IR_Array &n) override;
+    virtual void visit(struct IR_New_Array &n) override;
     virtual void visit(struct IR_String &n) override;
     virtual void visit(struct IR_Symbol &n) override;
     virtual void visit(struct IR_Callable &n) override;
+    virtual void visit(struct IR_Indexable &n) override;
 
     virtual void visit(struct IR_Call &n) override;
     virtual void visit(struct IR_Call_Method &n) override;

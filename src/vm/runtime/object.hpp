@@ -6,22 +6,35 @@
 
 struct Malang_Object
 {
-
     Type_Info *type;
     struct Malang_GC *allocator;
     unsigned char free : 1;
+    unsigned char is_array : 1;
     unsigned char gc_allocated : 1;
     unsigned char color : 2;
     static constexpr auto white = 0u;
     static constexpr auto grey  = 1u;
     static constexpr auto black = 2u;
+    void gc_mark();
+};
 
+struct Malang_Object_Body
+{
+    Malang_Object header;
     // @TODO: think about virtual methods
     // for classes with virtual methods, field[0] could be an array of virtual methods,
     // the VM will need a "Call_Virtual_Method" instruction that takes an index into
     // this table and calls that
-
     Malang_Value *fields;
+
+    void gc_mark();
+};
+
+struct Malang_Array
+{
+    Malang_Object header;
+    Fixnum size;
+    Malang_Value *data;
 
     void gc_mark();
 };

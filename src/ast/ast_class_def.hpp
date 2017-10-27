@@ -6,6 +6,7 @@
 
 struct Class_Def_Node : public Ast_Node
 {
+    virtual ~Class_Def_Node();
     Class_Def_Node(const Source_Location &src_loc, Type_Info *type_info, bool has_explicit_supertype = false)
         : Ast_Node(src_loc)
         , type_info(type_info)

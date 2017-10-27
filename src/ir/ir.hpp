@@ -7,7 +7,6 @@
 #include "../source_code.hpp"
 #include "ir_visitor.hpp"
 #include "label_map.hpp"
-#include "symbol_map.hpp"
 
 #define IR_NODE_OVERRIDES \
     METADATA_OVERRIDES; \
@@ -31,9 +30,10 @@ struct IR_Node : public Metadata
 
 struct Malang_IR
 {
-    Malang_IR(Type_Map *types, Label_Map *labels)
+    ~Malang_IR();
+    Malang_IR(Type_Map *types)
         : types(types)
-        , labels(labels)
+        , labels(new Label_Map)
         {}
     Type_Map *types;
     Label_Map *labels;

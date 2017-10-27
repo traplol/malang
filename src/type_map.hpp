@@ -7,6 +7,7 @@
 
 struct Type_Map
 {
+    ~Type_Map();
     Type_Map();
     Type_Info *get_or_declare_type(const std::string &name);
     Type_Info *declare_type(const std::string &name, struct Type_Info *parent);

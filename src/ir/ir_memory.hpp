@@ -6,6 +6,7 @@
 
 struct IR_Allocate_Object : IR_Node // @FixMe: should this be IR_RValue?
 {
+    virtual ~IR_Allocate_Object();
     IR_Allocate_Object(const Source_Location &src_loc)
         : IR_Node(src_loc)
         {}
@@ -17,6 +18,7 @@ struct IR_Allocate_Object : IR_Node // @FixMe: should this be IR_RValue?
 
 struct IR_Deallocate_Object : IR_Node
 {
+    virtual ~IR_Deallocate_Object();
     IR_Deallocate_Object(const Source_Location &src_loc)
         : IR_Node(src_loc)
         {}

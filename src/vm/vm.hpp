@@ -5,12 +5,14 @@
 #include <stdint.h>
 #include "runtime/primitive_types.hpp"
 #include "runtime/reflection.hpp"
+#include "../type_map.hpp"
 
 using byte = unsigned char;
 
 struct Malang_VM
 {
-    Malang_VM(const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50);
+    ~Malang_VM();
+    Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50);
 
     void load_code(const std::vector<byte> &code);
     void run();
@@ -62,7 +64,7 @@ struct Malang_VM
     inline
     Malang_Value *current_locals()
     {
-        assert(locals_frames_top > 0);
+        //assert(locals_frames_top > 0);
         auto frame = locals_frames[locals_frames_top-1];
         return &locals[frame];
     }

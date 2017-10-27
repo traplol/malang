@@ -8,43 +8,47 @@
 
 struct Decl_Node : public Ast_LValue
 {
-    std::string variable_name;
-    Type_Node *type;
-    ~Decl_Node();
+    virtual ~Decl_Node();
     Decl_Node(const Source_Location &src_loc, const std::string &variable, Type_Node *type)
         : Ast_LValue(src_loc)
         , variable_name(variable)
         , type(type)
     {}
 
-    virtual Type_Info *get_type() final;
+    std::string variable_name;
+    Type_Node *type;
 
+    virtual Type_Info *get_type() final;
     AST_NODE_OVERRIDES;
 };
 
 struct Decl_Assign_Node : Ast_Node
 {
-    Decl_Node *decl;
-    Ast_Value *value;
-    ~Decl_Assign_Node();
+    virtual ~Decl_Assign_Node();
     Decl_Assign_Node(const Source_Location &src_loc, Decl_Node *decl, Ast_Value *value)
         : Ast_Node(src_loc)
         , decl(decl)
         , value(value)
         {}
+
+    Decl_Node *decl;
+    Ast_Value *value;
+
     AST_NODE_OVERRIDES;
 };
 
 struct Decl_Constant_Node : Ast_Node
 {
-    Decl_Node *decl;
-    Ast_Value *value;
-    ~Decl_Constant_Node();
+    virtual ~Decl_Constant_Node();
     Decl_Constant_Node(const Source_Location &src_loc, Decl_Node *decl, Ast_Value *value)
         : Ast_Node(src_loc)
         , decl(decl)
         , value(value)
         {}
+
+    Decl_Node *decl;
+    Ast_Value *value;
+
     AST_NODE_OVERRIDES;
 };
 

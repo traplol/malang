@@ -100,7 +100,7 @@ struct Codegen
     void push_back_alloc_locals(uint16_t num_to_alloc);
 
     void push_back_array_new(Type_Token type, int32_t length);
-    void push_back_array_new();
+    void push_back_array_new(Type_Token type);
     void push_back_array_load(bool checked = true);
     void push_back_array_store(bool checked = true);
     void push_back_array_length();

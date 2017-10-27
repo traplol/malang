@@ -19,6 +19,9 @@ IR_NODE_OVERRIDES_IMPL(IR_B_Greater_Than_Equals);
 IR_NODE_OVERRIDES_IMPL(IR_B_Equals);
 IR_NODE_OVERRIDES_IMPL(IR_B_Not_Equals);
 
+IR_Binary_Operation::~IR_Binary_Operation()
+{
+}
 Type_Info *IR_Binary_Operation::get_type() const
 {
     auto m = get_method_to_call();
