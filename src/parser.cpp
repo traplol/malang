@@ -114,6 +114,8 @@ static uptr<While_Node> parse_while(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required = true);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
 static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
+static uptr<Array_Literal_Node> parse_array_literal(Parser &parser);
+static uptr<New_Array_Node> parse_new_array(Parser &parser);
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser);
 static uptr<Ast_Value> parse_logical_and_exp(Parser &parser);
 static uptr<Ast_Value> parse_inclusive_or_exp(Parser &parser);
@@ -307,6 +309,39 @@ static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
     return uptr<Decl_Constant_Node>(new Decl_Constant_Node(decl->src_loc,
                                                            decl.release(),
                                                            value.release()));
+}
+static uptr<Array_Literal_Node> parse_array_literal(Parser &parser)
+{   // array_literal :=
+    //     [ expression_list ]
+    SAVE;
+    Token open_bracket_tk;
+    ACCEPT_OR_FAIL(open_bracket_tk, {Token_Id::Open_Square});
+    auto values = parse_expression_list(parser);
+    CHECK_OR_FAIL(values);
+    Token close_bracket_tk;
+    parser.expect(close_bracket_tk, Token_Id::Close_Square);
+    CHECK_OR_ERROR(!values->contents.empty(), open_bracket_tk, "Array literal cannot be empty");
+    return uptr<Array_Literal_Node>(new Array_Literal_Node{open_bracket_tk.src_loc(), values.release()});
+}
+static uptr<New_Array_Node> parse_new_array(Parser &parser)
+{   // new_array :=
+    //     [ expression ] type
+
+    SAVE;
+    Token open_bracket_tk;
+    ACCEPT_OR_FAIL(open_bracket_tk, {Token_Id::Open_Square});
+    auto size = parse_expression(parser);
+    CHECK_OR_FAIL(size);
+    Token close_bracket_tk;
+    ACCEPT_OR_FAIL({Token_Id::Close_Square});
+    auto of_type = parse_type(parser);
+    CHECK_OR_FAIL(of_type);
+    auto arr_ty = parser.types->get_array_type(of_type->type);
+    return uptr<New_Array_Node>(
+        new New_Array_Node{open_bracket_tk.src_loc(),
+                arr_ty,
+                of_type.release(),
+                size.release()});
 }
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser)
 {   // l_or :=
@@ -739,14 +774,24 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
     {
         return parse_if_else(parser);
     }
+    if (tk->id() == Token_Id::Open_Square)
+    {
+        if (auto new_arr = parse_new_array(parser))
+        {
+            return new_arr;
+        }
+        return parse_array_literal(parser);
+    }
     return parse_logical_or_exp(parser);
 }
 static uptr<Type_Node> parse_type(Parser &parser)
 {   // type :=
     //     ident
+    //     [] type
     //     fn ( ) -> type
     //     fn ( type ) -> type
-    //     fn ( type, type ) -> type
+    //     fn ( type, type+ ) -> type
+    //     @TODO: ( type, type+ ) 
     SAVE;
     Token first_tk;
     if (parser.accept(first_tk, {Token_Id::K_fn}))
@@ -778,6 +823,18 @@ static uptr<Type_Node> parse_type(Parser &parser)
         const auto is_primitive = false;
         auto fn_type = parser.types->declare_function(params_types, ret_ty_node->type, is_primitive);
         return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), fn_type));
+    }
+    else if (parser.accept(first_tk, {Token_Id::Open_Paren}))
+    {
+        parser.report_error(first_tk, "Tuple type not implemented yet.");
+        PARSE_FAIL;
+    }
+    else if (parser.accept(first_tk, {Token_Id::Open_Square}))
+    {
+        parser.expect(Token_Id::Close_Square);
+        auto of_ty_node = parse_type(parser);
+        auto array_type = parser.types->get_array_type(of_ty_node->type);
+        return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), array_type));
     }
     else
     {
@@ -857,8 +914,7 @@ static uptr<Fn_Node> parse_fn(Parser &parser)
     }
     else
     {
-        auto void_ty = parser.types->get_or_declare_type("void");
-        ret_ty = new Type_Node(close_paren_tk.src_loc(), void_ty);
+        ret_ty = new Type_Node(close_paren_tk.src_loc(), parser.types->get_void());
     }
     CHECK_OR_FAIL(ret_ty);
     std::vector<Ast_Node*> body;

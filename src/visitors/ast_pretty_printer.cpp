@@ -366,5 +366,5 @@ void Ast_Pretty_Printer::visit(struct New_Array_Node &n)
 {
     assert(n.size);
     assert(n.of_type);
-    str << "["; to_string(*n.size); str << "]" << n.of_type->name();
+    str << "["; to_string(*n.size); str << "]" << n.of_type->type->name();
 }

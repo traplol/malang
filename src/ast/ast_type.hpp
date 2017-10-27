@@ -5,6 +5,7 @@
 
 struct Type_Node : Ast_Node
 {
+    ~Type_Node();
     Type_Node(const Source_Location &src_loc, struct Type_Info *type)
         : Ast_Node(src_loc)
         , type(type)

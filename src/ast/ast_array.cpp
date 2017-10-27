@@ -1,4 +1,5 @@
 #include "ast_array.hpp"
+#include "ast_type.hpp"
 
 AST_NODE_OVERRIDES_IMPL(Array_Literal_Node);
 AST_NODE_OVERRIDES_IMPL(New_Array_Node);
@@ -27,5 +28,5 @@ New_Array_Node::~New_Array_Node()
 
 Type_Info *New_Array_Node::get_type()
 {
-    return of_type;
+    return array_type;
 }

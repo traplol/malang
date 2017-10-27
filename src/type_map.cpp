@@ -71,6 +71,7 @@ Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
     return type;
 }
 
+static
 std::string create_function_typename(Type_Info *return_type, const std::vector<Type_Info*> parameter_types, bool is_primitive)
 {
     // This should generate a string in the form of:
@@ -96,16 +97,44 @@ Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &pa
 {
     assert(return_type);
     auto type_name = create_function_typename(return_type, parameter_types, is_primitive);
-    auto t = get_type(type_name);
-    if (t != nullptr)
+    if (auto exists = get_type(type_name))
     {
-        return static_cast<Function_Type_Info*>(t);
+        auto fn_ty = dynamic_cast<Function_Type_Info*>(exists);
+        assert(fn_ty);
+        return fn_ty;
     }
     auto fn_type = new Function_Type_Info{nullptr, m_types_fast.size(), type_name, return_type, parameter_types, is_primitive};
     m_types[fn_type->name()] = fn_type;
     m_types_fast.push_back(fn_type);
     assert(m_types_fast[fn_type->type_token()] == fn_type);
     return fn_type;
+}
+
+static
+std::string create_array_type_name(Type_Info *of_type)
+{
+    // []int         array of (int)
+    // [][]bool      array of (array of (bool))
+    assert(of_type);
+    std::stringstream ss;
+    ss << "[]" << of_type->name();
+    return ss.str();
+}
+
+Array_Type_Info *Type_Map::get_array_type(Type_Info *of_type)
+{
+    auto array_type_name = create_array_type_name(of_type);
+    if (auto exists = get_type(array_type_name))
+    {
+        auto arr_ty = dynamic_cast<Array_Type_Info*>(exists);
+        assert(arr_ty);
+        return arr_ty;
+    }
+    auto arr_type = new Array_Type_Info{nullptr, m_types_fast.size(), array_type_name, of_type};
+    m_types[arr_type->name()] = arr_type;
+    m_types_fast.push_back(arr_type);
+    assert(m_types_fast[arr_type->type_token()] == arr_type);
+    return arr_type;
 }
 
 Type_Info *Type_Map::get_type(const std::string &name)

@@ -156,12 +156,6 @@ bool find_matching_bracket_left(const std::string &s, size_t start, char open, c
     size_t found_idx;
     for (auto i = start; i != static_cast<size_t>(-1); --i)
     {
-        if (pcount == 0)
-        {
-            found = true;
-            found_idx = i;
-            break;
-        }
         if (s[i] == close)
         {
             ++pcount;
@@ -169,6 +163,12 @@ bool find_matching_bracket_left(const std::string &s, size_t start, char open, c
         else if (s[i] == open)
         {
             --pcount;
+        }
+        if (pcount == 0)
+        {
+            found = true;
+            found_idx = i;
+            break;
         }
     }
     if (found)

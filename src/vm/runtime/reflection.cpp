@@ -304,3 +304,7 @@ bool Function_Type_Info::is_native() const
     return m_is_native;
 }
 
+Type_Info *Array_Type_Info::of_type() const
+{
+    return m_of_type;
+}

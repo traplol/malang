@@ -6,6 +6,7 @@
 #include "primitive_types.hpp"
 
 struct Function_Type_Info;
+struct Array_Type_Info;
 struct Type_Info;
 
 struct Method_Info
@@ -133,6 +134,18 @@ private:
     Type_Info *m_return_type;
     std::vector<Type_Info *> m_parameter_types;
     bool m_is_native;
+};
+
+struct Array_Type_Info : Type_Info
+{
+    virtual ~Array_Type_Info(){};
+    Array_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *of_type)
+        : Type_Info(parent, type_token, name)
+        , m_of_type(of_type)
+        {}
+    Type_Info *of_type() const;
+private:
+    Type_Info *m_of_type;
 };
 
 #endif /* MALANG_VM_REFLECTION_HPP */
