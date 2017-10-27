@@ -12,7 +12,7 @@ using byte = unsigned char;
 struct Malang_VM
 {
     ~Malang_VM();
-    Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50);
+    Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval = 50, size_t max_num_objects = 1000);
 
     void load_code(const std::vector<byte> &code);
     void run();

@@ -3,13 +3,41 @@
 #include "../../type_map.hpp"
 #include "gc.hpp"
 
+#define panic(...) { printf(__VA_ARGS__); abort(); }
+#define offsetof(a,b) __builtin_offsetof(a,b)
+
+struct GC_Node
+{
+    GC_Node(struct GC_List *magic_number)
+        : magic(magic_number)
+        , lookup_index(magic_index) {}
+    struct GC_List *magic;
+    size_t lookup_index;
+    union _ {
+        Malang_Object_Body object;
+        Malang_Array array;
+    } u;
+    static constexpr decltype(lookup_index) magic_index = static_cast<decltype(lookup_index)>(-1);
+};
+
+static_assert(offsetof(GC_Node, u.object.header) == offsetof(GC_Node, u.array.header),
+              "object and array headers are not at the same offset!");
+
 GC_List::~GC_List()
 {
+    for (auto &&node : nodes)
+    {
+        assert(node->magic == this);
+        delete node;
+    }
+    nodes.clear();
 }
 
 Malang_GC::~Malang_GC()
 {
-    printf("TODO: Cleanup GC\n");
+    printf("available: %ld\n", m_free.nodes.size());
+    printf("allocated: %ld\n", m_allocated.nodes.size());
+    sweep();
 }
 
 void Malang_GC::disable_automatic()
@@ -39,23 +67,22 @@ void Malang_GC::mark_and_sweep()
 void Malang_GC::mark()
 {
     assert(m_vm);
-    size_t visited = 0, marked = 0;
+    printf("GC: magic free     : %p\n", &m_free);
+    printf("GC: magic allocated: %p\n", &m_allocated);
+    size_t visited = 0, reachable = 0;
 #define _mark(n, a)                             \
     for (uintptr_t i = 0; i < (n); ++i) {       \
         visited++;                              \
         if ((a)[i].is_object()) {              \
-            marked++;                           \
+            reachable++;                           \
             (a)[i].as_object()->gc_mark();}}
 
-    printf("GC: allocated: %ld\n", m_num_allocated);
-    printf("GC: marking globals\n");
+    printf("GC: in use: %ld available: %ld\n", m_allocated.nodes.size(), m_free.nodes.size());
+    printf("GC: total allocated: %ld freed:%ld\n", m_total_allocated, m_total_freed);
     _mark(m_vm->globals_top, m_vm->globals);
-    printf("GC: marking locals\n");
     _mark(m_vm->locals_top, m_vm->locals);
-    printf("GC: marking data stack\n");
     _mark(m_vm->data_top, m_vm->data_stack);
-
-    printf("GC mark: visited: %ld marked: %ld\n", visited, marked);
+    printf("GC mark: visited: %ld reachable: %ld\n", visited, reachable);
 #undef _mark
 
 }
@@ -63,21 +90,18 @@ void Malang_GC::mark()
 void Malang_GC::sweep()
 {
     assert(m_vm);
-    auto cur = m_allocated.head;
     size_t visited = 0, freed = 0;
-    while (cur)
+    for (auto &&cur : m_allocated.nodes)
     {
-        auto next = cur->next;
         if (cur->u.object.header.color == Malang_Object::white)
         {
-            free(cur);
+            free_object(reinterpret_cast<Malang_Object*>(&cur->u));
             ++freed;
         }
         else
         {
             cur->u.object.header.color = Malang_Object::white;
         }
-        cur = next;
         ++visited;
     }
     printf("GC sweep: visited: %ld freed: %ld\n", visited, freed);
@@ -93,6 +117,7 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     // don't want to immediately free this object...
     obj.header.color = Malang_Object::grey;
     // @TODO: reserve fields and such 
+    obj.fields = nullptr;
 }
 
 void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum length)
@@ -103,7 +128,8 @@ void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum lengt
     arr.header.free = false;
     arr.header.is_array = true;
     // don't want to immediately free this array...
-    arr.header.color = Malang_Object::grey;
+    //arr.header.color = Malang_Object::grey;
+    arr.header.color = Malang_Object::white;
     arr.size = length;
     if (length)
     {
@@ -118,18 +144,23 @@ void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum lengt
 
 GC_Node *Malang_GC::alloc_intern()
 {
-    if (!m_is_paused && m_num_allocated > m_next_run)
+    if (!m_is_paused && m_allocated.nodes.size() >= m_next_run)
     {
         m_next_run += m_run_interval;
+        m_next_run = std::min(m_next_run, m_max_objects);
         printf("GC: automatic run triggered\n");
         mark_and_sweep();
+    }
+    if (m_allocated.nodes.size() >= m_max_objects)
+    {
+        panic("GC: out of alotted memory.\n");
     }
     auto gc_node = m_free.pop();
     if (!gc_node)
     {
-        gc_node = new GC_Node;
-        gc_node->next = nullptr;
+        gc_node = new GC_Node{&m_allocated};
     }
+    m_total_allocated++;
     return gc_node;
 }
 
@@ -139,7 +170,6 @@ Malang_Object *Malang_GC::allocate_object(Type_Token type_token)
     auto type = m_types->get_type(type_token);
     construct_object(gc_node->u.object, type);
     m_allocated.append(gc_node);
-    m_num_allocated++;
     return &(gc_node->u.object.header);
 }
 
@@ -149,15 +179,14 @@ Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum length
     auto type = m_types->get_type(of_type_token);
     construct_array(gc_node->u.array, type, length);
     m_allocated.append(gc_node);
-    m_num_allocated++;
     return &(gc_node->u.array.header);
 }
 
-void Malang_GC::free_object(Malang_Object_Body *obj)
+void Malang_GC::free_object_body(Malang_Object_Body *obj)
 {
     if (obj->header.free)
     {
-        return;
+        panic("GC: free_object_body attempted to double free");
     }
     if (obj->fields)
     {
@@ -165,11 +194,12 @@ void Malang_GC::free_object(Malang_Object_Body *obj)
         obj->fields = nullptr;
     }
 }
+
 void Malang_GC::free_array(Malang_Array *arr)
 {
     if (arr->header.free)
     {
-        return;
+        panic("GC: free_array attempted to double free");
     }
     if (arr->data)
     {
@@ -179,14 +209,13 @@ void Malang_GC::free_array(Malang_Array *arr)
     arr->size = 0;
 }
 
-void Malang_GC::free(GC_Node *gc_node)
+void Malang_GC::free_node(GC_Node *gc_node)
 {
     m_allocated.remove(gc_node);
     m_free.append(gc_node);
-    m_num_allocated--;
 }
 
-void Malang_GC::free(Malang_Object *obj)
+void Malang_GC::free_object(Malang_Object *obj)
 {
     assert(obj->allocator == this);
     assert(obj->free == false);
@@ -196,68 +225,59 @@ void Malang_GC::free(Malang_Object *obj)
     }
     else
     {
-        free_object(reinterpret_cast<Malang_Object_Body*>(obj));
+        free_object_body(reinterpret_cast<Malang_Object_Body*>(obj));
     }
     obj->free = true;
     auto ptr = reinterpret_cast<uintptr_t>(obj);
     ptr -= offsetof(GC_Node, u);
+    ++m_total_freed;
+    free_node(reinterpret_cast<GC_Node*>(ptr));
+}
 
-    free(reinterpret_cast<GC_Node*>(ptr));
+void Malang_GC::deallocate(Malang_Object *obj)
+{
+    free_object(obj);
 }
 
 void GC_List::append(GC_Node *node)
 {
     assert(node);
-    if (!head)
+    if (node->lookup_index != GC_Node::magic_index)
     {
-        head = node;
-        tail = head;
+        panic("GC append: tried to append with invalid index!\n");
     }
-    else
-    {
-        tail->next = node;
-        node->prev = tail;
-        node->next = nullptr;
-        tail = node;
-    }
+    node->magic = this;
+    node->lookup_index = nodes.size();
+    nodes.push_back(node);
 }
 
 void GC_List::remove(GC_Node *node)
 {
     assert(node);
-    if (node == head)
+    if (node->magic != this)
     {
-        head = head->next;
-        if (head)
-            head->prev = nullptr;
+        panic("GC remove: magic number corrupted! %p %ld\n", node->magic, node->lookup_index);
     }
-    if (node == tail)
+    if (nodes.empty())
     {
-        tail = tail->prev;
-        if (tail)
-            tail->next = nullptr;
+        panic("GC remove: nodes empty!\n");
     }
-    if (node->prev)
-    {
-        node->prev->next = node->next;
-    }
-    if (node->next)
-    {
-        node->next->prev = node->prev;
-    }
-    node->prev = nullptr;
-    node->next = nullptr;
+    nodes[node->lookup_index] = std::move(nodes.back());
+    nodes[node->lookup_index]->lookup_index = node->lookup_index;
+    nodes.pop_back();
+    node->lookup_index = GC_Node::magic_index;
+    node->magic = nullptr;
 }
 
 GC_Node *GC_List::pop()
 {
-    if (!tail)
+    if (nodes.empty())
     {
         return nullptr;
     }
-    auto gc_node = tail;
-    remove(tail);
-    gc_node->prev = nullptr;
-    gc_node->next = nullptr;
-    return gc_node;
+    auto node = nodes.back();
+    nodes.pop_back();
+    node->lookup_index = GC_Node::magic_index;
+    node->magic = nullptr;
+    return node;
 }

@@ -20,6 +20,7 @@ Type_Info *Array_Literal_Node::get_type()
 New_Array_Node::~New_Array_Node()
 {
     array_type = nullptr;
+    delete of_type;
     of_type = nullptr;
     delete size;
     size = nullptr;

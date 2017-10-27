@@ -18,10 +18,10 @@ Malang_VM::~Malang_VM()
     delete gc;
 }
 
-Malang_VM::Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval)
+Malang_VM::Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval, size_t max_num_objects)
     : primitives(std::move(primitives))
 {
-    gc = new Malang_GC{this, types, gc_run_interval};
+    gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
 }
 
 void Malang_VM::load_code(const std::vector<byte> &code)

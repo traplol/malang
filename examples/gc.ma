@@ -10,7 +10,7 @@ alloc_stuff :: fn () {
 }
 
 i := 0
-while i < 110 {
+while i < 20000000 {
     println(i)
     alloc_stuff()
     i = i + 1
