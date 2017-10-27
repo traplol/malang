@@ -129,6 +129,84 @@ void Lexer::dump()
     printf("======================\n");
 }
 
+static
+bool parse_number(std::vector<Token> &tokens, Source_Code *src)
+{
+    std::stringstream num;
+    auto line = src->line();
+    auto line_char = src->line_char();
+    bool is_real = false;
+    while (src->peek() != src->end_of_file)
+    {
+        if (Lexer::is_digit(src->peek()))
+        {
+            num << (char)src->next();
+            continue;
+        }
+        if (src->peek() == '.')
+        {
+            // valid: 123.stuff
+            if (!Lexer::is_digit(src->peek(1))) { break; }
+            // valid: 123.4.stuff
+            if (is_real) { break; }
+            is_real = true;
+            num << (char)src->next();
+            continue;
+        }
+        if (Lexer::is_ident_char(src->peek()))
+        {
+            // invalid: 123a
+            src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c' while parsing number\n", src->peek());
+            return false;
+        }
+        // breaks on non-digits and non-ident chars
+        break;
+    }
+    if (is_real)
+    {
+        tokens.push_back(Token(Token_Id::Real, num.str(),
+                               {src, src->filename(), line, line_char}));
+    }
+    else
+    {
+        tokens.push_back(Token(Token_Id::Integer, num.str(),
+                               {src, src->filename(), line, line_char}));
+    }
+    return true;
+}
+
+static
+bool parse_string(std::vector<Token> &tokens, Source_Code *src)
+{
+    std::stringstream str;
+    auto line = src->line();
+    auto line_char = src->line_char();
+    if (src->peek() != '"')
+        return false;
+    src->next(); // eat the first "
+    while (src->peek() != src->end_of_file)
+    {
+        auto c = (char)src->next();
+        if (c == '\\')
+        {
+            auto escaped = src->next();
+            if (escaped == src->end_of_file)
+                return false;
+            str << (char)Lexer::to_escaped(escaped);
+            continue;
+        }
+        if (c == '"')
+        {
+            src->next(); // eat the closing "
+            break;
+        }
+        str << c;
+    }
+    tokens.push_back(Token(Token_Id::String, str.str(),
+                           {src, src->filename(), line, line_char}));
+    return true;
+}
+
 bool Lexer::lex(Source_Code *src)
 {
     init_tk_type_map();
@@ -140,45 +218,19 @@ bool Lexer::lex(Source_Code *src)
             src->next();
             continue;
         }
+        if (src->peek() == '"')
+        {
+            if (!parse_string(tokens, src))
+            {
+                return false;
+            }
+            continue;
+        }
         if (is_digit(src->peek()))
         {
-            std::stringstream num;
-            auto line = src->line();
-            auto line_char = src->line_char();
-            bool is_real = false;
-            while (src->peek() != src->end_of_file)
+            if (!parse_number(tokens, src))
             {
-                if (is_digit(src->peek()))
-                {
-                    num << (char)src->next();
-                    continue;
-                }
-                if (src->peek() == '.')
-                {
-                    // valid: 123.stuff
-                    if (!is_digit(src->peek(1))) { break; }
-                    // valid: 123.4.stuff
-                    if (is_real) { break; }
-                    is_real = true;
-                    num << (char)src->next();
-                    continue;
-                }
-                if (is_ident_char(src->peek()))
-                {
-                    // invalid: 123a
-                    src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c' while parsing number\n", src->peek());
-                    return false;
-                }
-                // breaks on non-digits and non-ident chars
-                break;
-            }
-            if (is_real)
-            {
-                tokens.push_back(Token(Token_Id::Real, num.str(), {src, src->filename(), line, line_char}));
-            }
-            else
-            {
-                tokens.push_back(Token(Token_Id::Integer, num.str(), {src, src->filename(), line, line_char}));
+                return false;
             }
             continue;
         }
@@ -301,4 +353,15 @@ bool Lexer::is_digit(int c)
 bool Lexer::is_wspace(int c)
 {
     return isspace(c);
+}
+
+int Lexer::to_escaped(int c)
+{
+    switch (c)
+    {
+        default: return c;
+        case 't': return '\t';
+        case 'n': return '\n';
+        case 'r': return '\r';
+    }
 }

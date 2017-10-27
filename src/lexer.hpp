@@ -104,6 +104,7 @@ struct Lexer
     static bool is_ident_char(int c);
     static bool is_digit(int c);
     static bool is_wspace(int c);
+    static int to_escaped(int c);
 };
 
 
