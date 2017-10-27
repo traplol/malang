@@ -1,9 +1,11 @@
 #include <cassert>
 #include "ir_symbol.hpp"
 #include "symbol_map.hpp"
+#include "ir.hpp"
 
-Symbol_Map::Symbol_Map()
+Symbol_Map::Symbol_Map(Malang_IR *alloc)
     : m_local_index(0)
+    , m_alloc(alloc)
     , m_map(new string_to_symbol_map)
 {}
 
@@ -18,7 +20,7 @@ IR_Symbol *Symbol_Map::make_symbol(const std::string &name, Type_Info *type, con
     assert(type != nullptr);
     assert(get_symbol(name) == nullptr);
 
-    auto sym = new IR_Symbol{src_loc, name, m_local_index++, type, scope, false};
+    auto sym = m_alloc->alloc<IR_Symbol>(src_loc, name, m_local_index++, type, scope, false);
     (*m_map)[sym->symbol] = sym;
     return sym;
 }

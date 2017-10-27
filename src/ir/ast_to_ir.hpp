@@ -9,7 +9,7 @@
 
 struct Locality
 {
-    Locality();
+    Locality(struct Malang_IR *);
     ~Locality();
     Symbol_Map *symbols;
 };

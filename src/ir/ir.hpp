@@ -26,6 +26,10 @@ struct IR_Node : public Metadata
     METADATA_OVERRIDES;
 
     Source_Location src_loc;
+protected:
+    friend struct Malang_IR;
+    //void * operator new(size_t);
+    //void operator delete(void *);
 };
 
 struct Malang_IR
@@ -33,11 +37,26 @@ struct Malang_IR
     ~Malang_IR();
     Malang_IR(Type_Map *types)
         : types(types)
-        , labels(new Label_Map)
+        , labels(new Label_Map{this})
         {}
     Type_Map *types;
     Label_Map *labels;
     std::vector<IR_Node*> roots;
+
+    // This scheme has been adopted because some IR_Nodes are shared (e.g labels) as the
+    // base type IR_Node* which leads to a horrible ownership problem. The simplest solution
+    // is to say no IR_Node owns another IR_Node only the Malang_IR container that allocated
+    // it has ownership. This also makes sense because realisticly any leaf node depended on
+    // by its parent, and that node's parent, and so forth to the root node.
+    template <typename T, typename... Args>
+    T *alloc(Args&&... args)
+    {
+        T *t = new T(std::forward<Args>(args)...);
+        m_own_allocated_nodes.push_back(t);
+        return t;
+    }
+private:
+    std::vector<IR_Node*> m_own_allocated_nodes;
 };
 
 #endif /* MALANG_IR_IR_HPP */

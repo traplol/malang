@@ -11,7 +11,7 @@ struct Parser
 {
     Parser(Type_Map *types) : types(types) {}
     Ast parse(const std::string &filename);
-    Ast parse(const std::string &filename, const std::string &code);
+    Ast parse(Source_Code *src_code);
     Token_Id peek_id(size_t n=0) const;
     const Token *peek(size_t n=0) const;
     bool accept(Token &out, const std::vector<Token_Id> &ids);

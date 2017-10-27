@@ -1,6 +1,3 @@
-true :: 1==1
-false :: 1==0
-
 one :: fn() -> bool {
     println(1)
     return true

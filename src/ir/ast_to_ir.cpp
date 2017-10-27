@@ -33,8 +33,8 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
-Locality::Locality()
-    : symbols(new Symbol_Map)
+Locality::Locality(Malang_IR *ir)
+    : symbols(new Symbol_Map{ir})
 {}
 Locality::~Locality()
 {
@@ -49,7 +49,7 @@ Ast_To_IR::~Ast_To_IR()
 Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives, Type_Map *types)
     : primitives(primitives)
     , types(types)
-    , locality(new Locality)
+    , locality(nullptr)
     , ir(nullptr)
 {}
 
@@ -57,7 +57,7 @@ void Ast_To_IR::visit(Variable_Node &n)
 {
     if (auto prim_fn = primitives->get_builtin(n.name))
     {
-        auto callable = new IR_Callable{n.src_loc, prim_fn->index, prim_fn->fn_type};
+        auto callable = ir->alloc<IR_Callable>(n.src_loc, prim_fn->index, prim_fn->fn_type);
         _return(callable);
     }
     auto symbol = find_symbol(n.name);
@@ -77,12 +77,12 @@ void Ast_To_IR::visit(Assign_Node &n)
     assert(lval);
     if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {
-        auto assign = new IR_Assignment{n.src_loc, sym, value, sym->scope};
+        auto assign = ir->alloc<IR_Assignment>(n.src_loc, sym, value, sym->scope);
         _return(assign);
     }
     else if (auto idx = dynamic_cast<IR_Indexable*>(lval))
     {
-        auto assign = new IR_Assignment{n.src_loc, idx, value, Symbol_Scope::None};
+        auto assign = ir->alloc<IR_Assignment>(n.src_loc, idx, value, Symbol_Scope::None);
         _return(assign);
     }
     else
@@ -127,7 +127,7 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
     variable->is_initialized = true;
-    auto assign = new IR_Assignment{n.src_loc, variable, value, variable->scope};
+    auto assign = ir->alloc<IR_Assignment>(n.src_loc, variable, value, variable->scope);
     _return(assign);
 }
 
@@ -149,7 +149,7 @@ void Ast_To_IR::visit(Decl_Constant_Node &n)
     {
         n.decl->type = new Type_Node{n.src_loc, val_ty};
     }
-    auto assign = new IR_Assignment{n.src_loc, variable, value, variable->scope};
+    auto assign = ir->alloc<IR_Assignment>(n.src_loc, variable, value, variable->scope);
     _return(assign);
 }
 
@@ -179,7 +179,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     // Since code can be free (outside of a function), we opt to define a function wherever we
     // are. We don't want that code to accidently start executing so we just create a branch
     // that jumps over the body of the function.
-    auto branch_over_body = new IR_Branch{n.src_loc, fn_body->end()};
+    auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, fn_body->end());
 
     cur_symbol_scope = Symbol_Scope::Local;
     // @TODO: Handle "this" instance being in arg_0 for methods
@@ -189,7 +189,7 @@ void Ast_To_IR::visit(Fn_Node &n)
         // in the reverse order they were declared.
         auto p_sym = get<IR_Symbol*>(**it);
         assert(p_sym);
-        auto assign_arg_to_local = new IR_Assign_Top{p_sym->src_loc, p_sym, cur_symbol_scope};
+        auto assign_arg_to_local = ir->alloc<IR_Assign_Top>(p_sym->src_loc, p_sym, cur_symbol_scope);
         fn_body->body().push_back(assign_arg_to_local);
         //p_sym->is_initialized = true;
     }
@@ -207,18 +207,20 @@ void Ast_To_IR::visit(Fn_Node &n)
     }
     if (fn_body->body().empty())
     {
-        fn_body->body().push_back(new IR_Return{n.src_loc, {}, cur_locals_count != 0}); // @FixMe: src_loc should be close curly of function def
+        auto empty_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+        fn_body->body().push_back(empty_retn); // @FixMe: src_loc should be close curly of function def
     }
     else if (auto last = fn_body->body().back())
     {
         if (dynamic_cast<IR_Return*>(last) == nullptr)
         {
-            fn_body->body().push_back(new IR_Return{n.src_loc, {}, cur_locals_count != 0}); // @FixMe: src_loc should be close curly of function def
+            auto last_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+            fn_body->body().push_back(last_retn); // @FixMe: src_loc should be close curly of function def
         }
     }
     if (cur_locals_count > 0)
     {
-        auto num_locals_to_alloc = new IR_Allocate_Locals{n.src_loc, cur_locals_count};
+        auto num_locals_to_alloc = ir->alloc<IR_Allocate_Locals>(n.src_loc, cur_locals_count);
         fn_body->body().insert(fn_body->body().begin(), num_locals_to_alloc);
     }
     ir->roots.push_back(branch_over_body);
@@ -227,7 +229,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     cur_symbol_scope = old_scope;
     cur_locals_count = old_locals_count;
     cur_fn = old_fn;
-    auto callable = new IR_Callable{n.src_loc, fn_body, n.fn_type};
+    auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type);
     _return(callable)
 }
 
@@ -238,13 +240,13 @@ void Ast_To_IR::visit(List_Node &n)
 
 void Ast_To_IR::visit(Integer_Node &n)
 {
-    auto fixnum = new IR_Fixnum{n.src_loc, types->get_int(), static_cast<Fixnum>(n.value)};
+    auto fixnum = ir->alloc<IR_Fixnum>(n.src_loc, types->get_int(), static_cast<Fixnum>(n.value));
     _return(fixnum);
 }
 
 void Ast_To_IR::visit(Real_Node &n)
 {
-    auto real = new IR_Double{n.src_loc, types->get_double(), n.value};
+    auto real = ir->alloc<IR_Double>(n.src_loc, types->get_double(), n.value);
     _return(real);
 }
 
@@ -255,7 +257,7 @@ void Ast_To_IR::visit(String_Node &n)
 
 void Ast_To_IR::visit(Boolean_Node &n)
 {
-    auto boolean = new IR_Boolean{n.src_loc, types->get_bool(), n.value};
+    auto boolean = ir->alloc<IR_Boolean>(n.src_loc, types->get_bool(), n.value);
     _return(boolean);
 }
 
@@ -307,11 +309,11 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     {
         short_circuit_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     }
-    auto short_circuit = new IR_Branch_If_False{n.src_loc, short_circuit_label};
+    auto short_circuit = ir->alloc<IR_Branch_If_False>(n.src_loc, short_circuit_label);
     block.push_back(short_circuit);
     block.push_back(rhs);
 
-    auto r_block = new IR_Block{n.src_loc, block, types->get_bool()};
+    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, types->get_bool());
     _return(r_block);
 }
 
@@ -325,7 +327,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     if (!rhs) { \
         n.rhs->src_loc.report("error", "Expected a value"); \
         abort();} \
-    auto bop = new ir_b_class_name{n.src_loc}; \
+    auto bop = ir->alloc<ir_b_class_name>(n.src_loc); \
     bop->lhs = lhs; \
     bop->rhs = rhs; \
     _return(bop);
@@ -433,7 +435,7 @@ void Ast_To_IR::visit(Call_Node &n)
     {
         abort();
     }
-    auto call = new IR_Call{n.src_loc, callee, args};
+    auto call = ir->alloc<IR_Call>(n.src_loc, callee, args);
     _return(call);
 }
 
@@ -447,7 +449,7 @@ void Ast_To_IR::visit(Index_Node &n)
     if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
     {
         auto index = get<IR_Value*>(*n.subscript);
-        auto indexable = new IR_Indexable{n.src_loc, thing, index, arr_ty->of_type()};
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, arr_ty->of_type());
         _return(indexable);
     }
     else
@@ -544,7 +546,7 @@ void Ast_To_IR::visit(Return_Node &n)
         values.push_back(ret_v);
     }
     */
-    auto retn = new IR_Return{n.src_loc, values, cur_locals_count != 0};
+    auto retn = ir->alloc<IR_Return>(n.src_loc, values, cur_locals_count != 0);
     _return(retn);
 }
 
@@ -570,7 +572,7 @@ void Ast_To_IR::visit(While_Node &n)
     }
     block.push_back(cond);
 
-    auto branch_if_cond_false = new IR_Branch_If_False{n.src_loc, loop_block->end()};
+    auto branch_if_cond_false = ir->alloc<IR_Branch_If_False>(n.src_loc, loop_block->end());
     block.push_back(branch_if_cond_false);
     // We push here so variables can be declared inside the loop body but cannot
     // be referenced outside of the loop body while still allowing the loop body
@@ -584,12 +586,12 @@ void Ast_To_IR::visit(While_Node &n)
             loop_block->body().push_back(body_node);
         }
         // The end of a while loop is always a branch back to the condition check.
-        loop_block->body().push_back(new IR_Branch{n.src_loc, condition_check_label});
+        loop_block->body().push_back(ir->alloc<IR_Branch>(n.src_loc, condition_check_label));
     }
     locality->symbols->pop();
 
     block.push_back(loop_block);
-    auto ret = new IR_Block{n.src_loc, block, types->get_void()};
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
     cur_false_label = old_cur_false_label;
     _return(ret);
 }
@@ -642,7 +644,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
         abort();
     }
     block.push_back(cond);
-    auto branch_to_alt = new IR_Branch_If_False{n.src_loc, alt_begin_label};
+    auto branch_to_alt = ir->alloc<IR_Branch_If_False>(n.src_loc, alt_begin_label);
     block.push_back(branch_to_alt);
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
@@ -656,7 +658,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
     if (!n.alternative.empty())
     {
         auto end_label = ir->labels->make_label(label_name_gen(), n.src_loc);
-        auto branch_to_end = new IR_Branch{n.src_loc, end_label};
+        auto branch_to_end = ir->alloc<IR_Branch>(n.src_loc, end_label);
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
         for (auto &&a : n.alternative)
@@ -673,7 +675,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
         block.push_back(alt_begin_label);
     }
 
-    auto ret = new IR_Block{n.src_loc, block, deduce_type(types->get_void(), last_conseq, last_altern)};
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, deduce_type(types->get_void(), last_conseq, last_altern));
     cur_false_label = old_cur_false_label;
     _return(ret);
 }
@@ -698,10 +700,10 @@ void Ast_To_IR::visit(struct New_Array_Node &n)
                              size_ty->name().c_str());
         abort();
     }
-    auto new_array = new IR_New_Array{n.src_loc,
+    auto new_array = ir->alloc<IR_New_Array>(n.src_loc,
                                       n.array_type,
                                       n.of_type->type->type_token(),
-                                      size};
+                                      size);
     _return(new_array);
 }
 
@@ -712,6 +714,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_fn = nullptr;
     cur_false_label = nullptr;
     ir = new Malang_IR{types};
+    locality = new Locality{ir};
     for (auto &&n : ast.roots)
     {
         auto node = get(*n);
@@ -723,7 +726,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
 void Ast_To_IR::push_locality()
 {
     scopes.push_back(locality);
-    locality = new Locality;
+    locality = new Locality{ir};
 }
 
 void Ast_To_IR::pop_locality()

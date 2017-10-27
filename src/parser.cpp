@@ -5,17 +5,11 @@
 #include "ast/nodes.hpp"
 
 
-Ast Parser::parse(const std::string &filename)
-{
-    throw "not implemented";
-}
-
-
 static Ast_Node *parse_top_level(Parser &parser);
-Ast Parser::parse(const std::string &filename, const std::string &source)
+Ast Parser::parse(Source_Code *src_code)
 {
     errors = 0;
-    code = new Source_Code(filename, source);
+    code = src_code;
     lexer.lex(code);
     //lexer.dump();
     lex_idx = 0;

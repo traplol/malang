@@ -39,7 +39,8 @@ std::vector<std::string> get_parse_test_output(Parse_Test &test)
     Parser parser(&types);
     try
     {
-        auto ast = parser.parse("test.ma", test.input);
+        auto src = new Source_Code("test.a", test.input);
+        auto ast = parser.parse(src);
         if (parser.errors)
         {
             printf("there were parsing errors...\n");
@@ -368,7 +369,7 @@ void parse_one()
 void codegen_stuff();
 void gc_stuff();
 void parse_stuff();
-void parse_to_code(const std::string &);
+void parse_to_code(const std::string &filename, const std::string &code);
 
 bool read_file(const std::string &filename, std::string &contents)
 {
@@ -395,7 +396,7 @@ int main(int argc, char **argv)
     std::string file_contents;
     if (read_file(argv[1], file_contents))
     {
-        parse_to_code(file_contents);
+        parse_to_code(argv[1], file_contents);
         return 0;
     }
     else
@@ -405,14 +406,15 @@ int main(int argc, char **argv)
     }
 }
 
-void parse_to_code(const std::string &code)
+void parse_to_code(const std::string &filename, const std::string &code)
 {
     Primitive_Function_Map primitives;
     Type_Map types;
     Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);
     printf("Input source:\n%s\n", code.c_str());
-    auto ast = parser.parse("test.ma", code);
+    auto src = new Source_Code{filename, code};
+    auto ast = parser.parse(src);
 
     printf("\nGenerated AST\n");
     for (auto &&n : ast.roots)
@@ -443,4 +445,5 @@ void parse_to_code(const std::string &code)
         delete ir;
         delete cg;
     }
+    delete src;
 }

@@ -6,6 +6,9 @@
 
 struct Label_Map
 {
+    Label_Map(struct Malang_IR *alloc)
+        : m_alloc(alloc)
+        {}
     struct IR_Label *make_label(const std::string &name, const Source_Location &src_loc);
     struct IR_Label *get_label(const std::string &name);
 
@@ -13,6 +16,7 @@ struct Label_Map
     struct IR_Named_Block *get_named_block(const std::string &name);
 private:
     std::map<std::string, struct IR_Label*> m_map;
+    struct Malang_IR *m_alloc;
 };
 
 #endif /* MALANG_IR_LABEL_MAP_HPP */

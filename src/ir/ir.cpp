@@ -9,4 +9,9 @@ Malang_IR::~Malang_IR()
     delete labels;
     labels = nullptr;
     roots.clear();
+    for (auto &&n : m_own_allocated_nodes)
+    {
+        delete n;
+    }
+    m_own_allocated_nodes.clear();
 }
