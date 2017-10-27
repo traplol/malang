@@ -6,15 +6,13 @@ TODO:
     front by a variable/command line argument. Alternatively since these are entirely accessed
     using indexes they could even be dynamically allocated.
 
-    + Implement VM calls (see: VM Calling Convention)
-
-    + Implement the AST to IR visitor
-
     + Implement Object + Type system
 
     + Write tests for every VM instruction
 
     + Write tests for every Codegen function
+
+    + Parse/lex comments
 
     + AST should begin generating type declarations and the IR should handle actually
     defining them
@@ -27,53 +25,69 @@ TODO:
 
 
 ==============================================================================================
-@FixMe: THIS ENTIRE SECTION IS OUTDATED AN NEEDS TO BE UPDATED
 VM Calling Convention:
 
     Arguments:
-    + VM call arguments use data stack; when a call happens save the current data stack top 
-    and use that to access arguments:
-      - fn (a, b, c, d, e)
-      - Load/Store_Arg_0 = e, 1 = d, 2 = c, 3 = b, N[4] = a this will work because the body 
-      will know where each argument is as soon as the function is declared.
-      - variadic arguments can be handled by the compiler generating an array of values and
-      then pushing that to the data stack last, the array would be accessible with Load_Arg_0
-
-    + The backwards accessibility ordering looks odd but it allows for arguments to be
-    evaluated in order from left to right without having to rearrange their ordering on the
-    stack before the call is executed.
+    + VM call arguments are passed using the data stack and should be passed in order from
+    left to right
 
     Return values:
-    + Since the data stack is also used to "return" values from functions, it is the caller's
-    responsibility to unpack or drop them as necessary. This allows functions to return any
-    number of values.
+    + Since the data stack is also used to return any number of values from functions, it is
+    the callee's responsibility to drop arguments before returning.
+
+    + To solve this, upon entering a function we immediately transfer the arguments into
+    local variables. Since arguments are passed from left to right this means the top of the
+    data stack is the last argument and they should be stored into local variables in reverse
+    order.
+    func :: fn (a: int, b: int, c: int) {...}
+                L0      L1      L2
+    func(1,2,3)
+    TOS -> 3, 2, 1
+    Store_Local_2 'c
+    Store_Local_1 'b
+    Store_Local_0 'a
 
     Local variables:
     + Local variables use a separate `locals' stack and allocating/freeing space on this stack
     is controlled by the callee itself.
 
     Instance Method calls:
-    + The object instance, "this", is implicitly passed to a method call last. Doing this
-    allows "this" to always be accessible with Load/Store_Arg_0. This also makes chaining
-    method calls more fluid because it is a simple Load_Arg_0 before calling a method within
+    + The object instance is implicitly passed to a method call first. Doing this allows the
+    instance to always be accessible with Load/Store_Local_0. This also makes chaining method
+    calls more fluid because it is a simple Load_Local_0 before calling a method within
     another method.
 
-    Example of stack after a return:
+    Example of a call with a multi-return:
 
-        rot :: fn (a: int, b: int, c: int) -> int, int, int {
+        rot :: fn (a: int, b: int, c: int) -> (int, int, int) {
             return b, c, a
         }
         x, _, z := rot(1, 2, 3)
-    
-        after the call to foo data stack:
-        1     <- TOP
-        3
-        2
-        3
+
+        after the call to 'rot data stack:
+        3     <- TOP
         2
         1
 
-        ...<code to setup call...
+        ; 'rot
+        Allocate_Locals <3>
+        Store_Local_2       ; 'c
+        Store_Local_1       ; 'b
+        Store_Local_0       ; 'a
+        Load_Local_1        ; 'b
+        Load_Local_2        ; 'c
+        Load_Local_0        ; 'a
+        Return
+
+        after the return of 'rot data stack:
+        1     <- TOP
+        3
+        2
+
+        Literal <1>         ; 1->a
+        Literal <2>         ; 2->b
+        Literal <3>         ; 3->c
+        Load_Global <0>     ; 'rot
         Call_Dyn            ; call 'rot
         Store_Local_1       ; store 1 in 'z
         Drop_1              ; drop 3
@@ -81,20 +95,67 @@ VM Calling Convention:
         Drop_3              ; drop args(3,2,1)
 
 ==============================================================================================
-Object Representation:
-    color:
-        0 = white: it's not reachable
-        1 = grey:  it's reachable
-        2 = black: we've marked all sub-references grey
-    struct Object
-    {
-        Type_Info *type_info;
-        unsigned char free : 1;
-        unsigned char color : 2;
-        Value *fields;
+Type syntax:
 
-        void gc_mark(); // visits every field, if it's an object call its gc_mark
-    };
+    type Greeting = string
+    type Name = string
+
+    type Greeter = {
+        name : Name,
+        greeting : Greeting,
+        has_greeted := false,
+        greet :: fn (who: Name) {
+            println("#{@greeting} #{who}, I am #{@name}")
+            @has_greeted = true
+        },
+        PI :: 3.14159,
+        say_pi :: fn () {
+            println("#{@PI}, I'm #{@name}... get it?")
+        }
+    }
+
+    greeter := Greeter{"Bob", "Salutations!"}
+    greeter.greet("Max")
+    greeter.say_pi()
+
+
+==============================================================================================
+Block as values:
+
+    x := let {
+        local_here_1 := get_result()
+        local_here_2 := do_thing()
+        local_here_1 + local_here_2
+    }
+
+    x is now the value of local_here_1 + local_here_2
+
+
+    y := for haystack {
+        if it == the_needle {
+            break "found"
+        }
+    } else "not found"
+    } nobreak "not found"
+    } default "not found"
+
+
+
+
+    need to drop unused expression values:
+    x := 0
+    while x < 100000 {
+        1
+        x = x + 1
+    }
+    this will just fill the data stack with 1s
+
+    if (for m.params {
+        if it.type == params[it_idx].type
+            break false
+        } else true) {
+        return m
+    }
 
 ==============================================================================================
 Garbage Collection:
@@ -271,6 +332,19 @@ Oct 25, 2017:
         Arguments are now immediatly transferred from the stack to locals in bytecode
         this leaves them accessible from 0 in the order they are declared
         fn (a: int, b: int, c: int)
-           L0      L1      L2
+            L0      L1      L2
     + To compensate for combining arguments into the locals, the Load/Store_Arg instructions
     have been replaced with Load/Store_Local_4,5,6,7,8, and 9
+
+Oct 26, 2017:
+    + Implemented array literal parsing
+    + Implemented new array parsing
+    + Implemented arrays into the object system
+    + Implemented array instructions into the VM
+    + Implemented array allocation into the language
+
+Oct 27, 2017:
+    + Fixed various memory leaks in the IR
+    + IR_Nodes are now owned by the Malang_IR that allocated them.
+    + Switched GC/Allocation to a O(1) vector system, no more linked list!
+    + Fixed bugs when freeing in the GC

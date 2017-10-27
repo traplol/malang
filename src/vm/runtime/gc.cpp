@@ -118,6 +118,12 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     obj.header.color = Malang_Object::grey;
     // @TODO: reserve fields and such 
     obj.fields = nullptr;
+    // Pause the GC while values are being initialized so the GC doesn't free while
+    // constructing.
+    auto paused = m_is_paused;
+    m_is_paused = true;
+    // Init here:
+    m_is_paused = paused;
 }
 
 void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum length)
@@ -135,6 +141,12 @@ void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum lengt
     {
         // @FixMe: should initialization be handled? maybe call ctor for every element
         arr.data = new Malang_Value[length];
+        // Pause the GC while values are being initialized so the GC doesn't free while
+        // constructing.
+        auto paused = m_is_paused;
+        m_is_paused = true;
+        // Init here:
+        m_is_paused = paused;
     }
     else
     {
