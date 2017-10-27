@@ -716,6 +716,11 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
         return uptr<Ast_Value>(
             new Integer_Node(token.src_loc(), token.to_int(), parser.types->get_int()));
     }
+    if (parser.accept(token, { Token_Id::String }))
+    {
+        return uptr<Ast_Value>(
+            new String_Node(token.src_loc(), token.to_string(), parser.types->get_string()));
+    }
     if (parser.accept(token, { Token_Id::Real }))
     {
         return uptr<Ast_Value>(
