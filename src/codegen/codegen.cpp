@@ -617,3 +617,9 @@ void Codegen::push_back_array_length()
 {
     push_back_instruction(Instruction::Array_Length);
 }
+
+void Codegen::push_back_load_string_constant(int32_t index)
+{
+    push_back_instruction(Instruction::Load_String_Constant);
+    push_back_raw_32(index);
+}

@@ -6,6 +6,7 @@
 #include "../ast/ast.hpp"
 #include "ir.hpp"
 #include "symbol_map.hpp"
+#include "../vm/runtime/primitive_types.hpp"
 
 struct Locality
 {
@@ -17,7 +18,9 @@ struct Locality
 struct Ast_To_IR : Ast_Visitor
 {
     ~Ast_To_IR();
-    Ast_To_IR(struct Primitive_Function_Map *primitives, Type_Map *types);
+    Ast_To_IR(struct Primitive_Function_Map *primitives,
+              std::vector<StringConstant> *strings,
+              Type_Map *types);
 
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
@@ -76,6 +79,7 @@ private:
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
     std::vector<Locality*> scopes;
+    std::vector<StringConstant> *strings;
 
     void push_locality();
     void pop_locality();

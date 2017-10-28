@@ -18,8 +18,12 @@ Malang_VM::~Malang_VM()
     delete gc;
 }
 
-Malang_VM::Malang_VM(Type_Map *types, const std::vector<Native_Code> &primitives, size_t gc_run_interval, size_t max_num_objects)
+Malang_VM::Malang_VM(Type_Map *types,
+                     const std::vector<Native_Code> &primitives,
+                     const std::vector<StringConstant> &string_constants,
+                     size_t gc_run_interval, size_t max_num_objects)
     : primitives(std::move(primitives))
+    , string_constants(std::move(string_constants))
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
 }
@@ -934,6 +938,20 @@ static void run_code(Malang_VM &vm)
                 assert(obj_ref->is_array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 vm.push_data(array->size);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Load_String_Constant)
+            {
+                ip++;
+                auto idx = fetch32(ip);
+                printf("load_string_constant not impl.\n");
+                printf("would have loaded string:\n");
+                for (Fixnum i = 0; i < vm.string_constants[idx].size(); ++i)
+                {
+                    printf("%c", vm.string_constants[idx][i]);
+                }
+                abort();
+                ip += sizeof(idx);
                 DISPATCH_NEXT;
             }
         }

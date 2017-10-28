@@ -49,7 +49,7 @@ void IR_To_Code::visit(IR_New_Array &n)
 
 void IR_To_Code::visit(IR_String &n)
 {
-    NOT_IMPL;
+    cg->push_back_load_string_constant(n.strings_index);
 }
 
 void IR_To_Code::visit(IR_Symbol &n)

@@ -104,6 +104,8 @@ struct Codegen
     void push_back_array_load(bool checked = true);
     void push_back_array_store(bool checked = true);
     void push_back_array_length();
+
+    void push_back_load_string_constant(int32_t index);
 };
 
 #endif /* MALANG_CODEGEN_CODEGEN_HPP */

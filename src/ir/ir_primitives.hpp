@@ -106,13 +106,13 @@ struct IR_New_Array : IR_LValue
 struct IR_String : IR_RValue
 {
     virtual ~IR_String();
-    IR_String(const Source_Location &src_loc, Type_Info *type, const std::string &value)
+    IR_String(const Source_Location &src_loc, Type_Info *type, Fixnum strings_index)
         : IR_RValue(src_loc)
         , type(type)
-        , value(value)
+        , strings_index(strings_index)
         {}
     Type_Info *type;
-    std::string value;
+    Fixnum strings_index;
 
     virtual Type_Info *get_type() const override { return type; }
     IR_NODE_OVERRIDES;

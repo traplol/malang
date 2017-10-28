@@ -46,11 +46,14 @@ Ast_To_IR::~Ast_To_IR()
     delete locality;
     locality = nullptr;
 }
-Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives, Type_Map *types)
+Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives,
+                     std::vector<StringConstant> *strings,
+                     Type_Map *types)
     : primitives(primitives)
     , types(types)
     , locality(nullptr)
     , ir(nullptr)
+    , strings(strings)
 {}
 
 void Ast_To_IR::visit(Variable_Node &n)
@@ -252,7 +255,9 @@ void Ast_To_IR::visit(Real_Node &n)
 
 void Ast_To_IR::visit(String_Node &n)
 {
-    NOT_IMPL;
+    auto string = ir->alloc<IR_String>(n.src_loc, types->get_string(), strings->size());
+    strings->push_back(n.value);
+    _return(string);
 }
 
 void Ast_To_IR::visit(Boolean_Node &n)

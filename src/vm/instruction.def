@@ -234,4 +234,6 @@ ITEM(Array_Store_Unchecked)
 // array_ref -> length
 ITEM(Array_Length)
 
+ITEM(Load_String_Constant)
+
 #undef ITEM
