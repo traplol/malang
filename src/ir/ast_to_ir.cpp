@@ -203,11 +203,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     // both in the same scope and a way that easily disallows declaring a variable with the
     // same name as a parameter
     //locality->symbols->reset_index();
-    for (auto &&b : n.body)
-    {
-        auto body_node = get(*b);
-        fn_body->body().push_back(body_node);
-    }
+    convert_body(n.body, fn_body->body());
     if (fn_body->body().empty())
     {
         auto empty_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
@@ -555,6 +551,35 @@ void Ast_To_IR::visit(Return_Node &n)
     _return(retn);
 }
 
+void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, IR_Value **last_node_as_value)
+{
+    IR_Node *last_node = nullptr;
+    const bool collecting_last_node = last_node_as_value != nullptr;
+    for (size_t i = 0; i < src.size(); ++i)
+    {
+        const bool is_last_iter = i+1 >= src.size();
+        auto ast_node = src[i];
+        last_node = get(*ast_node);
+        assert(last_node);
+        dst.push_back(last_node);
+        if (auto val = dynamic_cast<IR_Value*>(last_node))
+        {
+            if (!is_last_iter || !collecting_last_node)
+            {
+            if (val->get_type() != types->get_void())
+            {
+                auto discard = ir->alloc<IR_Discard_Result>(ast_node->src_loc, 1);
+                dst.push_back(discard);
+            }
+            }
+        }
+    }
+    if (collecting_last_node)
+    {
+        *last_node_as_value = dynamic_cast<IR_Value*>(last_node);
+    }
+}
+
 void Ast_To_IR::visit(While_Node &n)
 {
     std::vector<IR_Node*> block;
@@ -584,12 +609,7 @@ void Ast_To_IR::visit(While_Node &n)
     // to access variables declared outside its own scope.
     locality->symbols->push();
     {
-        for (auto &&b : n.body)
-        {
-            auto body_node = get(*b);
-            assert(body_node);
-            loop_block->body().push_back(body_node);
-        }
+        convert_body(n.body, loop_block->body());
         // The end of a while loop is always a branch back to the condition check.
         loop_block->body().push_back(ir->alloc<IR_Branch>(n.src_loc, condition_check_label));
     }
@@ -610,13 +630,11 @@ Type_Info *deduce_type(Type_Info *default_type, IR_Value *cons, IR_Value *alt)
     }
     if (!cons && alt)
     {
-        printf("TODO: !a && b\n");
-        abort();
+        return default_type;
     }
     if (cons && !alt)
     {
-        printf("TODO: a && !b\n");
-        abort();
+        return default_type;
     }
     auto cons_ty = cons->get_type();
     assert(cons_ty);
@@ -653,26 +671,14 @@ void Ast_To_IR::visit(If_Else_Node &n)
     block.push_back(branch_to_alt);
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
-    for (auto &&c : n.consequence)
-    {
-        auto cons_node = get(*c);
-        assert(cons_node);
-        block.push_back(cons_node);
-        last_conseq = dynamic_cast<IR_Value*>(cons_node);
-    }
+    convert_body(n.consequence, block, &last_conseq);
     if (!n.alternative.empty())
     {
         auto end_label = ir->labels->make_label(label_name_gen(), n.src_loc);
         auto branch_to_end = ir->alloc<IR_Branch>(n.src_loc, end_label);
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
-        for (auto &&a : n.alternative)
-        {
-            auto alt_node = get(*a);
-            assert(alt_node);
-            block.push_back(alt_node);
-            last_altern = dynamic_cast<IR_Value*>(alt_node);
-        }
+        convert_body(n.alternative, block, &last_altern);
         block.push_back(end_label);
     }
     else
@@ -720,11 +726,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_false_label = nullptr;
     ir = new Malang_IR{types};
     locality = new Locality{ir};
-    for (auto &&n : ast.roots)
-    {
-        auto node = get(*n);
-        ir->roots.push_back(node);
-    }
+    convert_body(ast.roots, ir->roots);
     return ir;
 }
 

@@ -84,6 +84,7 @@ private:
     void push_locality();
     void pop_locality();
     IR_Symbol *find_symbol(const std::string &name);
+    void convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, struct IR_Value **last_node_as_value = nullptr);
 
     template<typename T = IR_Node*>
     T get(Ast_Node &n)

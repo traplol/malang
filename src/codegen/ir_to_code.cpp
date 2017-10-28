@@ -11,6 +11,11 @@ void IR_To_Code::visit(IR_Noop &n)
     cg->push_back_noop();
 }
 
+void IR_To_Code::visit(IR_Discard_Result &n)
+{
+    cg->push_back_drop(n.num);
+}
+
 void IR_To_Code::visit(IR_Block &n)
 {
     convert_many(n.nodes);
@@ -18,7 +23,7 @@ void IR_To_Code::visit(IR_Block &n)
 
 void IR_To_Code::visit(IR_Boolean &n)
 {
-    cg->push_back_literal_value(n.value);
+    cg->push_back_literal_32(n.value);
 }
 
 void IR_To_Code::visit(IR_Char &n)

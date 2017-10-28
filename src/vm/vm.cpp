@@ -401,7 +401,7 @@ static void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto a = vm.pop_data().as_fixnum();
-                vm.push_data(-a);
+                vm.push_data(~a);
                 DISPATCH_NEXT;
             }
             DISPATCH(Noop)

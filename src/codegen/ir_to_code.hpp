@@ -9,6 +9,8 @@
 struct IR_To_Code : IR_Visitor
 {
     virtual void visit(struct IR_Noop &n) override;
+    virtual void visit(struct IR_Discard_Result&) override;
+    virtual void visit(struct IR_Assign_Top &n) override;
     virtual void visit(struct IR_Block &n) override;
 
     virtual void visit(struct IR_Boolean &n) override;
@@ -32,7 +34,6 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Branch_If_True &n) override;
     virtual void visit(struct IR_Branch_If_False &n) override;
     virtual void visit(struct IR_Assignment &n) override;
-    virtual void visit(struct IR_Assign_Top &n) override;
 
     virtual void visit(struct IR_B_Add &n) override;
     virtual void visit(struct IR_B_Subtract &n) override;
