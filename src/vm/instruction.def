@@ -77,23 +77,23 @@ ITEM(Get_Type)
 // assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
 ITEM(Branch)
 
-// pops the top of the stack
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the top of the stack is zero; pops top of stack if it's not zero
+ITEM(Branch_If_False_Or_Pop)
+
+// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
+// if the top of the stack is not zero; pops top of stack if it's zero
+ITEM(Branch_If_True_Or_Pop)
+
+// pop top of stack
 // assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
 // if the value popped is zero
-ITEM(Pop_Branch_If_Zero)
+ITEM(Pop_Branch_If_False)
 
-// pops the top of the stack
+// pop top of stack
 // assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
 // if the value popped is not zero
-ITEM(Pop_Branch_If_Not_Zero)
-
-// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
-// if the top of stack is zero
-ITEM(Branch_If_Zero)
-
-// assumes the next 4 bytes of the bytecode is a 32-bit integer representing how far to jump
-// if the top of stack is not zero
-ITEM(Branch_If_Not_Zero)
+ITEM(Pop_Branch_If_True)
 
 // restore previous locals frame, pop IP from return stack, set IP to this value
 ITEM(Return)

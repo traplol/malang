@@ -494,30 +494,30 @@ size_t Codegen::push_back_branch()
     push_back_raw_32(0);
     return idx;
 }
-size_t Codegen::push_back_branch_if_zero(bool pop)
+size_t Codegen::push_back_pop_branch_if_false()
 {
-    if (pop)
-    {
-        push_back_instruction(Instruction::Pop_Branch_If_Zero);
-    }
-    else
-    {
-        push_back_instruction(Instruction::Branch_If_Zero);
-    }
+    push_back_instruction(Instruction::Pop_Branch_If_False);
     auto idx = code.size();
     push_back_raw_32(0);
     return idx;
 }
-size_t Codegen::push_back_branch_if_not_zero(bool pop)
+size_t Codegen::push_back_pop_branch_if_true()
 {
-    if (pop)
-    {
-        push_back_instruction(Instruction::Pop_Branch_If_Not_Zero);
-    }
-    else
-    {
-        push_back_instruction(Instruction::Branch_If_Not_Zero);
-    }
+    push_back_instruction(Instruction::Pop_Branch_If_True);
+    auto idx = code.size();
+    push_back_raw_32(0);
+    return idx;
+}
+size_t Codegen::push_back_branch_if_false_or_pop()
+{
+    push_back_instruction(Instruction::Branch_If_False_Or_Pop);
+    auto idx = code.size();
+    push_back_raw_32(0);
+    return idx;
+}
+size_t Codegen::push_back_branch_if_true_or_pop()
+{
+    push_back_instruction(Instruction::Branch_If_True_Or_Pop);
     auto idx = code.size();
     push_back_raw_32(0);
     return idx;
@@ -527,28 +527,24 @@ void Codegen::push_back_branch(int32_t n)
     push_back_instruction(Instruction::Branch);
     push_back_raw_32(n);
 }
-void Codegen::push_back_branch_if_zero(int32_t n, bool pop)
+void Codegen::push_back_pop_branch_if_false(int32_t n)
 {
-    if (pop)
-    {
-        push_back_instruction(Instruction::Pop_Branch_If_Zero);
-    }
-    else
-    {
-        push_back_instruction(Instruction::Branch_If_Zero);
-    }
+    push_back_instruction(Instruction::Pop_Branch_If_False);
     push_back_raw_32(n);
 }
-void Codegen::push_back_branch_if_not_zero(int32_t n, bool pop)
+void Codegen::push_back_pop_branch_if_true(int32_t n)
 {
-    if (pop)
-    {
-        push_back_instruction(Instruction::Pop_Branch_If_Not_Zero);
-    }
-    else
-    {
-        push_back_instruction(Instruction::Branch_If_Not_Zero);
-    }
+    push_back_instruction(Instruction::Pop_Branch_If_True);
+    push_back_raw_32(n);
+}
+void Codegen::push_back_branch_if_false_or_pop(int32_t n)
+{
+    push_back_instruction(Instruction::Branch_If_False_Or_Pop);
+    push_back_raw_32(n);
+}
+void Codegen::push_back_branch_if_true_or_pop(int32_t n)
+{
+    push_back_instruction(Instruction::Branch_If_True_Or_Pop);
     push_back_raw_32(n);
 }
 

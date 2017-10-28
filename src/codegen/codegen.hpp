@@ -85,13 +85,15 @@ struct Codegen
 
     // Returns the index into the code where the dummy value is.
     size_t push_back_branch();
-    // Returns the index into the code where the dummy value is.
-    size_t push_back_branch_if_zero(bool pop=true);
-    // Returns the index into the code where the dummy value is.
-    size_t push_back_branch_if_not_zero(bool pop=true);
+    size_t push_back_pop_branch_if_false();
+    size_t push_back_pop_branch_if_true();
+    size_t push_back_branch_if_false_or_pop();
+    size_t push_back_branch_if_true_or_pop();
     void push_back_branch(int32_t n);
-    void push_back_branch_if_zero(int32_t n, bool pop=true);
-    void push_back_branch_if_not_zero(int32_t n, bool pop=true);
+    void push_back_pop_branch_if_false(int32_t n);
+    void push_back_pop_branch_if_true(int32_t n);
+    void push_back_branch_if_false_or_pop(int32_t n);
+    void push_back_branch_if_true_or_pop(int32_t n);
 
     void set_raw_8(size_t index, byte value);
     void set_raw_16(size_t index, int16_t value);

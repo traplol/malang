@@ -451,7 +451,7 @@ static void run_code(Malang_VM &vm)
                 ip += fetch32(ip) - 1;
                 DISPATCH_NEXT;
             }
-            DISPATCH(Pop_Branch_If_Zero)
+            DISPATCH(Pop_Branch_If_False)
             {
                 ip++;
                 if (vm.pop_data().as_fixnum() == 0)
@@ -464,7 +464,7 @@ static void run_code(Malang_VM &vm)
                 }
                 DISPATCH_NEXT;
             }
-            DISPATCH(Pop_Branch_If_Not_Zero)
+            DISPATCH(Pop_Branch_If_True)
             {
                 ip++;
                 if (vm.pop_data().as_fixnum() != 0)
@@ -477,7 +477,7 @@ static void run_code(Malang_VM &vm)
                 }
                 DISPATCH_NEXT;
             }
-            DISPATCH(Branch_If_Zero)
+            DISPATCH(Branch_If_False_Or_Pop)
             {
                 ip++;
                 if (vm.peek_data().as_fixnum() == 0)
@@ -486,11 +486,12 @@ static void run_code(Malang_VM &vm)
                 }
                 else
                 {
+                    vm.pop_data();
                     ip += 4;
                 }
                 DISPATCH_NEXT;
             }
-            DISPATCH(Branch_If_Not_Zero)
+            DISPATCH(Branch_If_True_Or_Pop)
             {
                 ip++;
                 if (vm.peek_data().as_fixnum() != 0)
@@ -499,6 +500,7 @@ static void run_code(Malang_VM &vm)
                 }
                 else
                 {
+                    vm.pop_data();
                     ip += 4;
                 }
                 DISPATCH_NEXT;

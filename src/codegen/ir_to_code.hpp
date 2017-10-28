@@ -31,8 +31,10 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Label &n) override;
     virtual void visit(struct IR_Named_Block &n) override;
     virtual void visit(struct IR_Branch &n) override;
-    virtual void visit(struct IR_Branch_If_True &n) override;
-    virtual void visit(struct IR_Branch_If_False &n) override;
+    virtual void visit(struct IR_Pop_Branch_If_True &n) override;
+    virtual void visit(struct IR_Pop_Branch_If_False &n) override;
+    virtual void visit(struct IR_Branch_If_True_Or_Pop &n) override;
+    virtual void visit(struct IR_Branch_If_False_Or_Pop &n) override;
     virtual void visit(struct IR_Assignment &n) override;
 
     virtual void visit(struct IR_B_Add &n) override;

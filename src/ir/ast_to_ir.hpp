@@ -73,7 +73,7 @@ private:
     Type_Map *types;
     Locality *locality;
     struct Fn_Node *cur_fn;
-    IR_Label *cur_false_label;
+    IR_Label *cur_true_label, *cur_false_label;
     Malang_IR *ir;
     IR_Node *tree;
     Symbol_Scope cur_symbol_scope;

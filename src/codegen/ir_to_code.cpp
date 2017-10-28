@@ -186,32 +186,62 @@ void IR_To_Code::visit(IR_Branch &n)
     }
 }
 
-void IR_To_Code::visit(IR_Branch_If_True &n)
+void IR_To_Code::visit(IR_Pop_Branch_If_True &n)
 {
     assert(n.destination);
     if (n.destination->is_resolved())
     {
-        cg->push_back_branch_if_not_zero(n.destination->address(), n.consume_cond);
+        cg->push_back_pop_branch_if_true(n.destination->address());
     }
     else
     {
         auto from = cg->code.size();
-        auto idx = cg->push_back_branch_if_not_zero(n.consume_cond);
+        auto idx = cg->push_back_pop_branch_if_true();
         n.destination->please_backfill_on_resolve_rel(cg, idx, from);
     }
 }
 
-void IR_To_Code::visit(IR_Branch_If_False &n)
+void IR_To_Code::visit(IR_Pop_Branch_If_False &n)
 {
     assert(n.destination);
     if (n.destination->is_resolved())
     {
-        cg->push_back_branch_if_zero(n.destination->address(), n.consume_cond);
+        cg->push_back_pop_branch_if_false(n.destination->address());
     }
     else
     {
         auto from = cg->code.size();
-        auto idx = cg->push_back_branch_if_zero(n.consume_cond);
+        auto idx = cg->push_back_pop_branch_if_false();
+        n.destination->please_backfill_on_resolve_rel(cg, idx, from);
+    }
+}
+
+void IR_To_Code::visit(IR_Branch_If_True_Or_Pop &n)
+{
+    assert(n.destination);
+    if (n.destination->is_resolved())
+    {
+        cg->push_back_branch_if_true_or_pop(n.destination->address());
+    }
+    else
+    {
+        auto from = cg->code.size();
+        auto idx = cg->push_back_branch_if_true_or_pop();
+        n.destination->please_backfill_on_resolve_rel(cg, idx, from);
+    }
+}
+
+void IR_To_Code::visit(IR_Branch_If_False_Or_Pop &n)
+{
+    assert(n.destination);
+    if (n.destination->is_resolved())
+    {
+        cg->push_back_branch_if_false_or_pop(n.destination->address());
+    }
+    else
+    {
+        auto from = cg->code.size();
+        auto idx = cg->push_back_branch_if_false_or_pop();
         n.destination->please_backfill_on_resolve_rel(cg, idx, from);
     }
 }

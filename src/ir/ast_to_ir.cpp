@@ -264,22 +264,6 @@ void Ast_To_IR::visit(Boolean_Node &n)
 
 void Ast_To_IR::visit(Logical_Or_Node &n)
 {
-    NOT_IMPL;
-}
-
-void Ast_To_IR::visit(Logical_And_Node &n)
-{
-    // 1 < 2 && 10 < 100
-    //
-    // Lit(1)
-    // Lit(1)
-    // Less_Than
-    // Dup_1
-    // Branch_If_False(exit)
-    // Lit(10)
-    // Lit(100)
-    // Less_Than
-    // Label(exit)
 
     std::vector<IR_Node*> block;
     auto lhs = get<IR_Value*>(*n.lhs);
@@ -290,7 +274,6 @@ void Ast_To_IR::visit(Logical_And_Node &n)
                             lhs->get_type()->name().c_str());
         abort();
     }
-
     auto rhs = get<IR_Value*>(*n.rhs);
     assert(rhs);
     if (rhs->get_type() != types->get_bool())
@@ -301,18 +284,62 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     }
 
     block.push_back(lhs);
-    IR_Label *short_circuit_label;
-    if (cur_false_label)
+    if (cur_true_label)
     {
-        short_circuit_label = cur_false_label;
+        block.push_back(ir->alloc<IR_Pop_Branch_If_True>(lhs->src_loc, cur_true_label));
+        block.push_back(rhs);
     }
     else
     {
-        short_circuit_label = ir->labels->make_label(label_name_gen(), n.src_loc);
+        auto true_label = ir->labels->make_label(label_name_gen(), lhs->src_loc);
+        block.push_back(ir->alloc<IR_Branch_If_True_Or_Pop>(lhs->src_loc, true_label));
+        block.push_back(rhs);
+        block.push_back(true_label);
     }
-    auto short_circuit = ir->alloc<IR_Branch_If_False>(n.src_loc, short_circuit_label);
-    block.push_back(short_circuit);
-    block.push_back(rhs);
+
+    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, types->get_bool());
+    _return(r_block);
+}
+
+void Ast_To_IR::visit(Logical_And_Node &n)
+{
+    auto true_label = ir->labels->make_label(label_name_gen(), n.lhs->src_loc);
+    auto old_true_label = cur_true_label;
+    cur_true_label = true_label;
+    std::vector<IR_Node*> block;
+    auto lhs = get<IR_Value*>(*n.lhs);
+    assert(lhs);
+    if (lhs->get_type() != types->get_bool())
+    {
+        lhs->src_loc.report("error", "Expected type `bool' got `%s'",
+                            lhs->get_type()->name().c_str());
+        abort();
+    }
+    cur_true_label = old_true_label;
+    auto rhs = get<IR_Value*>(*n.rhs);
+    assert(rhs);
+    if (rhs->get_type() != types->get_bool())
+    {
+        rhs->src_loc.report("error", "Expected type `bool' got `%s'",
+                            rhs->get_type()->name().c_str());
+        abort();
+    }
+
+    block.push_back(lhs);
+    if (cur_false_label)
+    {
+        block.push_back(ir->alloc<IR_Pop_Branch_If_False>(lhs->src_loc, cur_false_label));
+        block.push_back(true_label);
+        block.push_back(rhs);
+    }
+    else
+    {
+        auto false_label = ir->labels->make_label(label_name_gen(), lhs->src_loc);
+        block.push_back(ir->alloc<IR_Branch_If_False_Or_Pop>(lhs->src_loc, false_label));
+        block.push_back(true_label);
+        block.push_back(rhs);
+        block.push_back(false_label);
+    }
 
     auto r_block = ir->alloc<IR_Block>(n.src_loc, block, types->get_bool());
     _return(r_block);
@@ -589,7 +616,9 @@ void Ast_To_IR::visit(While_Node &n)
     auto loop_block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(loop_block);
     auto old_cur_false_label = cur_false_label;
+    auto old_cur_true_label = cur_true_label;
     cur_false_label = loop_block->end();
+    cur_true_label = loop_block;
 
     assert(n.condition);
     auto cond = get<IR_Value*>(*n.condition);
@@ -602,7 +631,7 @@ void Ast_To_IR::visit(While_Node &n)
     }
     block.push_back(cond);
 
-    auto branch_if_cond_false = ir->alloc<IR_Branch_If_False>(n.src_loc, loop_block->end());
+    auto branch_if_cond_false = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, loop_block->end());
     block.push_back(branch_if_cond_false);
     // We push here so variables can be declared inside the loop body but cannot
     // be referenced outside of the loop body while still allowing the loop body
@@ -618,21 +647,14 @@ void Ast_To_IR::visit(While_Node &n)
     block.push_back(loop_block);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
     cur_false_label = old_cur_false_label;
+    cur_true_label = old_cur_true_label;
     _return(ret);
 }
 
 static inline
 Type_Info *deduce_type(Type_Info *default_type, IR_Value *cons, IR_Value *alt)
 {
-    if (!cons && !alt)
-    {
-        return default_type;
-    }
-    if (!cons && alt)
-    {
-        return default_type;
-    }
-    if (cons && !alt)
+    if (!cons || !alt)
     {
         return default_type;
     }
@@ -653,9 +675,12 @@ Type_Info *deduce_type(Type_Info *default_type, IR_Value *cons, IR_Value *alt)
 void Ast_To_IR::visit(If_Else_Node &n)
 {
     auto old_cur_false_label = cur_false_label;
+    auto old_cur_true_label = cur_true_label;
     auto alt_begin_label = ir->labels->make_label(label_name_gen(), n.src_loc);
+    auto cons_begin_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     assert(alt_begin_label);
     cur_false_label = alt_begin_label;
+    cur_true_label = cons_begin_label;
     std::vector<IR_Node*> block;
     assert(n.condition);
     auto cond = get<IR_Value*>(*n.condition);
@@ -667,10 +692,11 @@ void Ast_To_IR::visit(If_Else_Node &n)
         abort();
     }
     block.push_back(cond);
-    auto branch_to_alt = ir->alloc<IR_Branch_If_False>(n.src_loc, alt_begin_label);
+    auto branch_to_alt = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, alt_begin_label);
     block.push_back(branch_to_alt);
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
+    block.push_back(cons_begin_label);
     convert_body(n.consequence, block, &last_conseq);
     if (!n.alternative.empty())
     {
@@ -688,6 +714,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
 
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, deduce_type(types->get_void(), last_conseq, last_altern));
     cur_false_label = old_cur_false_label;
+    cur_true_label = old_cur_true_label;
     _return(ret);
 }
 
@@ -723,7 +750,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
     cur_fn = nullptr;
-    cur_false_label = nullptr;
+    cur_true_label = cur_false_label = nullptr;
     ir = new Malang_IR{types};
     locality = new Locality{ir};
     convert_body(ast.roots, ir->roots);

@@ -15,9 +15,5 @@ four :: fn() -> bool {
     return true
 }
 
-if one() && two() && three() && four()
+if one() && two() || three() && four()
     println(9999)
-else
-    println(1111)
-
-

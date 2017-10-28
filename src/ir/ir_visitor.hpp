@@ -28,8 +28,10 @@ struct IR_Visitor
     virtual void visit(struct IR_Label&) = 0;
     virtual void visit(struct IR_Named_Block&) = 0;
     virtual void visit(struct IR_Branch&) = 0;
-    virtual void visit(struct IR_Branch_If_True&) = 0;
-    virtual void visit(struct IR_Branch_If_False&) = 0;
+    virtual void visit(struct IR_Pop_Branch_If_True&) = 0;
+    virtual void visit(struct IR_Pop_Branch_If_False&) = 0;
+    virtual void visit(struct IR_Branch_If_True_Or_Pop&) = 0;
+    virtual void visit(struct IR_Branch_If_False_Or_Pop&) = 0;
     virtual void visit(struct IR_Assignment&) = 0;
 
     virtual void visit(struct IR_B_Add&) = 0;
