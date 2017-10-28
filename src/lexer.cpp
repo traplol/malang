@@ -249,6 +249,8 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
+        PUSH_KEY_IDENT("and", Log_And);
+        PUSH_KEY_IDENT("or", Log_Or);
         PUSH_KEY_IDENT("else", K_else);
         PUSH_KEY_IDENT("class", K_class);
         PUSH_KEY_IDENT("match", K_match);
