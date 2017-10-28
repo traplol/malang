@@ -166,9 +166,11 @@ static std::string label_name_gen()
 
 void Ast_To_IR::visit(Fn_Node &n)
 {
+    // Use the stack to save state becaue functions can be nested
     auto old_scope = cur_symbol_scope;
     auto old_locals_count = cur_locals_count;
     auto old_fn = cur_fn;
+    auto old_returns = all_returns_this_fn;
     if (old_fn)
     {
         n.src_loc.report("NYI", "Support for closures is not yet implemented");
@@ -176,6 +178,11 @@ void Ast_To_IR::visit(Fn_Node &n)
     }
     cur_fn = &n;
 
+    // we need some way to store all returns created during this function definition so we can decide
+    // whether or not we use the Return_Fast instruction
+    std::vector<IR_Return*> returns_this_fn;
+    all_returns_this_fn = &returns_this_fn;
+    const bool is_void_return = n.fn_type->return_type() == types->get_void();
     push_locality();
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
@@ -185,8 +192,8 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, fn_body->end());
 
     cur_symbol_scope = Symbol_Scope::Local;
-    // @TODO: Handle "this" instance being in arg_0 for methods
-    // one way to do this is to implicitly append the symbol "this" to the function args
+    // @TODO: Handle "this" instance being in Local_0 for methods
+    // one way to do this is to implicitly prepend the symbol "this" to the function args
     for (auto &&it = n.params.rbegin(); it != n.params.rend(); ++it)
     {   // Args are pushed on the stack from left to right so they need to be pulled out
         // in the reverse order they were declared.
@@ -194,26 +201,33 @@ void Ast_To_IR::visit(Fn_Node &n)
         assert(p_sym);
         auto assign_arg_to_local = ir->alloc<IR_Assign_Top>(p_sym->src_loc, p_sym, cur_symbol_scope);
         fn_body->body().push_back(assign_arg_to_local);
-        //p_sym->is_initialized = true;
+        p_sym->is_initialized = true;
     }
-
-    cur_symbol_scope = Symbol_Scope::Local;
-    //cur_locals_count = 0;
-    // Parameters and locals are separated but there still needs to be a way to reference them
-    // both in the same scope and a way that easily disallows declaring a variable with the
-    // same name as a parameter
-    //locality->symbols->reset_index();
     convert_body(n.body, fn_body->body());
     if (fn_body->body().empty())
     {
+        if (!is_void_return)
+        {
+            n.return_type->src_loc.report("error", "Empty function cannot return type `%s'",
+                                          n.fn_type->return_type()->name().c_str());
+            abort();
+        }
         auto empty_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+        all_returns_this_fn->push_back(empty_retn);
         fn_body->body().push_back(empty_retn); // @FixMe: src_loc should be close curly of function def
     }
     else if (auto last = fn_body->body().back())
     {
         if (dynamic_cast<IR_Return*>(last) == nullptr)
         {
+            if (!is_void_return)
+            {
+                n.return_type->src_loc.report("error", "Function expected to return type `%s' but it returns nothing",
+                                              n.fn_type->return_type()->name().c_str());
+                abort();
+            }
             auto last_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+            all_returns_this_fn->push_back(last_retn);
             fn_body->body().push_back(last_retn); // @FixMe: src_loc should be close curly of function def
         }
     }
@@ -221,13 +235,21 @@ void Ast_To_IR::visit(Fn_Node &n)
     {
         auto num_locals_to_alloc = ir->alloc<IR_Allocate_Locals>(n.src_loc, cur_locals_count);
         fn_body->body().insert(fn_body->body().begin(), num_locals_to_alloc);
+        for (auto &&ret : *all_returns_this_fn)
+        {
+            ret->should_leave = true;
+        }
     }
     ir->roots.push_back(branch_over_body);
     ir->roots.push_back(fn_body);
     pop_locality();
+
+    // Restore the saved state
     cur_symbol_scope = old_scope;
     cur_locals_count = old_locals_count;
     cur_fn = old_fn;
+    all_returns_this_fn = old_returns;
+
     auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type);
     _return(callable)
 }
@@ -575,6 +597,7 @@ void Ast_To_IR::visit(Return_Node &n)
     }
     */
     auto retn = ir->alloc<IR_Return>(n.src_loc, values, cur_locals_count != 0);
+    all_returns_this_fn->push_back(retn);
     _return(retn);
 }
 
@@ -694,17 +717,18 @@ void Ast_To_IR::visit(If_Else_Node &n)
     block.push_back(cond);
     auto branch_to_alt = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, alt_begin_label);
     block.push_back(branch_to_alt);
+    const bool is_either_empty = n.consequence.empty() || n.alternative.empty();
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
     block.push_back(cons_begin_label);
-    convert_body(n.consequence, block, &last_conseq);
+    convert_body(n.consequence, block, (is_either_empty ? nullptr : &last_conseq));
     if (!n.alternative.empty())
     {
         auto end_label = ir->labels->make_label(label_name_gen(), n.src_loc);
         auto branch_to_end = ir->alloc<IR_Branch>(n.src_loc, end_label);
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
-        convert_body(n.alternative, block, &last_altern);
+        convert_body(n.alternative, block, (is_either_empty ? nullptr : &last_altern));
         block.push_back(end_label);
     }
     else
@@ -712,7 +736,8 @@ void Ast_To_IR::visit(If_Else_Node &n)
         block.push_back(alt_begin_label);
     }
 
-    auto ret = ir->alloc<IR_Block>(n.src_loc, block, deduce_type(types->get_void(), last_conseq, last_altern));
+    auto if_else_type = deduce_type(types->get_void(), last_conseq, last_altern);
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, if_else_type);
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
     _return(ret);

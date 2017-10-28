@@ -80,6 +80,7 @@ private:
     uint16_t cur_locals_count;
     std::vector<Locality*> scopes;
     std::vector<StringConstant> *strings;
+    std::vector<IR_Return*> *all_returns_this_fn;
 
     void push_locality();
     void pop_locality();
