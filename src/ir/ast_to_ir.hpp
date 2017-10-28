@@ -19,7 +19,7 @@ struct Ast_To_IR : Ast_Visitor
 {
     ~Ast_To_IR();
     Ast_To_IR(struct Primitive_Function_Map *primitives,
-              std::vector<StringConstant> *strings,
+              std::vector<String_Constant> *strings,
               Type_Map *types);
 
     virtual void visit(struct Variable_Node&n) override;
@@ -79,7 +79,7 @@ private:
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
     std::vector<Locality*> scopes;
-    std::vector<StringConstant> *strings;
+    std::vector<String_Constant> *strings;
     std::vector<IR_Return*> *all_returns_this_fn;
 
     void push_locality();

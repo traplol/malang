@@ -90,6 +90,9 @@ struct Type_Info
     const std::vector<Field_Info*> &fields() const;
     std::vector<Field_Info*> all_fields() const;
 
+    bool add_constructor(Method_Info *ctor);
+    const std::vector<Method_Info*> &constructors() const;
+
     bool add_method(Method_Info *method);
     const std::vector<Method_Info*> &methods() const;
     std::vector<Method_Info*> all_methods() const;
@@ -97,6 +100,7 @@ struct Type_Info
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
 
+    Method_Info *get_constructor(const std::vector<Type_Info*> &param_types) const;
     Method_Info *get_method(const std::string &name, const std::vector<Type_Info*> &param_types) const;
     std::vector<Method_Info*> get_methods(const std::string &name) const;
     Field_Info *get_field(const std::string &name) const;
@@ -114,6 +118,7 @@ private:
     std::string m_name;
     std::vector<Field_Info*> m_fields;
     std::vector<Method_Info*> m_methods;
+    std::vector<Method_Info*> m_constructors;
     std::vector<Type_Info*> m_subtypes;
 };
 

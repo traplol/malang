@@ -409,7 +409,7 @@ int main(int argc, char **argv)
 void parse_to_code(const std::string &filename, const std::string &code)
 {
     Primitive_Function_Map primitives;
-    std::vector<StringConstant> string_constants;
+    std::vector<String_Constant> string_constants;
     Type_Map types;
     Malang_Runtime::init_types(primitives, types);
     Parser parser(&types);

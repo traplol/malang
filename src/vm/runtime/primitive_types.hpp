@@ -11,21 +11,21 @@ using Double = double;
 using Char = char;
 using Native_Code = void(*)(struct Malang_VM &vm);
 
-struct StringConstant
+struct String_Constant
 {
-    ~StringConstant()
+    ~String_Constant()
     {
         m_length = 0;
-        delete m_data;
+        delete[] m_data;
         m_data = nullptr;
     }
 
-    StringConstant()
+    String_Constant()
         : m_length(0)
         , m_data(nullptr)
         {}
 
-    StringConstant(const std::string &string)
+    String_Constant(const std::string &string)
     {
         m_length = string.size();
         if (!string.empty())
@@ -42,7 +42,7 @@ struct StringConstant
         }
     }
 
-    StringConstant(const StringConstant &copy)
+    String_Constant(const String_Constant &copy)
     {
         m_length = copy.m_length;
         if (m_length)
@@ -59,7 +59,7 @@ struct StringConstant
         }
     }
 
-    StringConstant(StringConstant &&move) noexcept
+    String_Constant(String_Constant &&move) noexcept
         : m_length(move.m_length)
         , m_data(move.m_data)
     {
@@ -67,21 +67,21 @@ struct StringConstant
         move.m_data = nullptr;
     }
 
-    StringConstant &operator=(const StringConstant &copy)
+    String_Constant &operator=(const String_Constant &copy)
     {
-        StringConstant tmp(copy);
+        String_Constant tmp(copy);
         *this = std::move(tmp);
         return *this;
     }
 
-    StringConstant &operator=(const std::string &copy)
+    String_Constant &operator=(const std::string &copy)
     {
-        StringConstant tmp(copy);
+        String_Constant tmp(copy);
         *this = std::move(tmp);
         return *this;
     }
 
-    StringConstant &operator=(StringConstant &&move)
+    String_Constant &operator=(String_Constant &&move)
     {
         delete m_data;
         m_length = move.m_length;
@@ -101,7 +101,7 @@ struct StringConstant
     const Char *data() const { return m_data; }
 
 private:
-    friend std::ostream &operator<<(std::ostream &os, const StringConstant &string)
+    friend std::ostream &operator<<(std::ostream &os, const String_Constant &string)
     {
         os << std::string(string.m_data, string.m_length);
         return os;

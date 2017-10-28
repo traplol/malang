@@ -14,7 +14,7 @@ struct Malang_VM
     ~Malang_VM();
     Malang_VM(Type_Map *types,
               const std::vector<Native_Code> &primitives,
-              const std::vector<StringConstant> &string_constants,
+              const std::vector<String_Constant> &string_constants,
               size_t gc_run_interval = 50, size_t max_num_objects = 1000);
 
     void load_code(const std::vector<byte> &code);
@@ -24,7 +24,7 @@ struct Malang_VM
 
     std::vector<byte> code;
     std::vector<Native_Code> primitives;
-    std::vector<StringConstant> string_constants;
+    std::vector<String_Constant> string_constants;
 
     uintptr_t locals_frames_top;
     uintptr_t call_frames_top;
@@ -42,6 +42,8 @@ struct Malang_VM
     Malang_Value globals[n_vars];
     Malang_Value locals[n_vars];
     Malang_Value data_stack[n_vars];
+
+    void panic(const char *fmt, ...);
 
     void dump_code(uintptr_t ip, size_t n, int width=30) const;
     void trace(uintptr_t ip) const;

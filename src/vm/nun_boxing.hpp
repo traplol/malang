@@ -13,13 +13,20 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
 template<typename ObjectType>
 struct Value
 {
-    static constexpr uint64_t max_double  = 0xfff8000000000000;
-    static constexpr uint64_t fixnum_tag   = 0xfff9000000000000;
+    static constexpr uint64_t max_double = 0xfff8000000000000;
+    static constexpr uint64_t fixnum_tag = 0xfff9000000000000;
     static constexpr uint64_t object_tag = 0xfffa000000000000;
 
     inline Value()
     {
         v.as_bits = 0;
+    }
+
+    static inline Value<ObjectType> with_bits(uint64_t bits)
+    {
+        Value<ObjectType> v;
+        v.v.as_bits = bits;
+        return v;
     }
 
     inline Value(double number)

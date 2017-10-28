@@ -47,7 +47,7 @@ Ast_To_IR::~Ast_To_IR()
     locality = nullptr;
 }
 Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives,
-                     std::vector<StringConstant> *strings,
+                     std::vector<String_Constant> *strings,
                      Type_Map *types)
     : primitives(primitives)
     , types(types)
@@ -273,7 +273,7 @@ void Ast_To_IR::visit(Real_Node &n)
 
 void Ast_To_IR::visit(String_Node &n)
 {
-    auto string = ir->alloc<IR_String>(n.src_loc, types->get_string(), strings->size());
+    auto string = ir->alloc<IR_String>(n.src_loc, types->get_buffer(), strings->size());
     strings->push_back(n.value);
     _return(string);
 }
@@ -496,7 +496,13 @@ void Ast_To_IR::visit(Index_Node &n)
 
     auto thing_ty = thing->get_type();
     assert(thing_ty);
-    if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
+    if (thing_ty == ir->types->get_buffer())
+    {
+        auto index = get<IR_Value*>(*n.subscript);
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, ir->types->get_int());
+        _return(indexable);
+    }
+    else if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
     {
         auto index = get<IR_Value*>(*n.subscript);
         auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, arr_ty->of_type());
@@ -504,7 +510,7 @@ void Ast_To_IR::visit(Index_Node &n)
     }
     else
     {
-        printf("calling index method not impl yet.\n");
+        printf("calling index method for %s not impl yet.\n", thing_ty->name().c_str());
         abort();
     }
 }

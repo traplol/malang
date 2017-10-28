@@ -3,7 +3,7 @@ x := [n]int
 
 i := 0
 while i < n {
-    x[i] = i * 2
+    x[i*2] = i * 2
     i = i + 1
 }
 

@@ -20,7 +20,7 @@ Malang_VM::~Malang_VM()
 
 Malang_VM::Malang_VM(Type_Map *types,
                      const std::vector<Native_Code> &primitives,
-                     const std::vector<StringConstant> &string_constants,
+                     const std::vector<String_Constant> &string_constants,
                      size_t gc_run_interval, size_t max_num_objects)
     : primitives(std::move(primitives))
     , string_constants(std::move(string_constants))
@@ -58,6 +58,18 @@ static void print(const char *fmt, ...)
     va_start(args, fmt);
     vprint(fmt, args);
     va_end(args);
+}
+
+void Malang_VM::panic(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    print("runtime panic trigger!\n    ");
+    vprint(fmt, args);
+    va_end(args);
+    print("\n");
+    stack_trace();
+    abort();
 }
 
 static inline
@@ -882,14 +894,12 @@ static void run_code(Malang_VM &vm)
                 ip++;
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                assert(obj_ref->is_array);
+                assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 if (idx < 0 || idx > array->size)
                 {
-                    // @TODO: panic helper
-                    print("panic! array index out of bounds. index was %d but array size is %d\n",
+                    vm.panic("array index out of bounds. index was %d but array size is %d",
                           idx, array->size);
-                    abort();
                 }
                 vm.push_data(array->data[idx]);
                 DISPATCH_NEXT;
@@ -900,14 +910,12 @@ static void run_code(Malang_VM &vm)
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
                 auto value = vm.pop_data();
-                assert(obj_ref->is_array);
+                assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 if (idx < 0 || idx > array->size)
                 {
-                    // @TODO: panic helper
-                    print("panic! array index out of bounds. index was %d but array size is %d\n",
+                    vm.panic("array index out of bounds. index was %d but array size is %d",
                           idx, array->size);
-                    abort();
                 }
                 array->data[idx] = value;
                 DISPATCH_NEXT;
@@ -917,7 +925,7 @@ static void run_code(Malang_VM &vm)
                 ip++;
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                assert(obj_ref->is_array);
+                assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 vm.push_data(array->data[idx]);
                 DISPATCH_NEXT;
@@ -928,7 +936,7 @@ static void run_code(Malang_VM &vm)
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
                 auto value = vm.pop_data();
-                assert(obj_ref->is_array);
+                assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 array->data[idx] = value;
                 DISPATCH_NEXT;
@@ -937,22 +945,101 @@ static void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto obj_ref = vm.pop_data().as_object();
-                assert(obj_ref->is_array);
+                assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 vm.push_data(array->size);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_New)
+            {
+                ip++;
+                auto size = vm.pop_data().as_fixnum();
+                auto buff_ref = vm.gc->allocate_buffer(size);
+                vm.push_data(buff_ref);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Copy)
+            {
+                ip++;
+                auto obj_a = vm.pop_data().as_object();
+                assert(obj_a->object_tag == Buffer);
+                auto buff_a = reinterpret_cast<Malang_Buffer*>(obj_a);
+                auto obj_b = vm.gc->allocate_buffer(buff_a->size);
+                auto buff_b = reinterpret_cast<Malang_Buffer*>(obj_b);
+                memcpy(buff_b->data, buff_a->data, buff_b->size);
+                vm.push_data(obj_b);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Load_Checked)
+            {
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                assert(obj_ref->object_tag == Buffer);
+                auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
+                if (idx < 0 || idx >= buffer->size)
+                {
+                    vm.panic("buffer index out of bounds. index was %d but buffer size is %d",
+                          idx, buffer->size);
+                }
+                vm.push_data(buffer->data[idx]);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Store_Checked)
+            {
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                auto value = vm.pop_data().as_fixnum();
+                assert(obj_ref->object_tag == Buffer);
+                auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
+                if (idx < 0 || idx >= buffer->size)
+                {
+                    vm.panic("buffer index out of bounds. index was %d but buffer size is %d",
+                          idx, buffer->size);
+                }
+                buffer->data[idx] = value;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Load_Unchecked)
+            {
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                assert(obj_ref->object_tag == Buffer);
+                auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
+                vm.push_data(buffer->data[idx]);
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Store_Unchecked)
+            {
+                ip++;
+                auto idx = vm.pop_data().as_fixnum();
+                auto obj_ref = vm.pop_data().as_object();
+                auto value = vm.pop_data().as_fixnum();
+                assert(obj_ref->object_tag == Buffer);
+                auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
+                buffer->data[idx] = value;
+                DISPATCH_NEXT;
+            }
+            DISPATCH(Buffer_Length)
+            {
+                ip++;
+                auto obj = vm.pop_data().as_object();
+                assert(obj->object_tag == Buffer);
+                auto buff = reinterpret_cast<Malang_Buffer*>(obj);
+                vm.push_data(buff->size);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_String_Constant)
             {
                 ip++;
                 auto idx = fetch32(ip);
-                printf("load_string_constant not impl.\n");
-                printf("would have loaded string:\n");
-                for (Fixnum i = 0; i < vm.string_constants[idx].size(); ++i)
-                {
-                    printf("%c", vm.string_constants[idx][i]);
-                }
-                abort();
+                auto &string_const = vm.string_constants[idx];
+                auto obj = vm.gc->allocate_buffer(string_const.size());
+                auto buff = reinterpret_cast<Malang_Buffer*>(obj);
+                memcpy(buff->data, string_const.data(), buff->size);
+                vm.push_data(obj);
                 ip += sizeof(idx);
                 DISPATCH_NEXT;
             }

@@ -42,6 +42,19 @@ static void stack_trace(Malang_VM &vm)
     vm.stack_trace();
 }
 
+static void gc_pause(Malang_VM &vm)
+{
+    vm.gc->disable_automatic();
+}
+static void gc_resume(Malang_VM &vm)
+{
+    vm.gc->enable_automatic();
+}
+static void gc_run(Malang_VM &vm)
+{
+    vm.gc->manual_run();
+}
+
 void Malang_Runtime::runtime_builtins_init(Primitive_Function_Map &b, Type_Map &t)
 {
     Function_Type_Info *fn;
@@ -51,4 +64,13 @@ void Malang_Runtime::runtime_builtins_init(Primitive_Function_Map &b, Type_Map &
 
     fn = t.declare_function({}, t.get_void(), is_primitive);
     b.add_builtin("stack_trace", fn, stack_trace);
+
+    fn = t.declare_function({}, t.get_void(), is_primitive);
+    b.add_builtin("gc_pause", fn, gc_pause);
+
+    fn = t.declare_function({}, t.get_void(), is_primitive);
+    b.add_builtin("gc_resume", fn, gc_resume);
+
+    fn = t.declare_function({}, t.get_void(), is_primitive);
+    b.add_builtin("gc_run", fn, gc_run);
 }

@@ -16,11 +16,12 @@ Type_Map::Type_Map()
 {
     m_void   = declare_type("void", nullptr);
     m_object = declare_type("object", nullptr);
+    m_buffer = declare_type("buffer", m_object);
     m_int    = declare_type("int", m_object);
     m_char   = declare_type("char", m_object);
     m_double = declare_type("double", m_object);
-    m_string = declare_type("string", m_object);
     m_bool   = declare_type("bool", m_object);
+    m_string = declare_type("string", m_object);
 }
 
 Type_Info *Type_Map::get_void() const
@@ -57,6 +58,11 @@ Type_Info *Type_Map::get_bool() const
 {
     assert(m_bool);
     return m_bool;
+}
+Type_Info *Type_Map::get_buffer() const
+{
+    assert(m_buffer);
+    return m_buffer;
 }
 
 Type_Info *Type_Map::get_or_declare_type(const std::string &name)

@@ -3,13 +3,17 @@
 
 void Malang_Object::gc_mark()
 {
-    if (is_array)
+    switch (object_tag)
     {
-        reinterpret_cast<Malang_Array*>(this)->gc_mark();
-    }
-    else
-    {
-        reinterpret_cast<Malang_Object_Body*>(this)->gc_mark();
+        case Object:
+            reinterpret_cast<Malang_Object_Body*>(this)->gc_mark();
+            break;
+        case Array:
+            reinterpret_cast<Malang_Array*>(this)->gc_mark();
+            break;
+        case Buffer:
+            reinterpret_cast<Malang_Buffer*>(this)->gc_mark();
+            break;
     }
 }
 
@@ -58,5 +62,13 @@ void Malang_Array::gc_mark()
             value.as_object()->gc_mark();
         }
     }
+    header.color = header.black;
+}
+
+void Malang_Buffer::gc_mark()
+{
+    assert(header.free == false);
+    assert(header.type);
+    assert(header.allocator);
     header.color = header.black;
 }

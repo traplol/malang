@@ -32,15 +32,21 @@ struct Malang_GC
     void manual_run();
     void deallocate(Malang_Object *obj);
     Malang_Object *allocate_object(Type_Token type_token);
-    Malang_Object *allocate_array(Type_Token of_type_token, Fixnum length);
+    Malang_Object *allocate_array(Type_Token of_type_token, Fixnum size);
+    Malang_Object *allocate_buffer(Fixnum size);
 private:
     GC_Node *alloc_intern();
+
     void free_node(struct GC_Node *gc_node);
     void free_object(Malang_Object *obj);
     void free_object_body(Malang_Object_Body *obj);
     void free_array(Malang_Array *arr);
+    void free_buffer(Malang_Buffer *buf);
+
     void construct_object(Malang_Object_Body &obj, Type_Info *type);
-    void construct_array(Malang_Array &arr, Type_Info *of_type, Fixnum length);
+    void construct_array(Malang_Array &arr, Type_Info *of_type, Fixnum size);
+    void construct_buffer(Malang_Buffer &buff, Fixnum size);
+
     void mark();
     void sweep();
     void mark_and_sweep();

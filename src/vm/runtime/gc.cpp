@@ -16,6 +16,7 @@ struct GC_Node
     union _ {
         Malang_Object_Body object;
         Malang_Array array;
+        Malang_Buffer buffer;
     } u;
     static constexpr decltype(lookup_index) magic_index = static_cast<decltype(lookup_index)>(-1);
 };
@@ -113,9 +114,8 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     obj.header.type = type;
     obj.header.allocator = this;
     obj.header.free = false;
-    obj.header.is_array = false;
-    // don't want to immediately free this object...
-    obj.header.color = Malang_Object::grey;
+    obj.header.object_tag = Object;
+    obj.header.color = Malang_Object::white;
     // @TODO: reserve fields and such 
     obj.fields = nullptr;
     // Pause the GC while values are being initialized so the GC doesn't free while
@@ -126,21 +126,19 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     m_is_paused = paused;
 }
 
-void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum length)
+void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum size)
 {
     assert(type);
     arr.header.type = type;
     arr.header.allocator = this;
     arr.header.free = false;
-    arr.header.is_array = true;
-    // don't want to immediately free this array...
-    //arr.header.color = Malang_Object::grey;
+    arr.header.object_tag = Array;
     arr.header.color = Malang_Object::white;
-    arr.size = length;
-    if (length)
+    arr.size = size;
+    if (size)
     {
         // @FixMe: should initialization be handled? maybe call ctor for every element
-        arr.data = new Malang_Value[length];
+        arr.data = new Malang_Value[size];
         // Pause the GC while values are being initialized so the GC doesn't free while
         // constructing.
         auto paused = m_is_paused;
@@ -151,6 +149,24 @@ void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum lengt
     else
     {
         arr.data = nullptr;
+    }
+}
+
+void Malang_GC::construct_buffer(Malang_Buffer &buff, Fixnum size)
+{
+    buff.header.type = m_types->get_buffer();
+    buff.header.allocator = this;
+    buff.header.free = false;
+    buff.header.object_tag = Buffer;
+    buff.header.color = Malang_Object::white;
+    buff.size = size;
+    if (size)
+    {
+        buff.data = new unsigned char[size];
+    }
+    else
+    {
+        buff.data = nullptr;
     }
 }
 
@@ -185,11 +201,19 @@ Malang_Object *Malang_GC::allocate_object(Type_Token type_token)
     return &(gc_node->u.object.header);
 }
 
-Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum length)
+Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum size)
 {
     auto gc_node = alloc_intern();
     auto type = m_types->get_type(of_type_token);
-    construct_array(gc_node->u.array, type, length);
+    construct_array(gc_node->u.array, type, size);
+    m_allocated.append(gc_node);
+    return &(gc_node->u.array.header);
+}
+
+Malang_Object *Malang_GC::allocate_buffer(Fixnum size)
+{
+    auto gc_node = alloc_intern();
+    construct_buffer(gc_node->u.buffer, size);
     m_allocated.append(gc_node);
     return &(gc_node->u.array.header);
 }
@@ -221,6 +245,20 @@ void Malang_GC::free_array(Malang_Array *arr)
     arr->size = 0;
 }
 
+void Malang_GC::free_buffer(Malang_Buffer *buff)
+{
+    if (buff->header.free)
+    {
+        panic("GC: free_buffer attempted to double free");
+    }
+    if (buff->data)
+    {
+        delete[] buff->data;
+        buff->data = nullptr;
+    }
+    buff->size = 0;
+}
+
 void Malang_GC::free_node(GC_Node *gc_node)
 {
     m_allocated.remove(gc_node);
@@ -231,13 +269,17 @@ void Malang_GC::free_object(Malang_Object *obj)
 {
     assert(obj->allocator == this);
     assert(obj->free == false);
-    if (obj->is_array)
+    switch (obj->object_tag)
     {
-        free_array(reinterpret_cast<Malang_Array*>(obj));
-    }
-    else
-    {
-        free_object_body(reinterpret_cast<Malang_Object_Body*>(obj));
+        case Object: 
+            free_object_body(reinterpret_cast<Malang_Object_Body*>(obj));
+            break;
+        case Array:
+            free_array(reinterpret_cast<Malang_Array*>(obj));
+            break;
+        case Buffer:
+            free_buffer(reinterpret_cast<Malang_Buffer*>(obj));
+            break;
     }
     obj->free = true;
     auto ptr = reinterpret_cast<uintptr_t>(obj);

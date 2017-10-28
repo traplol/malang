@@ -94,9 +94,17 @@ void IR_To_Code::visit(struct IR_Callable &n)
 
 void IR_To_Code::visit(struct IR_Indexable &n)
 {
+    printf("%s\n", n.thing->get_type()->name().c_str());
     convert_one(*n.thing);
     convert_one(*n.index);
-    cg->push_back_array_load();
+    if (n.thing->get_type() == ir->types->get_buffer())
+    {
+        cg->push_back_buffer_load();
+    }
+    else
+    {
+        cg->push_back_array_load();
+    }
 }
 
 void IR_To_Code::visit(IR_Call &n)
@@ -294,7 +302,14 @@ void IR_To_Code::visit(IR_Assignment &n)
         convert_one(*n.rhs);
         convert_one(*idx->thing);
         convert_one(*idx->index);
-        cg->push_back_array_store();
+        if (lval->get_type() == ir->types->get_buffer())
+        {
+            cg->push_back_buffer_store();
+        }
+        else
+        {
+            cg->push_back_array_store();
+        }
     }
     else
     {

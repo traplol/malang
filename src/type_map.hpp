@@ -24,6 +24,7 @@ struct Type_Map
     Type_Info *get_double() const;
     Type_Info *get_string() const;
     Type_Info *get_bool() const;
+    Type_Info *get_buffer() const;
 private:
     std::map<std::string, Type_Info*> m_types;
     std::vector<Type_Info*> m_types_fast;
@@ -35,6 +36,7 @@ private:
     Type_Info *m_double;
     Type_Info *m_string;
     Type_Info *m_bool;
+    Type_Info *m_buffer;
 };
 
 #endif /* MALANG_IR_TYPE_MAP_HPP */

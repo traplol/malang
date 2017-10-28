@@ -1,2 +1,6 @@
 x := "hello world"
-println(x)
+i := 0
+while i < 11 {
+    println(x[i])
+    i = i + 1
+}

@@ -4,19 +4,24 @@
 #include "reflection.hpp"
 #include "primitive_types.hpp"
 
+#define Object 1
+#define Array 2
+#define Buffer 3
+
 struct Malang_Object
 {
     Type_Info *type;
     struct Malang_GC *allocator;
     unsigned char free : 1;
-    unsigned char is_array : 1;
     unsigned char gc_allocated : 1;
     unsigned char color : 2;
+    unsigned char object_tag : 5;
     static constexpr auto white = 0u;
     static constexpr auto grey  = 1u;
     static constexpr auto black = 2u;
     void gc_mark();
 };
+
 
 struct Malang_Object_Body
 {
@@ -30,6 +35,7 @@ struct Malang_Object_Body
     void gc_mark();
 };
 
+
 struct Malang_Array
 {
     Malang_Object header;
@@ -38,5 +44,21 @@ struct Malang_Array
 
     void gc_mark();
 };
+
+
+struct Malang_Buffer
+{
+    Malang_Object header;
+    Fixnum size;
+    unsigned char *data;
+
+    void gc_mark();
+};
+
+static_assert(sizeof(Malang_Object)      == 24, "");
+static_assert(sizeof(Malang_Object_Body) == 32, "");
+static_assert(sizeof(Malang_Array)       == 40, "");
+static_assert(sizeof(Malang_Buffer)      == 40, "");
+
 
 #endif /* MALANG_VM_OBJECT_HPP */

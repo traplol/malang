@@ -127,15 +127,10 @@ const std::vector<Field_Info*> &Type_Info::fields() const
     return m_fields;
 }
 
-Method_Info *Type_Info::find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const
+static
+Method_Info *find_method_impl(const std::vector<Method_Info*> &methods, const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index)
 {
-    assert(!name.empty());
-    if (m_parent)
-    {
-        if (auto meth = m_parent->find_method(name, param_types, index))
-            return meth;
-    }
-    for (auto &&m : m_methods)
+    for (auto &&m : methods)
     {
         if (m->name() == name)
         {
@@ -160,6 +155,33 @@ Method_Info *Type_Info::find_method(const std::string &name, const std::vector<T
         ++index;
     }
     return nullptr;
+}
+
+Method_Info *Type_Info::get_constructor(const std::vector<Type_Info*> &param_types) const
+{
+    size_t _ = 0;
+    return find_method_impl(m_constructors, ".ctor", param_types, _);
+}
+bool Type_Info::add_constructor(Method_Info *ctor)
+{
+    assert(ctor);
+    if (get_constructor(ctor->parameter_types()))
+    {
+        return false;
+    }
+    m_constructors.push_back(ctor);
+    return true;
+}
+
+Method_Info *Type_Info::find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const
+{
+    assert(!name.empty());
+    if (m_parent)
+    {
+        if (auto meth = m_parent->find_method(name, param_types, index))
+            return meth;
+    }
+    return find_method_impl(m_methods, name, param_types, index);
 }
 
 bool Type_Info::has_method(Method_Info *method) const

@@ -614,8 +614,54 @@ void Codegen::push_back_array_length()
     push_back_instruction(Instruction::Array_Length);
 }
 
+void Codegen::push_back_buffer_new()
+{
+    push_back_instruction(Instruction::Buffer_New);
+}
+
+void Codegen::push_back_buffer_new(int32_t length)
+{
+    push_back_literal_32(length);
+    push_back_buffer_new();
+}
+
+void Codegen::push_back_buffer_copy()
+{
+    push_back_instruction(Instruction::Buffer_Copy);
+}
+
+void Codegen::push_back_buffer_load(bool checked)
+{
+    if (checked)
+    {
+        push_back_instruction(Instruction::Buffer_Load_Checked);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Buffer_Load_Checked);
+    }
+}
+
+void Codegen::push_back_buffer_store(bool checked)
+{
+    if (checked)
+    {
+        push_back_instruction(Instruction::Buffer_Store_Checked);
+    }
+    else
+    {
+        push_back_instruction(Instruction::Buffer_Store_Checked);
+    }
+}
+
+void Codegen::push_back_buffer_length()
+{
+    push_back_instruction(Instruction::Buffer_Length);
+}
+
 void Codegen::push_back_load_string_constant(int32_t index)
 {
     push_back_instruction(Instruction::Load_String_Constant);
     push_back_raw_32(index);
 }
+
