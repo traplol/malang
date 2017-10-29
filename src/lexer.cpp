@@ -212,6 +212,11 @@ bool Lexer::lex(Source_Code *src)
     tokens.clear();
     while (src->peek() != src->end_of_file)
     {
+        if (src->peek() == '#')
+        {
+            while (src->peek() != '\n')
+                src->next();
+        }
         if (is_wspace(src->peek()))
         {
             src->next();

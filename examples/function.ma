@@ -7,7 +7,7 @@ fn() {
     println("IIFE!")
 }()
 
-bound_func := 111
+# bound_func := 111
 
 fn bound_func(a: int) -> double {
     return a * -1.0
