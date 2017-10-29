@@ -25,6 +25,29 @@ TODO:
 
 
 ==============================================================================================
+Vocabulary:
+
+    primitive:
+        A function written in the host language that does trivial operations.
+        e.g: 1.5 + 2
+
+    builtin:
+        A function written in the host language used to do otherwise impossible operations.
+        e.g: reading or writing a file, manually controlling the garbage collector
+
+    garbage collector:
+        The virtual machine's automatic memory manager. It periodically (or at user defined
+        times) checks the system for memory that is no longer reachable by the program and
+        frees it for reuse.
+
+    function:
+        A first-class value representing a procedure of program code.
+
+    bound function:
+        A function that is literally named and can share this name with other bound functions
+        when their parameters are different.
+
+==============================================================================================
 VM Calling Convention:
 
     Arguments:
@@ -312,3 +335,16 @@ Oct 27, 2017:
       ? Maybe implement some kind of copy-on-write for string constants so they aren't copied
       over and over again when used in a loop.
       ? Maybe `string' type is a purely immutable primitive
+
+Oct 28, 2017:
+    + Implemented hard-binding functions, which means a function can be literally named and
+    have other functions share the same name if their parameters differ. Type inference will
+    decide which function to call.
+    + Fixed parsing stuff like "x().aa[123].b.c().z"
+    + Started implementing member lookup -- just array and buffer's ".length" which are
+    compiled into the corresponding Array_Length and Buffer_Length instructions.
+    + Made a mess of the way symbols are looked up, need to consolidate primitives, bound
+    functions, and regular variables into a singular collection.
+    + Implemented a map to lookup bound native and compiled functions, still need to move
+    all of the primitives and builtins into this map.
+

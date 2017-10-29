@@ -240,6 +240,19 @@ void Ast_To_IR::visit(Fn_Node &n)
     }
     cur_fn = &n;
 
+    if (n.is_bound())
+    {   // We need to ensure some VARIABLE does not already have this name, otherwise we don't
+        // care.
+        // @Design: This may be scrapped as it's worth considering allowing bound functions
+        // to be defined anywhere/out-of-order in the source code.
+        if (auto exists = find_symbol(n.bound_name))
+        {
+            n.src_loc.report("error", "Cannot declare bound function because a variable with that name already exists.");
+            exists->src_loc.report("here", "");
+            abort();
+        }
+    }
+
     // we need some way to store all returns created during this function definition so we can decide
     // whether or not we use the Return_Fast instruction
     std::vector<IR_Return*> returns_this_fn;
