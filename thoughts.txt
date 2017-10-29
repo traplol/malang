@@ -48,7 +48,7 @@ Vocabulary:
         when their parameters are different.
 
     IIFE:
-        Immediately Invoked Function Execution, an unnamed function that runs immediately.
+        Immediately Invoked Function Expression, an unnamed function that runs immediately.
 
     closure:
         A function defined inside of another function's defintion is capable of capturing
