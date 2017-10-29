@@ -197,7 +197,6 @@ bool parse_string(std::vector<Token> &tokens, Source_Code *src)
         }
         if (c == '"')
         {
-            src->next(); // eat the closing "
             break;
         }
         str << c;

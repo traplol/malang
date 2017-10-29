@@ -1,0 +1,5 @@
+println(42)
+println("hello world")
+println(true)
+println(false)
+println(123.69420)

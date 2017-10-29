@@ -10,7 +10,7 @@
 #define _return(x) { tree = (x); return; }
 
 static inline
-bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &values, const std::vector<Type_Info*> &types)
+bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &values, const Function_Parameters &types)
 {
     if (values.size() != types.size())
     {
@@ -58,10 +58,19 @@ Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives,
 
 void Ast_To_IR::visit(Variable_Node &n)
 {
-    if (auto prim_fn = primitives->get_builtin(n.name))
+    if (primitives->builtin_exists(n.name))
     {
-        auto callable = ir->alloc<IR_Callable>(n.src_loc, prim_fn->index, prim_fn->fn_type);
-        _return(callable);
+        if (!cur_call_arg_types)
+        {
+            n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
+            abort();
+        }
+        auto prim_fn = primitives->get_builtin(n.name, *cur_call_arg_types);
+        if (prim_fn)
+        {
+            auto callable = ir->alloc<IR_Callable>(n.src_loc, prim_fn->index, prim_fn->fn_type);
+            _return(callable);
+        }
     }
     auto symbol = find_symbol(n.name);
     if (!symbol)
@@ -463,6 +472,7 @@ void Ast_To_IR::visit(Modulo_Node &n)
 void Ast_To_IR::visit(Call_Node &n)
 {
     std::vector<IR_Value*> args;
+    Types args_types;
     if (n.args)
     {
         for (auto &&a : n.args->contents)
@@ -470,8 +480,14 @@ void Ast_To_IR::visit(Call_Node &n)
             auto val = get<IR_Value*>(*a);
             assert(val);
             args.push_back(val);
+            args_types.push_back(val->get_type());
         }
     }
+    auto old_cur_call_arg_types = cur_call_arg_types;
+    Function_Parameters fp(args_types);
+    cur_call_arg_types = &fp;
+
+
     auto callee = get<IR_Value*>(*n.callee);
     assert(callee);
     auto fn_type = dynamic_cast<Function_Type_Info*>(callee->get_type());
@@ -486,6 +502,7 @@ void Ast_To_IR::visit(Call_Node &n)
         abort();
     }
     auto call = ir->alloc<IR_Call>(n.src_loc, callee, args);
+    cur_call_arg_types = old_cur_call_arg_types;
     _return(call);
 }
 

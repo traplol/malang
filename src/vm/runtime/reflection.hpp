@@ -9,6 +9,77 @@ struct Function_Type_Info;
 struct Array_Type_Info;
 struct Type_Info;
 using Type_Token = Fixnum;
+using Methods = std::vector<struct Method_Info*>;
+using Fields = std::vector<struct Field_Info*>;
+using Types = std::vector<struct Type_Info*>;
+
+struct Function_Parameters
+{
+    Function_Parameters() {}
+    Function_Parameters(const std::initializer_list<Type_Info*> &list)
+        : m_parameter_types(list)
+        {}
+    Function_Parameters(const Types &copy)
+        : m_parameter_types(copy)
+        {}
+    Function_Parameters(Types &&move)
+        : m_parameter_types(std::move(move))
+        {}
+
+    const Types &types() const
+    {
+        return m_parameter_types;
+    }
+
+    bool operator==(const Function_Parameters &other) const
+    {
+        if (this == &other) return true;
+        if (m_parameter_types.size() != other.m_parameter_types.size())
+            return false;
+        for (size_t i = 0; i < m_parameter_types.size(); ++i)
+        {
+            if (other[i] != (*this)[i])
+                return false;
+        }
+        return true;
+    }
+
+    bool operator!=(const Function_Parameters &other) const
+    {
+        return !(*this == other);
+    }
+
+    Type_Info *operator[](size_t index) const
+    {
+        return m_parameter_types[index];
+    }
+
+    auto begin()  const { return m_parameter_types.begin(); }
+    auto end()    const { return m_parameter_types.end(); }
+    auto rbegin() const { return m_parameter_types.rbegin(); }
+    auto rend()   const { return m_parameter_types.rend(); }
+    auto size()   const { return m_parameter_types.size(); }
+
+private:
+    Types m_parameter_types;
+};
+
+namespace std
+{
+    template<>
+    struct hash<Function_Parameters>
+    {
+        size_t operator()(const Function_Parameters &fp) const
+        {
+            size_t res = 17;
+            for (auto &&t : fp)
+            {
+                res = res * 31 + hash<uintptr_t>()(reinterpret_cast<uintptr_t>(t));
+            }
+            return res;
+        }
+    };
+}
 
 struct Method_Info
 {
@@ -26,7 +97,7 @@ struct Method_Info
             set_function(prim);
         }
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type, int32_t code_ip)
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, Fixnum code_ip)
         : m_name(name)
         , m_fn_type(fn_type)
         {
@@ -35,7 +106,7 @@ struct Method_Info
 
     Function_Type_Info *type() const;
     const std::string &name() const;
-    const std::vector<Type_Info*> &parameter_types() const;
+    const Function_Parameters &parameter_types() const;
     Type_Info *return_type() const;
 
     void set_function(Primitive_Function *prim);
@@ -50,7 +121,7 @@ private:
     bool m_is_native;
     union {
         Primitive_Function *prim;
-        int32_t code_ip;
+        Fixnum code_ip;
     } m_fn;
 };
 
@@ -88,48 +159,48 @@ struct Type_Info
     const std::string &name() const;
 
     bool add_field(Field_Info *field);
-    const std::vector<Field_Info*> &fields() const;
-    std::vector<Field_Info*> all_fields() const;
+    const Fields &fields() const;
+    Fields all_fields() const;
 
     bool add_constructor(Method_Info *ctor);
-    const std::vector<Method_Info*> &constructors() const;
+    const Methods &constructors() const;
 
     bool add_method(Method_Info *method);
-    const std::vector<Method_Info*> &methods() const;
-    std::vector<Method_Info*> all_methods() const;
+    const Methods &methods() const;
+    Methods all_methods() const;
 
     bool is_gc_managed() const { return m_is_gc_managed; }
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
 
-    Method_Info *get_constructor(const std::vector<Type_Info*> &param_types) const;
-    Method_Info *get_method(const std::string &name, const std::vector<Type_Info*> &param_types) const;
-    std::vector<Method_Info*> get_methods(const std::string &name) const;
+    Method_Info *get_constructor(const Function_Parameters &param_types) const;
+    Method_Info *get_method(const std::string &name, const Function_Parameters &param_types) const;
+    Methods get_methods(const std::string &name) const;
     Field_Info *get_field(const std::string &name) const;
     bool get_field_index(const std::string &name, size_t &index) const;
 
 private:
     friend struct Type_Map;
-    void fill_methods(std::vector<Method_Info*> &v) const;
-    void fill_fields(std::vector<Field_Info*> &v) const;
+    void fill_methods(Methods &v) const;
+    void fill_fields(Fields &v) const;
     bool has_method(Method_Info *method) const;
     bool has_field(const std::string &name) const;
-    Method_Info *find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const;
+    Method_Info *find_method(const std::string &name, const Function_Parameters &param_types, size_t &index) const;
     Field_Info *find_field(const std::string &name, size_t &index) const;
     Type_Info *m_parent;
     bool m_is_gc_managed;
     Type_Token m_type_token;
     std::string m_name;
-    std::vector<Field_Info*> m_fields;
-    std::vector<Method_Info*> m_methods;
-    std::vector<Method_Info*> m_constructors;
-    std::vector<Type_Info*> m_subtypes;
+    Fields m_fields;
+    Methods m_methods;
+    Methods m_constructors;
+    Types m_subtypes;
 };
 
 struct Function_Type_Info : Type_Info
 {
     virtual ~Function_Type_Info(){};
-    Function_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *return_type, const std::vector<Type_Info*> &parameter_types, bool is_native)
+    Function_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *return_type, const Function_Parameters &parameter_types, bool is_native)
         : Type_Info(parent, type_token, name)
         , m_return_type(return_type)
         , m_parameter_types(std::move(parameter_types))
@@ -137,11 +208,11 @@ struct Function_Type_Info : Type_Info
         {}
 
     Type_Info *return_type() const;
-    const std::vector<Type_Info*> &parameter_types() const;
+    const Function_Parameters &parameter_types() const;
     bool is_native() const;
 private:
     Type_Info *m_return_type;
-    std::vector<Type_Info *> m_parameter_types;
+    Function_Parameters m_parameter_types;
     bool m_is_native;
 };
 

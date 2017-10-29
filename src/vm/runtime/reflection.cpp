@@ -15,7 +15,7 @@ Function_Type_Info *Method_Info::type() const
     return m_fn_type;
 }
 
-const std::vector<Type_Info*> &Method_Info::parameter_types() const
+const Function_Parameters &Method_Info::parameter_types() const
 {
     assert(m_fn_type);
     return m_fn_type->parameter_types();
@@ -122,46 +122,32 @@ bool Type_Info::add_field(Field_Info *field)
     return true;
 }
 
-const std::vector<Field_Info*> &Type_Info::fields() const
+const Fields &Type_Info::fields() const
 {
     return m_fields;
 }
 
 static
-Method_Info *find_method_impl(const std::vector<Method_Info*> &methods, const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index)
+Method_Info *find_method_impl(const Methods &methods, const std::string &name, const Function_Parameters &param_types, size_t &index)
 {
     for (auto &&m : methods)
     {
         if (m->name() == name)
         {
-            auto m0 = m->type();
-            if (m0->parameter_types().size() == param_types.size())
-            {
-                bool failed = true;
-                for (size_t i = 0; i < m0->parameter_types().size(); ++i)
-                {   // if any single parameter type doesn't match
-                    if (m0->parameter_types()[i] != param_types[i])
-                    {
-                        failed = false;
-                        break;
-                    }
-                }
-                if (failed)
-                {
-                    return m;
-                }
-            }
+            if (m->parameter_types() == param_types)
+                return m;
         }
         ++index;
     }
     return nullptr;
 }
 
-Method_Info *Type_Info::get_constructor(const std::vector<Type_Info*> &param_types) const
+Method_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
 {
     size_t _ = 0;
     return find_method_impl(m_constructors, ".ctor", param_types, _);
 }
+
 bool Type_Info::add_constructor(Method_Info *ctor)
 {
     assert(ctor);
@@ -173,7 +159,7 @@ bool Type_Info::add_constructor(Method_Info *ctor)
     return true;
 }
 
-Method_Info *Type_Info::find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const
+Method_Info *Type_Info::find_method(const std::string &name, const Function_Parameters &param_types, size_t &index) const
 {
     assert(!name.empty());
     if (m_parent)
@@ -229,12 +215,12 @@ bool Type_Info::add_method(Method_Info *method)
     return true;
 }
 
-const std::vector<Method_Info*> &Type_Info::methods() const
+const Methods &Type_Info::methods() const
 {
     return m_methods;
 }
 
-void Type_Info::fill_methods(std::vector<Method_Info*> &v) const
+void Type_Info::fill_methods(Methods &v) const
 {
     if (m_parent)
     {
@@ -243,7 +229,7 @@ void Type_Info::fill_methods(std::vector<Method_Info*> &v) const
     v.insert(v.end(), m_methods.begin(), m_methods.end());
 }
 
-void Type_Info::fill_fields(std::vector<Field_Info*> &v) const
+void Type_Info::fill_fields(Fields &v) const
 {
     if (m_parent)
     {
@@ -252,16 +238,16 @@ void Type_Info::fill_fields(std::vector<Field_Info*> &v) const
     v.insert(v.end(), m_fields.begin(), m_fields.end());
 }
 
-std::vector<Method_Info*> Type_Info::all_methods() const
+Methods Type_Info::all_methods() const
 {
-    std::vector<Method_Info*> all_methods;
+    Methods all_methods;
     fill_methods(all_methods);
     return all_methods;
 }
 
-std::vector<Field_Info*> Type_Info::all_fields() const
+Fields Type_Info::all_fields() const
 {
-    std::vector<Field_Info*> all_fields;
+    Fields all_fields;
     fill_fields(all_fields);
     return all_fields;
 }
@@ -280,16 +266,15 @@ bool Type_Info::is_assignable_to(Type_Info *other) const
     return false;
 }
 
-Method_Info *Type_Info::get_method(const std::string &name, const std::vector<Type_Info*> &param_types) const
+Method_Info *Type_Info::get_method(const std::string &name, const Function_Parameters &param_types) const
 {
     size_t _;
     return find_method(name, param_types, _);
 }
 
-std::vector<Method_Info*> Type_Info::get_methods(const std::string &name) const
+Methods Type_Info::get_methods(const std::string &name) const
 {
-    // @TODO: get_methods should look up the type tree
-    std::vector<Method_Info*> methods;
+    Methods methods;
     for (auto &&m : m_methods)
     {
         if (m->name() == name)
@@ -335,7 +320,7 @@ bool Type_Info::is_subtype_of(Type_Info *other) const
     return false;
 }
 
-const std::vector<Type_Info*> &Function_Type_Info::parameter_types() const
+const Function_Parameters &Function_Type_Info::parameter_types() const
 {
     return m_parameter_types;
 }
