@@ -47,6 +47,13 @@ Vocabulary:
         A function that is literally named and can share this name with other bound functions
         when their parameters are different.
 
+    IIFE:
+        Immediately Invoked Function Execution, an unnamed function that runs immediately.
+
+    closure:
+        A function defined inside of another function's defintion is capable of capturing
+        state from the parent function's scope.
+
 ==============================================================================================
 VM Calling Convention:
 
