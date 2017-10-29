@@ -1,17 +1,16 @@
 
 alloc_stuff :: fn () {
-    n := 51
+    n := 100
     x := [n]int
     i := 0
     while i < n {
-        x[i] = i * 2
+        x[i] = i * i
         i = i + 1
     }
 }
 
 i := 0
-while i < 20000000 {
-    println(i)
+while i < 20000 {
     alloc_stuff()
     i = i + 1
 }

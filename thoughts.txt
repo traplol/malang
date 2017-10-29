@@ -97,6 +97,27 @@ VM Calling Convention:
 ==============================================================================================
 Type syntax:
 
+    type aliast cents   = int
+    type aliast dollars = int
+    type aliast time_ms = int
+
+    to_cents :: fn(dollars: dollars) -> cents {
+        return cast(cents, dollars*100)
+    }
+    to_dollars :: fn(cents: cents) -> dollars {
+        return cast(dollars, cents/100)
+    }
+
+    money : dollars = 45          // good, 45
+    pennies := to_cents(dollars)  // good, 450
+    duration : time_ms = 2750
+    wtf1 := to_cents(duration)     // bad, compile error
+    wtf2 := to_dollars(duration)   // bad, compile error
+    ok   := to_dollars(45)         // 45 is an int which is the aliased type
+    ok   := to_cents(9999)         // 9999 is an int which is the aliased type
+    bad  := to_cents(42.69)        // 42.69 is not an int
+
+
     type Greeting = string
     type Name = string
 
@@ -118,6 +139,9 @@ Type syntax:
     greeter.greet("Max")
     greeter.say_pi()
 
+type meters = int
+type meters/10s = int
+cast :: fn(meters: meters) -> meters/10s { return meters/10 }
 
 ==============================================================================================
 Block as values:
@@ -173,73 +197,6 @@ Garbage Collection:
         6. if it's black, mark it white for the next run, and skip
         7. if it's grey, throw an error, there should be no grey objects while freeing
         8. if it's white, mark it as free
-
-==============================================================================================
-IR:
-    Symbol table to map symbols to globals/locals/fields
-    Label table to backfill branches
-
-
-    Builtin primitives:
-        Boolean
-        Char
-        Fixnum
-        Single
-        Double
-        Array
-        String
-        Callable
-
-    Symbol
-    Call
-    Call method
-    Return
-    Label
-    Named block
-    Branch
-    Branch if true
-    Branch if false
-    Assignment
-    Binary operators:
-        + - * / % & | ^
-        << >> < > <= >=
-        ==
-
-    Unary operators:
-        ! ~ - +
-
-    Type
-    Allocate object
-    Deallocate object
-
-
-==============================================================================================
-Logical Conditions with Short-Circuiting:
-    Note:
-      These all end with a jump_if_false(alternative) because if we get that far and fail
-      then the condition was not met.
-
-    `if (x || y) { A: ... } B:`
-    Represented as:
-    do_x                              ; pushes a bool to stack
-    jump_if_true(A)                   ; pop 1, jump if true
-    do_y                              ; pushes a bool to stack
-    jump_if_false(B)                  ; pop 1, jump if false
-    A:
-        ...
-    B:
-        ...
-
-    `if (x && y) { A: ... } B:`
-    Represented as:
-    do_x                              ; pushes a bool to stack
-    jump_if_false(B)                  ; pop 1, jump if false
-    do_y                              ; pushes a bool to stack
-    jump_if_false(B)                  ; pop 1, jump if false
-    A:
-        ...
-    B:
-        ...
 
 ==============================================================================================
 DONE:
@@ -342,9 +299,16 @@ Oct 26, 2017:
     + Implemented arrays into the object system
     + Implemented array instructions into the VM
     + Implemented array allocation into the language
+    + Implemented array indexing into the language
 
 Oct 27, 2017:
     + Fixed various memory leaks in the IR
     + IR_Nodes are now owned by the Malang_IR that allocated them.
-    + Switched GC/Allocation to a O(1) vector system, no more linked list!
+    + Switched GC/Allocation to a O(1) unordered-vector system, no more linked list!
     + Fixed bugs when freeing in the GC
+    + Naive string parsing
+    + Added buffer type which is a block of memory with byte-index granularity
+    + String constants get automatically copied into buffers
+      ? Maybe implement some kind of copy-on-write for string constants so they aren't copied
+      over and over again when used in a loop.
+      ? Maybe `string' type is a purely immutable primitive

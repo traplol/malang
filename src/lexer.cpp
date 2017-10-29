@@ -279,7 +279,9 @@ continue; \
 #define PUSH_TOKEN_2C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1]) PUSH_TOKEN_BODY(str, id)
 #define PUSH_TOKEN_3C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1] && src->peek(2) == (str[2])) PUSH_TOKEN_BODY(str, id)
 
-        PUSH_TOKEN_3C("<=>", Compare);
+        //PUSH_TOKEN_3C("<=>", Compare);
+        //PUSH_TOKEN_3C("[]=", Op_Index_Set);
+        //PUSH_TOKEN_2C("[]", Op_Index_Get);
 
         PUSH_TOKEN_2C("->", Right_Arrow);
         PUSH_TOKEN_2C("<<", L_Shift);

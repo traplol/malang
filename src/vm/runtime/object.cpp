@@ -54,12 +54,15 @@ void Malang_Array::gc_mark()
     }
 
     header.color = header.grey;
-    for (size_t i = 0; i < static_cast<size_t>(size); ++i)
+    if (header.type->is_gc_managed())
     {
-        auto value = data[i];
-        if (value.is_object())
+        for (size_t i = 0; i < static_cast<size_t>(size); ++i)
         {
-            value.as_object()->gc_mark();
+            auto value = data[i];
+            if (value.is_object())
+            {
+                value.as_object()->gc_mark();
+            }
         }
     }
     header.color = header.black;

@@ -117,13 +117,21 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     obj.header.object_tag = Object;
     obj.header.color = Malang_Object::white;
     // @TODO: reserve fields and such 
-    obj.fields = nullptr;
-    // Pause the GC while values are being initialized so the GC doesn't free while
-    // constructing.
-    auto paused = m_is_paused;
-    m_is_paused = true;
-    // Init here:
-    m_is_paused = paused;
+    auto num_fields = type->fields().size();
+    if (num_fields)
+    {
+        obj.fields = static_cast<decltype(obj.fields)>(::operator new(sizeof(*obj.fields) * num_fields));
+        // Pause the GC while values are being initialized so the GC doesn't free while
+        // constructing.
+        auto paused = m_is_paused;
+        m_is_paused = true;
+        // Init here:
+        m_is_paused = paused;
+    }
+    else
+    {
+        obj.fields = nullptr;
+    }
 }
 
 void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum size)
@@ -138,7 +146,7 @@ void Malang_GC::construct_array(Malang_Array &arr, Type_Info *type, Fixnum size)
     if (size)
     {
         // @FixMe: should initialization be handled? maybe call ctor for every element
-        arr.data = new Malang_Value[size];
+        arr.data = static_cast<decltype(arr.data)>(::operator new(sizeof(*arr.data) * size));
         // Pause the GC while values are being initialized so the GC doesn't free while
         // constructing.
         auto paused = m_is_paused;
@@ -162,7 +170,7 @@ void Malang_GC::construct_buffer(Malang_Buffer &buff, Fixnum size)
     buff.size = size;
     if (size)
     {
-        buff.data = new unsigned char[size];
+        buff.data = static_cast<decltype(buff.data)>(::operator new(sizeof(*buff.data) * size));
     }
     else
     {
@@ -226,7 +234,8 @@ void Malang_GC::free_object_body(Malang_Object_Body *obj)
     }
     if (obj->fields)
     {
-        delete[] obj->fields;
+        // this is allocated with ::operator new (sizeof... * size)
+        delete obj->fields;
         obj->fields = nullptr;
     }
 }
@@ -239,7 +248,8 @@ void Malang_GC::free_array(Malang_Array *arr)
     }
     if (arr->data)
     {
-        delete[] arr->data;
+        // this is allocated with ::operator new (sizeof... * size)
+        delete arr->data;
         arr->data = nullptr;
     }
     arr->size = 0;
@@ -253,7 +263,8 @@ void Malang_GC::free_buffer(Malang_Buffer *buff)
     }
     if (buff->data)
     {
-        delete[] buff->data;
+        // this is allocated with ::operator new (sizeof... * size)
+        delete buff->data;
         buff->data = nullptr;
     }
     buff->size = 0;

@@ -75,6 +75,7 @@ struct Type_Info
     virtual ~Type_Info();
     Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name)
         : m_parent(parent)
+        , m_is_gc_managed(true)
         , m_type_token(type_token)
         , m_name(name)
         {}
@@ -97,6 +98,7 @@ struct Type_Info
     const std::vector<Method_Info*> &methods() const;
     std::vector<Method_Info*> all_methods() const;
 
+    bool is_gc_managed() const { return m_is_gc_managed; }
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
 
@@ -107,6 +109,7 @@ struct Type_Info
     bool get_field_index(const std::string &name, size_t &index) const;
 
 private:
+    friend struct Type_Map;
     void fill_methods(std::vector<Method_Info*> &v) const;
     void fill_fields(std::vector<Field_Info*> &v) const;
     bool has_method(Method_Info *method) const;
@@ -114,6 +117,7 @@ private:
     Method_Info *find_method(const std::string &name, const std::vector<Type_Info*> &param_types, size_t &index) const;
     Field_Info *find_field(const std::string &name, size_t &index) const;
     Type_Info *m_parent;
+    bool m_is_gc_managed;
     Type_Token m_type_token;
     std::string m_name;
     std::vector<Field_Info*> m_fields;

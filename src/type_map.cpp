@@ -15,6 +15,7 @@ Type_Map::~Type_Map()
 Type_Map::Type_Map()
 {
     m_void   = declare_type("void", nullptr);
+
     m_object = declare_type("object", nullptr);
     m_buffer = declare_type("buffer", m_object);
     m_int    = declare_type("int", m_object);
@@ -22,6 +23,12 @@ Type_Map::Type_Map()
     m_double = declare_type("double", m_object);
     m_bool   = declare_type("bool", m_object);
     m_string = declare_type("string", m_object);
+
+    m_void->m_is_gc_managed   = false;
+    m_int->m_is_gc_managed    = false;
+    m_char->m_is_gc_managed   = false;
+    m_double->m_is_gc_managed = false;
+    m_bool->m_is_gc_managed   = false;
 }
 
 Type_Info *Type_Map::get_void() const
