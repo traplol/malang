@@ -121,9 +121,10 @@ struct IR_String : IR_RValue
 struct IR_Callable : IR_RValue
 {
     virtual ~IR_Callable();
-    IR_Callable(const Source_Location &src_loc, struct IR_Label *label, struct Function_Type_Info *fn_type)
+    IR_Callable(const Source_Location &src_loc, struct IR_Label *label, struct Function_Type_Info *fn_type, bool is_special_bound = false)
         : IR_RValue(src_loc)
         , fn_type(fn_type)
+        , is_special_bound(is_special_bound)
         {
             u.label = label;
         }
@@ -139,6 +140,7 @@ struct IR_Callable : IR_RValue
         Fixnum index;
     } u;
     struct Function_Type_Info *fn_type;
+    bool is_special_bound;
     virtual Type_Info *get_type() const override { return fn_type; }
 
     IR_NODE_OVERRIDES;

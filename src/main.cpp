@@ -314,6 +314,14 @@ void parse_tests()
         {"x . y . z", "x.y.z"},
         {"x.y().z.a", "x.y().z.a"},
         {"x(1).y[2].z", "x(1).y[2].z"},
+
+        {"fn () {}()", // Immediatly Invoked Function Execution
+         "fn () -> void {\n"
+         "}()"},
+
+        {"fn bound_func() -> void {}",
+         "fn bound_func() -> void {\n"
+         "}"},
          
     };
     size_t total_run = 0;

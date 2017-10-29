@@ -26,190 +26,190 @@ static void i_neg(Malang_VM &vm)
 
 static void ii_add(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a + b);
 }
 
 static void ii_sub(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a - b);
 }
 
 static void ii_mul(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a * b);
 }
 
 static void ii_div(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a / b);
 }
 
 static void ii_mod(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(std::fmod(a, b));
 }
 
 static void ii_and(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a & b);
 }
 
 static void ii_or(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a | b);
 }
 
 static void ii_xor(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a ^ b);
 }
 
 static void ii_lshift(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a << b);
 }
 
 static void ii_rshift(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a >> b);
 }
 
 static void ii_less(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a < b);
 }
 
 static void ii_greater(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a > b);
 }
 
 static void ii_less_eq(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a <= b);
 }
 
 static void ii_greater_eq(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a >= b);
 }
 
 static void ii_eql(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a == b);
 }
 
 static void ii_neql(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_fixnum();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a != b);
 }
 
 static void id_add(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a + b);
 }
 
 static void id_sub(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a - b);
 }
 
 static void id_mul(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a * b);
 }
 
 static void id_div(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a / b);
 }
 
 static void id_mod(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(std::fmod(a, b));
 }
 
 static void id_less(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a < b);
 }
 
 static void id_greater(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a > b);
 }
 
 static void id_less_eq(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a <= b);
 }
 
 static void id_greater_eq(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a >= b);
 }
 
 static void id_eql(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a == b);
 }
 
 static void id_neql(Malang_VM &vm)
 {
-    auto a = vm.pop_data().as_fixnum();
     auto b = vm.pop_data().as_double();
+    auto a = vm.pop_data().as_fixnum();
     vm.push_data(a != b);
 }
 

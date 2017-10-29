@@ -112,11 +112,13 @@ private:
 
 struct Primitive_Function
 {
-    Primitive_Function(Fixnum index, Native_Code native_code, struct Function_Type_Info *fn_type)
-        : index(index)
+    Primitive_Function(const std::string &name, Fixnum index, Native_Code native_code, struct Function_Type_Info *fn_type)
+        : name(name)
+        , index(index)
         , native_code(native_code)
         , fn_type(fn_type)
         {}
+    std::string name;
     Fixnum index;
     Native_Code native_code;
     struct Function_Type_Info *fn_type;

@@ -6,6 +6,7 @@
 #include "../ast/ast.hpp"
 #include "ir.hpp"
 #include "symbol_map.hpp"
+#include "bound_function_map.hpp"
 #include "../vm/runtime/primitive_types.hpp"
 
 struct Locality
@@ -13,6 +14,7 @@ struct Locality
     Locality(struct Malang_IR *);
     ~Locality();
     Symbol_Map *symbols;
+    Bound_Function_Map *bound_functions;
 };
 
 struct Ast_To_IR : Ast_Visitor

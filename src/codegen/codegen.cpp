@@ -252,14 +252,19 @@ void Codegen::push_back_literal_double(Double n)
         return;
     }
 
-    union {Double d; uint64_t i;} zero, one, two, _n;
+    union {Double d; uint64_t i;} mone, zero, one, two, _n;
+    mone.d = -1.0;
     zero.d = 0.0;
     one.d = 1.0;
     two.d = 2.0;
     _n.d = n;
 
 
-    if (_n.i == zero.i)
+    if (_n.i == mone.i)
+    {
+        push_back_instruction(Instruction::Literal_Double_m1);
+    }
+    else if (_n.i == zero.i)
     {
         push_back_instruction(Instruction::Literal_Double_0);
     }

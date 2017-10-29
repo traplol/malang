@@ -819,6 +819,12 @@ static void run_code(Malang_VM &vm)
                 ip += sizeof(n);
                 DISPATCH_NEXT;
             }
+            DISPATCH(Literal_Double_m1)
+            {
+                ip++;
+                vm.push_data(-1.0);
+                DISPATCH_NEXT;
+            }
             DISPATCH(Literal_Double_0)
             {
                 ip++;

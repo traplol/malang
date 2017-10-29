@@ -69,8 +69,7 @@ struct IR_To_Code : IR_Visitor
 private:
     Codegen *cg;
     Malang_IR *ir;
-    bool auto_call_cleanup;
-    size_t auto_drop;
+    bool skip_next_drop;
     void convert_one(IR_Node &n);
     void convert_many(const std::vector<IR_Node*> &n);
     void binary_op_helper(struct IR_Binary_Operation &bop);

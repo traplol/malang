@@ -27,13 +27,13 @@ Primitive_Function *Primitive_Function_Map::add_builtin(const std::string &name,
             abort();
         }
         // Subsequent
-        auto pfn = add_primitive(fn_type, native_code);
+        auto pfn = add_primitive(name, fn_type, native_code);
         m_builtins[name][fn_type->parameter_types()] = pfn;
         return pfn;
     }
     else
     {   // First
-        auto pfn = add_primitive(fn_type, native_code);
+        auto pfn = add_primitive(name, fn_type, native_code);
         m_builtins[name] = {{fn_type->parameter_types(), pfn}};
         return pfn;
     }
@@ -77,9 +77,10 @@ bool Primitive_Function_Map::builtin_exists(const std::string &name)
     return false;
 }
 
-Primitive_Function *Primitive_Function_Map::add_primitive(struct Function_Type_Info *fn_type, Native_Code native_code)
+Primitive_Function *Primitive_Function_Map::add_primitive(const std::string &name, struct Function_Type_Info *fn_type, Native_Code native_code)
 {
-    auto pfn = new Primitive_Function{static_cast<Fixnum>(m_primitives.size()),
+    auto pfn = new Primitive_Function{name,
+                                      static_cast<Fixnum>(m_primitives.size()),
                                       native_code, fn_type};
     m_primitives.push_back(pfn->native_code);
     return pfn;

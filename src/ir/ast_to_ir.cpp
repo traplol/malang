@@ -35,11 +35,14 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
 
 Locality::Locality(Malang_IR *ir)
     : symbols(new Symbol_Map{ir})
+    , bound_functions(new Bound_Function_Map)
 {}
 Locality::~Locality()
 {
     delete symbols;
     symbols = nullptr;
+    delete bound_functions;
+    bound_functions = nullptr;
 }
 Ast_To_IR::~Ast_To_IR()
 {
@@ -85,16 +88,37 @@ void Ast_To_IR::visit(Variable_Node &n)
             abort();
         }
     }
-    else
+    else if (locality->bound_functions->any(n.name))
     {
-        auto symbol = find_symbol(n.name);
-        if (!symbol)
+        if (!cur_call_arg_types)
         {
-            n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
+            n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
             abort();
         }
-        _return(symbol);
+        auto bound_fn = locality->bound_functions->get_function(n.name, *cur_call_arg_types);
+        if (bound_fn.is_valid())
+        {
+            if (bound_fn.is_primitive())
+            {
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.primitive()->index,
+                                                       bound_fn.fn_type());
+                _return(callable);
+            }
+            else
+            {
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
+                                                       bound_fn.fn_type());
+                _return(callable);
+            }
+        }
     }
+    auto symbol = find_symbol(n.name);
+    if (!symbol)
+    {
+        n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
+        abort();
+    }
+    _return(symbol);
 }
 
 void Ast_To_IR::visit(Assign_Node &n)
@@ -267,15 +291,25 @@ void Ast_To_IR::visit(Fn_Node &n)
     }
     ir->roots.push_back(branch_over_body);
     ir->roots.push_back(fn_body);
+
     pop_locality();
+
+    if (n.is_bound())
+    {
+        if (!locality->bound_functions->add_function(n.bound_name, n.fn_type, fn_body))
+        {
+            n.src_loc.report("error", "Cannot bind %s to `%s' because it already exists",
+                             n.fn_type->name().c_str(), n.bound_name.c_str());
+            abort();
+        }
+    }
 
     // Restore the saved state
     cur_symbol_scope = old_scope;
     cur_locals_count = old_locals_count;
     cur_fn = old_fn;
     all_returns_this_fn = old_returns;
-
-    auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type);
+    auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type, n.is_bound());
     _return(callable)
 }
 
@@ -556,23 +590,65 @@ void Ast_To_IR::visit(Member_Accessor_Node &n)
     _return(member_access);
 }
 
+// @FixMe: The immediate evaluation of Negate_Node, Positive_Node, Not_Node, and Invert_Node
+// should probably be handled in the IR_To_Code converter...
 void Ast_To_IR::visit(Negate_Node &n)
 {
+    if (n.operand->type_id() == Real_Node::_type_id())
+    {
+        auto real = static_cast<Real_Node*>(n.operand);
+        auto evaled = new IR_Double{n.src_loc, ir->types->get_double(), -real->value};
+        _return(evaled);
+    }
+    if (n.operand->type_id() == Integer_Node::_type_id())
+    {
+        auto integer = static_cast<Integer_Node*>(n.operand);
+        auto evaled = new IR_Fixnum{n.src_loc, ir->types->get_int(),
+                                     static_cast<Fixnum>(-integer->value)};
+        _return(evaled);
+    }
     NOT_IMPL;
 }
 
 void Ast_To_IR::visit(Positive_Node &n)
 {
+    if (n.operand->type_id() == Real_Node::_type_id())
+    {
+        auto real = static_cast<Real_Node*>(n.operand);
+        auto evaled = new IR_Double{n.src_loc, ir->types->get_double(), real->value};
+        _return(evaled);
+    }
+    if (n.operand->type_id() == Integer_Node::_type_id())
+    {
+        auto integer = static_cast<Integer_Node*>(n.operand);
+        auto evaled = new IR_Fixnum{n.src_loc, ir->types->get_int(),
+                                     static_cast<Fixnum>(integer->value)};
+        _return(evaled);
+    }
     NOT_IMPL;
 }
 
 void Ast_To_IR::visit(Not_Node &n)
 {
+    if (n.operand->type_id() == Boolean_Node::_type_id())
+    {
+        auto boolean = static_cast<Boolean_Node*>(n.operand);
+        auto evaled = new IR_Boolean{n.src_loc, ir->types->get_int(),
+                                     !boolean->value};
+        _return(evaled);
+    }
     NOT_IMPL;
 }
 
 void Ast_To_IR::visit(Invert_Node &n)
 {
+    if (n.operand->type_id() == Integer_Node::_type_id())
+    {
+        auto integer = static_cast<Integer_Node*>(n.operand);
+        auto negated = new IR_Fixnum{n.src_loc, ir->types->get_int(),
+                                     static_cast<Fixnum>(~integer->value)};
+        _return(negated);
+    }
     NOT_IMPL;
 }
 
@@ -658,11 +734,11 @@ void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_N
         {
             if (!is_last_iter || !collecting_last_node)
             {
-            if (val->get_type() != types->get_void())
-            {
-                auto discard = ir->alloc<IR_Discard_Result>(ast_node->src_loc, 1);
-                dst.push_back(discard);
-            }
+                if (val->get_type() != types->get_void())
+                {
+                    auto discard = ir->alloc<IR_Discard_Result>(ast_node->src_loc, 1);
+                    dst.push_back(discard);
+                }
             }
         }
     }

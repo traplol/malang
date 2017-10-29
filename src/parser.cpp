@@ -714,6 +714,10 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
         }
         PARSE_FAIL;
     }
+    if (parser.peek_id() == Token_Id::K_fn)
+    {
+        return parse_fn(parser);
+    }
     if (parser.accept(token, { Token_Id::Integer }))
     {
         return uptr<Ast_Value>(
@@ -777,10 +781,6 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
     if (!tk)
     {
         return nullptr;
-    }
-    if (tk->id() == Token_Id::K_fn)
-    {
-        return parse_fn(parser);
     }
     if (tk->id() == Token_Id::K_if)
     {
@@ -905,31 +905,28 @@ static bool parse_decl_list(Parser &parser, std::vector<Decl_Node*> &decls)
     }
     return true;
 }
-static uptr<Fn_Node> parse_fn(Parser &parser)
-{   // function :=
-    //     fn ( ) -> type { body }
-    //     fn ( decl_list ) -> type { body }
+// This returns void* to get the compiler to stop complaining about implicit conversion of
+// nullptr to bool
+static void *parse_fn_shared(Parser &parser, std::vector<Decl_Node*> &params, Type_Node **ret_ty, std::vector<Ast_Node*> &body, Function_Type_Info **fn_ty)
+{
     SAVE;
-    Token tk_fn;
-    ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
     CHECK_OR_FAIL(parser.expect(Token_Id::Open_Paren));
-    std::vector<Decl_Node*> params;
     CHECK_OR_FAIL(parse_decl_list(parser, params));
     Token close_paren_tk;
     CHECK_OR_FAIL(parser.expect(close_paren_tk, Token_Id::Close_Paren));
-    Type_Node *ret_ty = nullptr;
+    *ret_ty = nullptr;
     Token arrow_tk;
     if (parser.accept(arrow_tk, {Token_Id::Right_Arrow}))
     {
-        ret_ty = parse_type(parser).release();
+        *ret_ty = parse_type(parser).release();
         CHECK_OR_ERROR(ret_ty, arrow_tk, "Expected type signature for function's return type");
     }
     else
     {
-        ret_ty = new Type_Node(close_paren_tk.src_loc(), parser.types->get_void());
+        // @Leak: if the body fails to parse this will leak.
+        *ret_ty = new Type_Node(close_paren_tk.src_loc(), parser.types->get_void());
     }
     CHECK_OR_FAIL(ret_ty);
-    std::vector<Ast_Node*> body;
     CHECK_OR_FAIL(parse_body(parser, body));
     std::vector<Type_Info*> p_types;
     for (auto &&decl : params)
@@ -937,7 +934,37 @@ static uptr<Fn_Node> parse_fn(Parser &parser)
         p_types.push_back(decl->type->type);
     }
     const auto is_primitive = false;
-    auto fn_ty = parser.types->declare_function(p_types, ret_ty->type, is_primitive);
+    *fn_ty = parser.types->declare_function(p_types, (*ret_ty)->type, is_primitive);
+    return reinterpret_cast<void*>(1);
+}
+static uptr<Fn_Node> parse_bound_fn(Parser &parser)
+{   // function :=
+    //     fn ident ( ) -> type { body }
+    //     fn ident ( decl_list ) -> type { body }
+    SAVE;
+    Token tk_fn;
+    ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
+    Token tk_ident;
+    ACCEPT_OR_FAIL(tk_ident, {Token_Id::Identifier});
+    std::vector<Decl_Node*> params;
+    Type_Node *ret_ty;
+    std::vector<Ast_Node*> body;
+    Function_Type_Info *fn_ty;
+    CHECK_OR_FAIL(parse_fn_shared(parser, params, &ret_ty, body, &fn_ty));
+    return uptr<Fn_Node>(new Fn_Node(tk_fn.src_loc(), tk_ident.to_string(), params, ret_ty, body, fn_ty));
+}
+static uptr<Fn_Node> parse_fn(Parser &parser)
+{   // function :=
+    //     fn ( ) -> type { body }
+    //     fn ( decl_list ) -> type { body }
+    SAVE;
+    Token tk_fn;
+    ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
+    std::vector<Decl_Node*> params;
+    Type_Node *ret_ty;
+    std::vector<Ast_Node*> body;
+    Function_Type_Info *fn_ty;
+    CHECK_OR_FAIL(parse_fn_shared(parser, params, &ret_ty, body, &fn_ty));
     return uptr<Fn_Node>(new Fn_Node(tk_fn.src_loc(), params, ret_ty, body, fn_ty));
 }
 static uptr<Class_Def_Node> parse_class(Parser &parser)
@@ -1046,11 +1073,15 @@ static Ast_Node *parse_top_level(Parser &parser)
     //     <nothing>
     //     statement top-level
     SAVE;
-    if (auto top = parse_statement(parser))
+    if (auto top = parse_class(parser))
     {
         return top.release();
     }
-    if (auto top = parse_class(parser))
+    if (auto top = parse_bound_fn(parser))
+    {
+        return top.release();
+    }
+    if (auto top = parse_statement(parser))
     {
         return top.release();
     }

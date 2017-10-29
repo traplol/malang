@@ -13,7 +13,9 @@ void IR_To_Code::visit(IR_Noop &n)
 
 void IR_To_Code::visit(IR_Discard_Result &n)
 {
-    cg->push_back_drop(n.num);
+    if (!skip_next_drop)
+        cg->push_back_drop(n.num);
+    skip_next_drop = false;
 }
 
 void IR_To_Code::visit(IR_Block &n)
@@ -43,7 +45,7 @@ void IR_To_Code::visit(IR_Single &n)
 
 void IR_To_Code::visit(IR_Double &n)
 {
-    cg->push_back_literal_value(n.value);
+    cg->push_back_literal_double(n.value);
 }
 
 void IR_To_Code::visit(IR_New_Array &n)
@@ -85,10 +87,16 @@ void IR_To_Code::visit(struct IR_Callable &n)
     {
         cg->push_back_literal_32(n.u.index);
     }
-    else
+    else if (!n.is_special_bound)
     {
+        printf("%s\n", n.fn_type->name().c_str());
         assert(n.u.label->is_resolved());
         cg->push_back_literal_32(n.u.label->address());
+    }
+    else
+    {   // @FixMe: this is a hack to omit a Literal_32 followed by a Drop_1 in the case
+        // of a function being hard-bound to a variable.
+        skip_next_drop = true;
     }
 }
 

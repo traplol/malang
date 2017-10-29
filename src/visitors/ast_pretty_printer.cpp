@@ -70,7 +70,14 @@ void Ast_Pretty_Printer::visit(Decl_Node &n)
 }
 void Ast_Pretty_Printer::visit(Fn_Node &n)
 {
-    str << "fn (";
+    if (n.is_bound())
+    {
+        str << "fn " << n.bound_name << "(";
+    }
+    else
+    {
+        str << "fn (";
+    }
     for (size_t i = 0; i < n.params.size(); ++i)
     {
         assert(n.params[i]);
