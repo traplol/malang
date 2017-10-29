@@ -1,14 +1,9 @@
 n := 10
-x := [n]int
-
+x := [100]int
 i := 0
-while i < n {
-    x[i*2] = i * 2
-    i = i + 1
-}
-
-i = 0
-while i < n {
+while i < x.length {
+    x[i] = i * x.length
+    println(i)
     println(x[i])
     i = i + 1
 }

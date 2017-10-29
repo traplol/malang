@@ -17,12 +17,12 @@ Type_Map::Type_Map()
     m_void   = declare_type("void", nullptr);
 
     m_object = declare_type("object", nullptr);
-    m_buffer = declare_type("buffer", m_object);
-    m_int    = declare_type("int", m_object);
-    m_char   = declare_type("char", m_object);
-    m_double = declare_type("double", m_object);
-    m_bool   = declare_type("bool", m_object);
-    m_string = declare_type("string", m_object);
+    m_buffer = declare_type("buffer", nullptr);
+    m_int    = declare_type("int", nullptr);
+    m_char   = declare_type("char", nullptr);
+    m_double = declare_type("double", nullptr);
+    m_bool   = declare_type("bool", nullptr);
+    m_string = declare_type("string", nullptr);
 
     m_void->m_is_gc_managed   = false;
     m_int->m_is_gc_managed    = false;
@@ -155,7 +155,9 @@ Array_Type_Info *Type_Map::get_array_type(Type_Info *of_type)
         return arr_ty;
     }
     auto type_token = static_cast<Type_Token>(m_types_fast.size());
-    auto arr_type = new Array_Type_Info{nullptr, type_token, array_type_name, of_type};
+    auto arr_type = new Array_Type_Info{type_token, array_type_name, of_type};
+    auto length_field = new Field_Info{"length", m_int};
+    arr_type->add_field(length_field);
     m_types[arr_type->name()] = arr_type;
     m_types_fast.push_back(arr_type);
     assert(m_types_fast[arr_type->type_token()] == arr_type);

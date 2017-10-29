@@ -33,7 +33,7 @@ struct Ast_Visitor
     virtual void visit(struct Modulo_Node&) = 0;
     virtual void visit(struct Call_Node&) = 0;
     virtual void visit(struct Index_Node&) = 0;
-    virtual void visit(struct Field_Accessor_Node&) = 0;
+    virtual void visit(struct Member_Accessor_Node&) = 0;
     virtual void visit(struct Negate_Node&) = 0;
     virtual void visit(struct Positive_Node&) = 0;
     virtual void visit(struct Not_Node&) = 0;

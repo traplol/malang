@@ -273,10 +273,10 @@ void parse_tests()
         {"x:=1.1==2", "x : bool = (1.1 == 2)"},
         {"x:=1.1!=2", "x : bool = (1.1 != 2)"},
 
-        //{"x()()", "x()()"},
-        //{"y(1)(2)", "y(1)(2)"},
-        //{"z(y(1)(2))", "z(y(1)(2))"},
-        //{"y(1)[44](2)", "y(1)[44](2)"},
+        {"x()()", "x()()"},
+        {"y(1)(2)", "y(1)(2)"},
+        {"z(y(1)(2))", "z(y(1)(2))"},
+        {"y(1)[44](2)", "y(1)[44](2)"},
 
         {"while 1 { }",
          "while 1 {\n"
@@ -308,9 +308,15 @@ void parse_tests()
          "y : []int = [n]int"},
         {"y := [n]int",
          "y : []int = [n]int"},
+
+        {"x.y", "x.y"},
+        {"x.y.z", "x.y.z"},
+        {"x . y . z", "x.y.z"},
+        {"x.y().z.a", "x.y().z.a"},
+        {"x(1).y[2].z", "x(1).y[2].z"},
          
     };
-    size_t total_run = 1;
+    size_t total_run = 0;
     for (auto &&it : tests)
     {
         auto actual = get_parse_test_output(it);
@@ -331,7 +337,7 @@ void parse_tests()
                 printf("\nexpected: %s\nactual:   %s\n",
                        it.expected[i].c_str(), actual[i].c_str());
             }
-            if (total_run % 40 == 0)
+            if (total_run && total_run % 40 == 0)
             {
                 printf(" %d\n", (int)total_run);
             }

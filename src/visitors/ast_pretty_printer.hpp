@@ -40,7 +40,7 @@ struct Ast_Pretty_Printer : Ast_Visitor
     virtual void visit(struct Modulo_Node&) override;
     virtual void visit(struct Call_Node&) override;
     virtual void visit(struct Index_Node&) override;
-    virtual void visit(struct Field_Accessor_Node&) override;
+    virtual void visit(struct Member_Accessor_Node&) override;
     virtual void visit(struct Negate_Node&) override;
     virtual void visit(struct Positive_Node&) override;
     virtual void visit(struct Not_Node&) override;

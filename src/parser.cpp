@@ -615,8 +615,7 @@ static uptr<Ast_Value> parse_unary_exp(Parser &parser)
    //     ! unary
     //     ~ unary
     SAVE;
-    uptr<Ast_Value> postfix = parse_postfix_exp(parser);
-    if (postfix)
+    if (auto postfix = parse_postfix_exp(parser))
     {
         return postfix;
     }
@@ -657,39 +656,43 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
     //     postfix [ expression_list ]
     //     postfix . identifier
 
-    // @FixMe: x()()() does not parse
-    // @FixMe: x()[...]() does not parse
-    // @FixMe: x[...]() does not parse
-
     SAVE;
-    auto prim = parse_primary(parser);
-    CHECK_OR_FAIL(prim);
+    auto expr = parse_primary(parser);
+    CHECK_OR_FAIL(expr);
     Token tok;
-    if (parser.accept(tok, {Token_Id::Open_Paren}))
+    while (parser.accept(tok, {Token_Id::Open_Paren, Token_Id::Open_Square, Token_Id::Dot}))
     {
-        auto args = parse_expression_list(parser);
-        if (!parser.expect(tok, Token_Id::Close_Paren))
+        switch (tok.id())
         {
-            PARSE_FAIL;
+            default:
+                printf("impossible %s:%d.\n", __FILE__, __LINE__);
+                abort();
+                break;
+
+            case Token_Id::Open_Paren:
+            {
+                auto args = parse_expression_list(parser);
+                CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Paren));
+                expr = uptr<Ast_Value>(new Call_Node(tok.src_loc(), expr.release(), args.release()));
+            } break;
+            case Token_Id::Open_Square:
+            {
+                auto index = parse_expression(parser);
+                CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Square));
+                expr = uptr<Ast_Value>(new Index_Node(tok.src_loc(), expr.release(), index.release()));
+            } break;
+            case Token_Id::Dot:
+            {
+                Token ident;
+                CHECK_OR_FAIL(parser.expect(ident, Token_Id::Identifier));
+                auto var = new Variable_Node(ident.src_loc(), ident.to_string());
+                expr = uptr<Ast_Value>(new Member_Accessor_Node(tok.src_loc(), expr.release(), var));
+            } break;
         }
-        return uptr<Ast_Value>(new Call_Node(tok.src_loc(), prim.release(), args.release()));
     }
-    if (parser.accept(tok, {Token_Id::Open_Square}))
+    if (expr)
     {
-        auto index = parse_expression(parser);
-        if (!parser.expect(tok, Token_Id::Close_Square))
-        {
-            PARSE_FAIL;
-        }
-        return uptr<Ast_Value>(new Index_Node(tok.src_loc(), prim.release(), index.release()));
-    }
-    //if (parser.accept(tok, {Token_Id::Dot}))
-    //{
-    //    
-    //}
-    if (prim)
-    {
-        return prim;
+        return expr;
     }
     PARSE_FAIL;
 }
@@ -734,7 +737,8 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     }
     if (parser.accept(token, { Token_Id::Identifier }))
     {
-        return uptr<Ast_Value>(new Variable_Node(token.src_loc(), token.to_string()));
+        return uptr<Ast_Value>(
+            new Variable_Node(token.src_loc(), token.to_string()));
     }
     PARSE_FAIL;
 }
@@ -767,6 +771,7 @@ static uptr<List_Node> parse_expression_list(Parser &parser)
 static uptr<Ast_Value> parse_expression(Parser &parser)
 {   // expression :=
     //     function
+    //     if_else
     //     l_or
     auto tk = parser.peek();
     if (!tk)

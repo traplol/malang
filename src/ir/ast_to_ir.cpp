@@ -71,14 +71,30 @@ void Ast_To_IR::visit(Variable_Node &n)
             auto callable = ir->alloc<IR_Callable>(n.src_loc, prim_fn->index, prim_fn->fn_type);
             _return(callable);
         }
+        else
+        {
+            std::stringstream ss;
+            for (size_t i = 0; i < cur_call_arg_types->size(); ++i)
+            {
+                ss << (*cur_call_arg_types)[i]->name();
+                if (i + 1 < cur_call_arg_types->size())
+                    ss << ", ";
+            }
+            n.src_loc.report("error", "No builtin function `%s' takes arguments with of types `%s'",
+                             n.name.c_str(), ss.str().c_str());
+            abort();
+        }
     }
-    auto symbol = find_symbol(n.name);
-    if (!symbol)
+    else
     {
-        n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
-        abort();
+        auto symbol = find_symbol(n.name);
+        if (!symbol)
+        {
+            n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
+            abort();
+        }
+        _return(symbol);
     }
-    _return(symbol);
 }
 
 void Ast_To_IR::visit(Assign_Node &n)
@@ -532,9 +548,12 @@ void Ast_To_IR::visit(Index_Node &n)
     }
 }
 
-void Ast_To_IR::visit(Field_Accessor_Node &n)
+void Ast_To_IR::visit(Member_Accessor_Node &n)
 {
-    NOT_IMPL;
+    auto thing = get<IR_Value*>(*n.thing);
+    assert(thing);
+    auto member_access = ir->alloc<IR_Member_Access>(n.src_loc, thing, n.member->name);
+    _return(member_access);
 }
 
 void Ast_To_IR::visit(Negate_Node &n)

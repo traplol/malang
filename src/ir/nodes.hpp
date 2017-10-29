@@ -16,5 +16,6 @@
 #include "ir_unary_ops.hpp"
 #include "ir_values.hpp"
 #include "ir_discard_result.hpp"
+#include "ir_member_access.hpp"
 
 #endif /* MALANG_IR_NODES_HPP */

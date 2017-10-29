@@ -54,10 +54,6 @@ DEF_BINARY_AST_NODE(Multiply_Node);
 DEF_BINARY_AST_NODE(Divide_Node);
 DEF_BINARY_AST_NODE(Modulo_Node);
 
-//DEF_BINARY_AST_NODE(Call_Node);
-//DEF_BINARY_AST_NODE(Index_Node);
-//DEF_BINARY_AST_NODE(Field_Accessor_Node);
-
 struct Call_Node : public Ast_RValue
 {
     Ast_Value *callee; 
@@ -86,12 +82,12 @@ struct Index_Node : public Ast_LValue
     AST_NODE_OVERRIDES;
 };
 
-struct Field_Accessor_Node : public Ast_LValue
+struct Member_Accessor_Node : public Ast_LValue
 {
     Ast_Value *thing; 
     Variable_Node *member; // @FixMe: rhs should be variable?
-    ~Field_Accessor_Node();
-    Field_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Variable_Node *member)
+    ~Member_Accessor_Node();
+    Member_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Variable_Node *member)
         : Ast_LValue(src_loc)
         , thing(thing)
         , member(member)

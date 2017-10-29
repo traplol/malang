@@ -168,8 +168,8 @@ Type_Info *Index_Node::get_type()
     return nullptr;
 }
 
-AST_NODE_OVERRIDES_IMPL(Field_Accessor_Node)
-Field_Accessor_Node::~Field_Accessor_Node()
+AST_NODE_OVERRIDES_IMPL(Member_Accessor_Node)
+Member_Accessor_Node::~Member_Accessor_Node()
 {
     delete thing;
     thing = nullptr;
@@ -177,7 +177,7 @@ Field_Accessor_Node::~Field_Accessor_Node()
     member = nullptr;
     PRINT_DTOR;
 }
-Type_Info *Field_Accessor_Node::get_type()
+Type_Info *Member_Accessor_Node::get_type()
 {
     auto thing_ty = thing->get_type();
     if (!thing_ty)

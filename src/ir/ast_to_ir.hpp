@@ -51,7 +51,7 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Modulo_Node&n) override;
     virtual void visit(struct Call_Node&n) override;
     virtual void visit(struct Index_Node&n) override;
-    virtual void visit(struct Field_Accessor_Node&n) override;
+    virtual void visit(struct Member_Accessor_Node&n) override;
     virtual void visit(struct Negate_Node&n) override;
     virtual void visit(struct Positive_Node&n) override;
     virtual void visit(struct Not_Node&n) override;

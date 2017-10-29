@@ -236,7 +236,7 @@ void Ast_Pretty_Printer::visit(Index_Node &n)
     assert(n.subscript);
     to_string(*n.thing); str << "["; to_string(*n.subscript); str << "]";
 }
-void Ast_Pretty_Printer::visit(Field_Accessor_Node &n)
+void Ast_Pretty_Printer::visit(Member_Accessor_Node &n)
 {
     assert(n.thing);
     assert(n.member);

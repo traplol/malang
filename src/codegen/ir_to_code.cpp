@@ -97,14 +97,41 @@ void IR_To_Code::visit(struct IR_Indexable &n)
     printf("%s\n", n.thing->get_type()->name().c_str());
     convert_one(*n.thing);
     convert_one(*n.index);
-    if (n.thing->get_type() == ir->types->get_buffer())
+    auto thing_ty = n.thing->get_type();
+    if (thing_ty == ir->types->get_buffer())
     {
         cg->push_back_buffer_load();
     }
-    else
+    else if (dynamic_cast<Array_Type_Info*>(thing_ty))
     {
         cg->push_back_array_load();
     }
+    else
+    {
+        n.src_loc.report("NYI", "Call to index method not impl.");
+        abort();
+    }
+}
+
+void IR_To_Code::visit(struct IR_Member_Access &n)
+{
+    convert_one(*n.thing);
+    auto thing_ty = n.thing->get_type();
+    assert(thing_ty);
+    if (n.member_name == "length")
+    {
+        if (thing_ty == ir->types->get_buffer())
+        {
+            cg->push_back_buffer_length();
+            return;
+        }
+        else if (dynamic_cast<Array_Type_Info*>(thing_ty))
+        {
+            cg->push_back_array_length();
+            return;
+        }
+    }
+    NOT_IMPL;
 }
 
 void IR_To_Code::visit(IR_Call &n)

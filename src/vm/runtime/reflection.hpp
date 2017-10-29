@@ -219,8 +219,8 @@ private:
 struct Array_Type_Info : Type_Info
 {
     virtual ~Array_Type_Info(){};
-    Array_Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name, Type_Info *of_type)
-        : Type_Info(parent, type_token, name)
+    Array_Type_Info(Type_Token type_token, const std::string &name, Type_Info *of_type)
+        : Type_Info(nullptr, type_token, name)
         , m_of_type(of_type)
         {}
     Type_Info *of_type() const;
