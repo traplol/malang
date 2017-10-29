@@ -15,4 +15,9 @@ fn bound_func(a: double) {
     println(a)
 }
 
-bound_func(bound_func(42))
+fn bound_func(a: double, b: buffer) {
+    println(a)
+    println(b)
+}
+
+bound_func(bound_func(42), "lol it werkz")

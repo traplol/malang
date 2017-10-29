@@ -44,6 +44,18 @@ Locality::~Locality()
     delete bound_functions;
     bound_functions = nullptr;
 }
+bool Locality::any(const std::string &name) const
+{
+    if (bound_functions->any(name))
+    {
+        return true;
+    }
+    if (symbols->get_symbol(name))
+    {
+        return true;
+    }
+    return false;
+}
 Ast_To_IR::~Ast_To_IR()
 {
     delete locality;
@@ -147,11 +159,12 @@ void Ast_To_IR::visit(Decl_Node &n)
 {
     assert(n.type);
     assert(n.type->type);
-    auto exists = locality->symbols->get_symbol(n.variable_name);
-    if (exists)
+    //auto exists = locality->symbols->get_symbol(n.variable_name);
+    //if (exists)
+    if (symbol_already_declared_here(n.variable_name))
     {
         n.src_loc.report("error", "Cannot declare variable because it has already been declared");
-        exists->src_loc.report("here", "");
+        //exists->src_loc.report("here", "");
         abort();
     }
     auto symbol = locality->symbols->make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
@@ -929,4 +942,25 @@ IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)
         }
     }
     return nullptr;
+}
+
+bool Ast_To_IR::symbol_already_declared_here(const std::string &name)
+{
+    return locality->any(name);
+}
+
+bool Ast_To_IR::symbol_already_declared_anywhere(const std::string &name)
+{
+    if (locality->any(name))
+    {
+        return true;
+    }
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+    {
+        if ((*it)->any(name))
+        {
+            return true;
+        }
+    }
+    return false;
 }
