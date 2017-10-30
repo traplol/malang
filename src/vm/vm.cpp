@@ -913,9 +913,9 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Array_Store_Checked)
             {
                 ip++;
+                auto value = vm.pop_data();
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                auto value = vm.pop_data();
                 assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 if (idx < 0 || idx > array->size)
@@ -939,9 +939,9 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Array_Store_Unchecked)
             {
                 ip++;
+                auto value = vm.pop_data();
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                auto value = vm.pop_data();
                 assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 array->data[idx] = value;
@@ -994,9 +994,9 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Buffer_Store_Checked)
             {
                 ip++;
+                auto value = vm.pop_data().as_fixnum();
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                auto value = vm.pop_data().as_fixnum();
                 assert(obj_ref->object_tag == Buffer);
                 auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
                 if (idx < 0 || idx >= buffer->size)
@@ -1020,9 +1020,9 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Buffer_Store_Unchecked)
             {
                 ip++;
+                auto value = vm.pop_data().as_fixnum();
                 auto idx = vm.pop_data().as_fixnum();
                 auto obj_ref = vm.pop_data().as_object();
-                auto value = vm.pop_data().as_fixnum();
                 assert(obj_ref->object_tag == Buffer);
                 auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
                 buffer->data[idx] = value;

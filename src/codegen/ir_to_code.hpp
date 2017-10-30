@@ -73,6 +73,7 @@ private:
     void convert_one(IR_Node &n);
     void convert_many(const std::vector<IR_Node*> &n);
     void binary_op_helper(struct IR_Binary_Operation &bop);
+    void unary_op_helper(struct IR_Unary_Operation &bop);
 
 };
 

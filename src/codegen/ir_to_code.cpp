@@ -102,10 +102,10 @@ void IR_To_Code::visit(struct IR_Callable &n)
 
 void IR_To_Code::visit(struct IR_Indexable &n)
 {
-    printf("%s\n", n.thing->get_type()->name().c_str());
     convert_one(*n.thing);
     convert_one(*n.index);
     auto thing_ty = n.thing->get_type();
+    assert(thing_ty);
     if (thing_ty == ir->types->get_buffer())
     {
         cg->push_back_buffer_load();
@@ -116,8 +116,31 @@ void IR_To_Code::visit(struct IR_Indexable &n)
     }
     else
     {
-        n.src_loc.report("NYI", "Call to index method not impl.");
-        abort();
+        if (auto method = thing_ty->get_method("[]", {n.index->get_type()}))
+        {
+            if (method->is_native())
+            {
+                cg->push_back_call_primitive(method->primitive_function()->index);
+            }
+            else
+            {
+                auto label = method->code_function();
+                if (label->is_resolved())
+                {
+                    cg->push_back_call_code(label->address());
+                }
+                else
+                {
+                    auto idx = cg->push_back_call_code();
+                    label->please_backfill_on_resolve(cg, idx);
+                }
+            }
+        }
+        else
+        {
+            n.src_loc.report("error", "[] operator not implemented for type `%s'", thing_ty->name().c_str());
+            abort();
+        }
     }
 }
 
@@ -334,16 +357,45 @@ void IR_To_Code::visit(IR_Assignment &n)
     }
     else if (auto idx = dynamic_cast<IR_Indexable*>(lval))
     {
-        convert_one(*n.rhs);
         convert_one(*idx->thing);
         convert_one(*idx->index);
-        if (lval->get_type() == ir->types->get_buffer())
+        convert_one(*n.rhs);
+        auto thing_ty = idx->thing->get_type();
+        if (thing_ty == ir->types->get_buffer())
         {
             cg->push_back_buffer_store();
         }
-        else
+        else if (dynamic_cast<Array_Type_Info*>(thing_ty))
         {
             cg->push_back_array_store();
+        }
+        else
+        {
+            if (auto method = thing_ty->get_method("[]=", {idx->index->get_type(), rval_ty}))
+            {
+                if (method->is_native())
+                {
+                    cg->push_back_call_primitive(method->primitive_function()->index);
+                }
+                else
+                {
+                    auto label = method->code_function();
+                    if (label->is_resolved())
+                    {
+                        cg->push_back_call_code(label->address());
+                    }
+                    else
+                    {
+                        auto idx = cg->push_back_call_code();
+                        label->please_backfill_on_resolve(cg, idx);
+                    }
+                }
+            }
+            else
+            {
+                n.src_loc.report("error", "[]= operator not implemented for type `%s'", thing_ty->name().c_str());
+                abort();
+            }
         }
     }
     else
@@ -653,24 +705,79 @@ void IR_To_Code::visit(struct IR_B_Not_Equals &n)
 }
 
 
+inline
+void IR_To_Code::unary_op_helper(struct IR_Unary_Operation &uop)
+{
+    auto m = uop.get_method_to_call();
+    assert(m);
+    {
+        if (m->is_native())
+        {
+            convert_one(*uop.operand);
+            cg->push_back_call_primitive(*m->primitive_function());
+        }
+        else
+        {
+            convert_one(*uop.operand);
+            auto label = m->code_function();
+            if (label->is_resolved())
+            {
+                cg->push_back_call_code(label->address());
+            }
+            else
+            {
+                auto idx = cg->push_back_call_code();
+                label->please_backfill_on_resolve(cg, idx);
+            }
+        }
+    }
+}
+
 void IR_To_Code::visit(IR_U_Not &n)
 {
-    NOT_IMPL;
+    unary_op_helper(n);
 }
 
 void IR_To_Code::visit(IR_U_Invert &n)
 {
-    NOT_IMPL;
+    auto _int = ir->types->get_int();
+    if (n.operand->get_type() == _int)
+    {
+        convert_one(*n.operand);
+        cg->push_back_fixnum_invert();
+    }
+    else
+    {
+        unary_op_helper(n);
+    }
 }
 
 void IR_To_Code::visit(IR_U_Negate &n)
 {
-    NOT_IMPL;
+    auto _int = ir->types->get_int();
+    if (n.operand->get_type() == _int)
+    {
+        convert_one(*n.operand);
+        cg->push_back_fixnum_negate();
+    }
+    else
+    {
+        unary_op_helper(n);
+    }
 }
 
 void IR_To_Code::visit(IR_U_Positive &n)
 {
-    NOT_IMPL;
+    auto _int = ir->types->get_int();
+    if (n.operand->get_type() == _int)
+    {
+        convert_one(*n.operand);
+        // noop
+    }
+    else
+    {
+        unary_op_helper(n);
+    }
 }
 
 

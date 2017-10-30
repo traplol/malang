@@ -267,7 +267,8 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, fn_body->end());
 
     cur_symbol_scope = Symbol_Scope::Local;
-    IR_Symbol *self_symbol = nullptr;
+    auto params_copy = n.params;
+    Decl_Node *self_decl = nullptr;
     if (is_extending)
     {
         auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
@@ -281,24 +282,28 @@ void Ast_To_IR::visit(Fn_Node &n)
             abort();
         }
         ++cur_locals_count;
-        self_symbol = locality->symbols->make_symbol("self", is_extending, n.src_loc, cur_symbol_scope);
-        assert(self_symbol);
+        self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}};
+        assert(self_decl);
+        params_copy.insert(params_copy.begin(), self_decl);
     }
-    for (auto &&it = n.params.rbegin(); it != n.params.rend(); ++it)
+
+    std::vector<IR_Symbol*> arg_symbols;
+    for (auto &&a : params_copy)
+    {   // Declare args in order from left to right
+        auto p_sym = get<IR_Symbol*>(*a);
+        assert(p_sym);
+        p_sym->is_initialized = true;
+        arg_symbols.push_back(p_sym);
+    }
+    for (auto &&it = arg_symbols.rbegin(); it != arg_symbols.rend(); ++it)
     {   // Args are pushed on the stack from left to right so they need to be pulled out
         // in the reverse order they were declared.
-        auto p_sym = get<IR_Symbol*>(**it);
-        assert(p_sym);
-        auto assign_arg_to_local = ir->alloc<IR_Assign_Top>(p_sym->src_loc, p_sym, cur_symbol_scope);
+        auto assign_arg_to_local = ir->alloc<IR_Assign_Top>((*it)->src_loc, *it, cur_symbol_scope);
         fn_body->body().push_back(assign_arg_to_local);
-        p_sym->is_initialized = true;
     }
-    if (self_symbol)
+    if (self_decl)
     {
-        auto assign_arg_to_self = ir->alloc<IR_Assign_Top>(self_symbol->src_loc,
-                                                           self_symbol, cur_symbol_scope);
-        fn_body->body().push_back(assign_arg_to_self);
-        self_symbol->is_initialized = true;
+        delete self_decl; // @XXX this is shite.
     }
     convert_body(n.body, fn_body->body());
     if (fn_body->body().empty())
@@ -625,8 +630,17 @@ void Ast_To_IR::visit(Index_Node &n)
     }
     else
     {
-        printf("calling index method for %s not impl yet.\n", thing_ty->name().c_str());
-        abort();
+        auto index = get<IR_Value*>(*n.subscript);
+        if (auto method = thing_ty->get_method("[]", {index->get_type()}))
+        {
+            auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, method->return_type());
+            _return(indexable);
+        }
+        else
+        {
+            n.src_loc.report("error", "[] operator not implemented for type `%s'", thing_ty->name().c_str());
+            abort();
+        }
     }
 }
 
@@ -642,62 +656,50 @@ void Ast_To_IR::visit(Member_Accessor_Node &n)
 // should probably be handled in the IR_To_Code converter...
 void Ast_To_IR::visit(Negate_Node &n)
 {
-    if (n.operand->type_id() == Real_Node::_type_id())
+    auto operand = get<IR_Value*>(*n.operand);
+    if (!operand)
     {
-        auto real = static_cast<Real_Node*>(n.operand);
-        auto evaled = new IR_Double{n.src_loc, ir->types->get_double(), -real->value};
-        _return(evaled);
+        n.operand->src_loc.report("error", "Expected a value");
+        abort();
     }
-    if (n.operand->type_id() == Integer_Node::_type_id())
-    {
-        auto integer = static_cast<Integer_Node*>(n.operand);
-        auto evaled = new IR_Fixnum{n.src_loc, ir->types->get_int(),
-                                     static_cast<Fixnum>(-integer->value)};
-        _return(evaled);
-    }
-    NOT_IMPL;
+    auto uop = ir->alloc<IR_U_Negate>(n.src_loc, operand);
+    _return(uop);
 }
 
 void Ast_To_IR::visit(Positive_Node &n)
 {
-    if (n.operand->type_id() == Real_Node::_type_id())
+    auto operand = get<IR_Value*>(*n.operand);
+    if (!operand)
     {
-        auto real = static_cast<Real_Node*>(n.operand);
-        auto evaled = new IR_Double{n.src_loc, ir->types->get_double(), real->value};
-        _return(evaled);
+        n.operand->src_loc.report("error", "Expected a value");
+        abort();
     }
-    if (n.operand->type_id() == Integer_Node::_type_id())
-    {
-        auto integer = static_cast<Integer_Node*>(n.operand);
-        auto evaled = new IR_Fixnum{n.src_loc, ir->types->get_int(),
-                                     static_cast<Fixnum>(integer->value)};
-        _return(evaled);
-    }
-    NOT_IMPL;
+    auto uop = ir->alloc<IR_U_Positive>(n.src_loc, operand);
+    _return(uop);
 }
 
 void Ast_To_IR::visit(Not_Node &n)
 {
-    if (n.operand->type_id() == Boolean_Node::_type_id())
+    auto operand = get<IR_Value*>(*n.operand);
+    if (!operand)
     {
-        auto boolean = static_cast<Boolean_Node*>(n.operand);
-        auto evaled = new IR_Boolean{n.src_loc, ir->types->get_int(),
-                                     !boolean->value};
-        _return(evaled);
+        n.operand->src_loc.report("error", "Expected a value");
+        abort();
     }
-    NOT_IMPL;
+    auto uop = ir->alloc<IR_U_Not>(n.src_loc, operand);
+    _return(uop);
 }
 
 void Ast_To_IR::visit(Invert_Node &n)
 {
-    if (n.operand->type_id() == Integer_Node::_type_id())
+    auto operand = get<IR_Value*>(*n.operand);
+    if (!operand)
     {
-        auto integer = static_cast<Integer_Node*>(n.operand);
-        auto negated = new IR_Fixnum{n.src_loc, ir->types->get_int(),
-                                     static_cast<Fixnum>(~integer->value)};
-        _return(negated);
+        n.operand->src_loc.report("error", "Expected a value");
+        abort();
     }
-    NOT_IMPL;
+    auto uop = ir->alloc<IR_U_Invert>(n.src_loc, operand);
+    _return(uop);
 }
 
 void Ast_To_IR::visit(Class_Def_Node &n)
