@@ -22,7 +22,7 @@ fn local_test() {
         println(x)
         println("local2")
     }
-    local_fn_1 :: fn() {
+    fn local_fn_1() {
         x := 123
         println(x)
         println("local1")

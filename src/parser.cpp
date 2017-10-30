@@ -1096,6 +1096,11 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     //    // eat stray semicolons
     //}
     SAVE;
+    if (auto bound = parse_bound_fn(parser))
+    {
+        parser.accept({Token_Id::Semicolon});
+        return bound;
+    }
     if (auto decl_ass = parse_decl_assign(parser))
     {
         //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
