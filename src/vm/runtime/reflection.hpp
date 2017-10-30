@@ -8,6 +8,7 @@
 struct Function_Type_Info;
 struct Array_Type_Info;
 struct Type_Info;
+struct IR_Label;
 using Type_Token = Fixnum;
 using Methods = std::vector<struct Method_Info*>;
 using Fields = std::vector<struct Field_Info*>;
@@ -84,11 +85,13 @@ namespace std
 struct Method_Info
 {
     ~Method_Info();
+    /*
     Method_Info(const std::string &name, Function_Type_Info *fn_type)
         : m_name(name)
         , m_fn_type(fn_type)
         , m_is_native(false)
         {}
+    */
 
     Method_Info(const std::string &name, Function_Type_Info *fn_type, Primitive_Function *prim)
         : m_name(name)
@@ -97,7 +100,7 @@ struct Method_Info
             set_function(prim);
         }
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type, Fixnum code_ip)
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, IR_Label *code_ip)
         : m_name(name)
         , m_fn_type(fn_type)
         {
@@ -110,9 +113,9 @@ struct Method_Info
     Type_Info *return_type() const;
 
     void set_function(Primitive_Function *prim);
-    void set_function(int32_t code_ip);
+    void set_function(IR_Label *code_ip);
     bool is_native() const;
-    uintptr_t code_function() const;
+    IR_Label *code_function() const;
     Primitive_Function *primitive_function() const;
 
 private:
@@ -121,7 +124,7 @@ private:
     bool m_is_native;
     union {
         Primitive_Function *prim;
-        Fixnum code_ip;
+        IR_Label *code_ip;
     } m_fn;
 };
 

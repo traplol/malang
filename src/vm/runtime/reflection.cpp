@@ -38,7 +38,7 @@ void Method_Info::set_function(Primitive_Function *primitive)
     m_fn.prim = primitive;
 }
 
-void Method_Info::set_function(int32_t code_ip)
+void Method_Info::set_function(IR_Label *code_ip)
 {
     m_is_native = false;
     m_fn.code_ip = code_ip;
@@ -49,7 +49,7 @@ bool Method_Info::is_native() const
     return m_is_native;
 }
 
-uintptr_t Method_Info::code_function() const
+IR_Label *Method_Info::code_function() const
 {
     assert(!is_native());
     return m_fn.code_ip;

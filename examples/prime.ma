@@ -12,9 +12,10 @@ prime :: fn (n: int) -> bool {
 }
 
 i := 0
-while i < 100 {
-    if prime(i)
-        println(i)
+while i < 1000000 {
+    prime(i)
+    #if prime(i)
+    #    println(i)
     i = i + 1
 }
 

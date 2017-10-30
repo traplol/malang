@@ -60,6 +60,7 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Not_Node&n) override;
     virtual void visit(struct Invert_Node&n) override;
     virtual void visit(struct Class_Def_Node&n) override;
+    virtual void visit(struct Extend_Node&n) override;
     virtual void visit(struct Type_Node&n) override;
     virtual void visit(struct Decl_Assign_Node&n) override;
     virtual void visit(struct Decl_Constant_Node&n) override;
@@ -75,6 +76,7 @@ private:
     Primitive_Function_Map *primitives;
     Type_Map *types;
     Locality *locality;
+    Type_Info *is_extending;
     struct Fn_Node *cur_fn;
     IR_Label *cur_true_label, *cur_false_label;
     Function_Parameters *cur_call_arg_types;

@@ -322,6 +322,20 @@ void parse_tests()
         {"fn bound_func() -> void {}",
          "fn bound_func() -> void {\n"
          "}"},
+
+        {"extend int {}",
+         "extend int {\n"
+         "}"},
+        {"extend string {\n"
+         "    fn +@ () -> string {\n"
+         "        return self\n"
+         "    }\n"
+         "}",
+         "extend string {\n"
+         "    fn +@() -> string {\n"
+         "        return self\n"
+         "    }\n"
+         "}"},
          
     };
     size_t total_run = 0;

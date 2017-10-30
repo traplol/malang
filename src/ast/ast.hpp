@@ -32,6 +32,8 @@ struct Ast_Node : public Metadata
     METADATA_OVERRIDES;
 };
 
+using Ast_Nodes = std::vector<Ast_Node*>;
+
 struct Ast
 {
     ~Ast();

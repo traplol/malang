@@ -53,83 +53,83 @@ Type_Info *Logical_And_Node::get_type()
 BIN_OP_DTOR(Logical_And_Node)
 AST_NODE_OVERRIDES_IMPL(Logical_And_Node)
 
-BIN_OP_GET_TYPE(Inclusive_Or_Node, "b_op |")
+BIN_OP_GET_TYPE(Inclusive_Or_Node, "|")
 BIN_OP_DTOR(Inclusive_Or_Node)
 AST_NODE_OVERRIDES_IMPL(Inclusive_Or_Node)
 
-BIN_OP_GET_TYPE(Exclusive_Or_Node, "b_op ^")
+BIN_OP_GET_TYPE(Exclusive_Or_Node, "^")
 BIN_OP_DTOR(Exclusive_Or_Node)
 AST_NODE_OVERRIDES_IMPL(Exclusive_Or_Node)
 
-BIN_OP_GET_TYPE(And_Node, "b_op &")
+BIN_OP_GET_TYPE(And_Node, "&")
 BIN_OP_DTOR(And_Node)
 AST_NODE_OVERRIDES_IMPL(And_Node)
 
-BIN_OP_GET_TYPE(Equals_Node, "b_op ==")
+BIN_OP_GET_TYPE(Equals_Node, "==")
 BIN_OP_DTOR(Equals_Node)
 AST_NODE_OVERRIDES_IMPL(Equals_Node)
 
-BIN_OP_GET_TYPE(Not_Equals_Node, "b_op !=")
+BIN_OP_GET_TYPE(Not_Equals_Node, "!=")
 BIN_OP_DTOR(Not_Equals_Node)
 AST_NODE_OVERRIDES_IMPL(Not_Equals_Node)
 
-BIN_OP_GET_TYPE(Less_Than_Node, "b_op <")
+BIN_OP_GET_TYPE(Less_Than_Node, "<")
 BIN_OP_DTOR(Less_Than_Node)
 AST_NODE_OVERRIDES_IMPL(Less_Than_Node)
 
-BIN_OP_GET_TYPE(Less_Than_Equals_Node, "b_op <=")
+BIN_OP_GET_TYPE(Less_Than_Equals_Node, "<=")
 BIN_OP_DTOR(Less_Than_Equals_Node)
 AST_NODE_OVERRIDES_IMPL(Less_Than_Equals_Node)
 
-BIN_OP_GET_TYPE(Greater_Than_Node, "b_op >")
+BIN_OP_GET_TYPE(Greater_Than_Node, ">")
 BIN_OP_DTOR(Greater_Than_Node)
 AST_NODE_OVERRIDES_IMPL(Greater_Than_Node)
 
-BIN_OP_GET_TYPE(Greater_Than_Equals_Node, "b_op >=")
+BIN_OP_GET_TYPE(Greater_Than_Equals_Node, ">=")
 BIN_OP_DTOR(Greater_Than_Equals_Node)
 AST_NODE_OVERRIDES_IMPL(Greater_Than_Equals_Node)
 
-BIN_OP_GET_TYPE(Left_Shift_Node, "b_op <<")
+BIN_OP_GET_TYPE(Left_Shift_Node, "<<")
 BIN_OP_DTOR(Left_Shift_Node)
 AST_NODE_OVERRIDES_IMPL(Left_Shift_Node)
 
-BIN_OP_GET_TYPE(Right_Shift_Node, "b_op >>")
+BIN_OP_GET_TYPE(Right_Shift_Node, ">>")
 BIN_OP_DTOR(Right_Shift_Node)
 AST_NODE_OVERRIDES_IMPL(Right_Shift_Node)
 
-BIN_OP_GET_TYPE(Add_Node, "b_op +")
+BIN_OP_GET_TYPE(Add_Node, "+")
 BIN_OP_DTOR(Add_Node)
 AST_NODE_OVERRIDES_IMPL(Add_Node)
 
-BIN_OP_GET_TYPE(Subtract_Node, "b_op -")
+BIN_OP_GET_TYPE(Subtract_Node, "-")
 BIN_OP_DTOR(Subtract_Node)
 AST_NODE_OVERRIDES_IMPL(Subtract_Node)
 
-BIN_OP_GET_TYPE(Multiply_Node, "b_op *")
+BIN_OP_GET_TYPE(Multiply_Node, "*")
 BIN_OP_DTOR(Multiply_Node)
 AST_NODE_OVERRIDES_IMPL(Multiply_Node)
 
-BIN_OP_GET_TYPE(Divide_Node, "b_op /")
+BIN_OP_GET_TYPE(Divide_Node, "/")
 BIN_OP_DTOR(Divide_Node)
 AST_NODE_OVERRIDES_IMPL(Divide_Node)
 
-BIN_OP_GET_TYPE(Modulo_Node, "b_op %")
+BIN_OP_GET_TYPE(Modulo_Node, "%")
 BIN_OP_DTOR(Modulo_Node)
 AST_NODE_OVERRIDES_IMPL(Modulo_Node)
 
-UNARY_OP_GET_TYPE(Negate_Node, "u_op -")
+UNARY_OP_GET_TYPE(Negate_Node, "-@")
 UNARY_OP_DTOR(Negate_Node)
 AST_NODE_OVERRIDES_IMPL(Negate_Node)
 
-UNARY_OP_GET_TYPE(Positive_Node, "u_op +")
+UNARY_OP_GET_TYPE(Positive_Node, "+@")
 UNARY_OP_DTOR(Positive_Node)
 AST_NODE_OVERRIDES_IMPL(Positive_Node)
 
-UNARY_OP_GET_TYPE(Not_Node, "u_op !")
+UNARY_OP_GET_TYPE(Not_Node, "!")
 UNARY_OP_DTOR(Not_Node)
 AST_NODE_OVERRIDES_IMPL(Not_Node)
 
-UNARY_OP_GET_TYPE(Invert_Node, "u_op ~")
+UNARY_OP_GET_TYPE(Invert_Node, "~")
 UNARY_OP_DTOR(Invert_Node)
 AST_NODE_OVERRIDES_IMPL(Invert_Node)
 

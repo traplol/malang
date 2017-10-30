@@ -332,12 +332,8 @@ void Codegen::push_back_call_primitive_dyn()
 }
 void Codegen::push_back_call_code(int32_t code)
 {
-    push_back_call_code();
-    push_back_raw_32(code);
-}
-void Codegen::push_back_call_code()
-{
     push_back_instruction(Instruction::Call);
+    push_back_raw_32(code);
 }
 void Codegen::push_back_call_code_dyn(int32_t code)
 {
@@ -492,40 +488,43 @@ void Codegen::push_back_drop(uint16_t n)
     }
 }
 
+size_t Codegen::make_dummy_32()
+{
+    constexpr Fixnum dummy = 0xdeadbeef;
+    auto idx = code.size();
+    push_back_raw_32(dummy);
+    return idx;
+}
+
+size_t Codegen::push_back_call_code()
+{
+    push_back_instruction(Instruction::Call);
+    return make_dummy_32();
+}
 size_t Codegen::push_back_branch()
 {
     push_back_instruction(Instruction::Branch);
-    auto idx = code.size();
-    push_back_raw_32(0);
-    return idx;
+    return make_dummy_32();
 }
 size_t Codegen::push_back_pop_branch_if_false()
 {
     push_back_instruction(Instruction::Pop_Branch_If_False);
-    auto idx = code.size();
-    push_back_raw_32(0);
-    return idx;
+    return make_dummy_32();
 }
 size_t Codegen::push_back_pop_branch_if_true()
 {
     push_back_instruction(Instruction::Pop_Branch_If_True);
-    auto idx = code.size();
-    push_back_raw_32(0);
-    return idx;
+    return make_dummy_32();
 }
 size_t Codegen::push_back_branch_if_false_or_pop()
 {
     push_back_instruction(Instruction::Branch_If_False_Or_Pop);
-    auto idx = code.size();
-    push_back_raw_32(0);
-    return idx;
+    return make_dummy_32();
 }
 size_t Codegen::push_back_branch_if_true_or_pop()
 {
     push_back_instruction(Instruction::Branch_If_True_Or_Pop);
-    auto idx = code.size();
-    push_back_raw_32(0);
-    return idx;
+    return make_dummy_32();
 }
 void Codegen::push_back_branch(int32_t n)
 {

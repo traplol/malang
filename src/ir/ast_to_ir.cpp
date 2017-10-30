@@ -267,8 +267,23 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, fn_body->end());
 
     cur_symbol_scope = Symbol_Scope::Local;
-    // @TODO: Handle "this" instance being in Local_0 for methods
-    // one way to do this is to implicitly prepend the symbol "this" to the function args
+    IR_Symbol *self_symbol = nullptr;
+    if (is_extending)
+    {
+        auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
+        if (!is_extending->add_method(method))
+        {
+            n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
+                             n.bound_name.c_str(),
+                             n.fn_type->name().c_str(),
+                             is_extending->name().c_str());
+            delete method;
+            abort();
+        }
+        ++cur_locals_count;
+        self_symbol = locality->symbols->make_symbol("self", is_extending, n.src_loc, cur_symbol_scope);
+        assert(self_symbol);
+    }
     for (auto &&it = n.params.rbegin(); it != n.params.rend(); ++it)
     {   // Args are pushed on the stack from left to right so they need to be pulled out
         // in the reverse order they were declared.
@@ -277,6 +292,13 @@ void Ast_To_IR::visit(Fn_Node &n)
         auto assign_arg_to_local = ir->alloc<IR_Assign_Top>(p_sym->src_loc, p_sym, cur_symbol_scope);
         fn_body->body().push_back(assign_arg_to_local);
         p_sym->is_initialized = true;
+    }
+    if (self_symbol)
+    {
+        auto assign_arg_to_self = ir->alloc<IR_Assign_Top>(self_symbol->src_loc,
+                                                           self_symbol, cur_symbol_scope);
+        fn_body->body().push_back(assign_arg_to_self);
+        self_symbol->is_initialized = true;
     }
     convert_body(n.body, fn_body->body());
     if (fn_body->body().empty())
@@ -683,6 +705,25 @@ void Ast_To_IR::visit(Class_Def_Node &n)
     NOT_IMPL;
 }
 
+void Ast_To_IR::visit(struct Extend_Node&n)
+{
+    std::vector<IR_Node*> block;
+    assert(n.for_type);
+    assert(n.for_type->type);
+
+    auto old_is_extending = is_extending;
+    is_extending = n.for_type->type;
+    for (auto &&fn : n.body)
+    {
+        auto converted = get(*fn);
+        assert(converted);
+        block.push_back(converted);
+    }
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
+    is_extending = old_is_extending;
+    _return(ret);
+}
+
 void Ast_To_IR::visit(Type_Node &n)
 {
     // @Audit: I don't think this should ever be called, is this a design mistake?
@@ -919,6 +960,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
     cur_fn = nullptr;
+    is_extending = nullptr;
     cur_true_label = cur_false_label = nullptr;
     ir = new Malang_IR{types};
     locality = new Locality{ir};

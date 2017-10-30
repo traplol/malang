@@ -303,6 +303,20 @@ void Ast_Pretty_Printer::visit(Class_Def_Node &n)
     dedent();
     str << "}";
 }
+void Ast_Pretty_Printer::visit(Extend_Node &n)
+{
+    assert(n.for_type);
+    str << "extend "; to_string(*n.for_type); str << " {\n";
+    indent();
+    for (auto &&fn : n.body)
+    {
+        do_indention();
+        to_string(*fn);
+        str << "\n";
+    }
+    dedent();
+    str << "}";
+}
 void Ast_Pretty_Printer::visit(Type_Node &n)
 {
     if (n.type)

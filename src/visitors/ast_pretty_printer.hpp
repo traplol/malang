@@ -46,6 +46,7 @@ struct Ast_Pretty_Printer : Ast_Visitor
     virtual void visit(struct Not_Node&) override;
     virtual void visit(struct Invert_Node&) override;
     virtual void visit(struct Class_Def_Node&) override;
+    virtual void visit(struct Extend_Node&) override;
     virtual void visit(struct Type_Node&) override;
     virtual void visit(struct Decl_Assign_Node&) override;
     virtual void visit(struct Decl_Constant_Node&) override;

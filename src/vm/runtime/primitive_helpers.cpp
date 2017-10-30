@@ -6,11 +6,10 @@ void Malang_Runtime::add_bin_op_method(Primitive_Function_Map &b, Type_Map &m, T
 {
     const auto is_primitive = true;
     auto fn = m.declare_function({other}, ret_ty, is_primitive);
-    std::string method_name = "b_op " + oper;
-    auto method = new Method_Info{method_name, fn, b.add_primitive(method_name, fn, prim)};
+    auto method = new Method_Info{oper, fn, b.add_primitive(oper, fn, prim)};
     if (!t->add_method(method))
     {
-        printf("Couldn't add method `%s' to type `%s'\n", method_name.c_str(), t->name().c_str());
+        printf("Couldn't add method `%s' to type `%s'\n", oper.c_str(), t->name().c_str());
         delete method;
     }
 }
@@ -19,11 +18,10 @@ void Malang_Runtime::add_una_op_method(Primitive_Function_Map &b, Type_Map &m, T
 {
     const auto is_primitive = true;
     auto fn = m.declare_function({}, ret_ty, is_primitive);
-    std::string method_name = "u_op " + oper;
-    auto method = new Method_Info{method_name, fn, b.add_primitive(method_name, fn, prim)};
+    auto method = new Method_Info{oper, fn, b.add_primitive(oper, fn, prim)};
     if (!t->add_method(method))
     {
-        printf("Couldn't add method `%s' to type `%s'\n", method_name.c_str(), t->name().c_str());
+        printf("Couldn't add method `%s' to type `%s'\n", oper.c_str(), t->name().c_str());
         delete method;
     }
 }

@@ -175,8 +175,8 @@ void Malang_Runtime::runtime_double_init(Primitive_Function_Map &b, Type_Map &m)
     auto _int    = m.get_int();
     auto _double = m.get_double();
     auto _bool   = m.get_bool();
-    add_una_op_method(b, m, _double, "+",  _double, d_pos);
-    add_una_op_method(b, m, _double, "-",  _double, d_neg);
+    add_una_op_method(b, m, _double, "+@", _double, d_pos);
+    add_una_op_method(b, m, _double, "-@", _double, d_neg);
 
     add_bin_op_method(b, m, _double, "+",  _double, _double, dd_add);
     add_bin_op_method(b, m, _double, "-",  _double, _double, dd_sub);

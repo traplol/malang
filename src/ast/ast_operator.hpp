@@ -85,7 +85,7 @@ struct Index_Node : public Ast_LValue
 struct Member_Accessor_Node : public Ast_LValue
 {
     Ast_Value *thing; 
-    Variable_Node *member; // @FixMe: rhs should be variable?
+    Variable_Node *member;
     ~Member_Accessor_Node();
     Member_Accessor_Node(const Source_Location &src_loc, Ast_Value *thing, Variable_Node *member)
         : Ast_LValue(src_loc)

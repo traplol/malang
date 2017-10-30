@@ -80,6 +80,10 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Log_Or);
         SET_TK_TYPE_MAP(Invert);
         SET_TK_TYPE_MAP(Not);
+        SET_TK_TYPE_MAP(Plus_At);
+        SET_TK_TYPE_MAP(Minus_At);
+        SET_TK_TYPE_MAP(Op_Index_Get);
+        SET_TK_TYPE_MAP(Op_Index_Set);
         SET_TK_TYPE_MAP(K_b_op);
         SET_TK_TYPE_MAP(K_u_op);
         //SET_TK_TYPE_MAP(K_proc);
@@ -93,6 +97,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_match);
         SET_TK_TYPE_MAP(K_true);
         SET_TK_TYPE_MAP(K_false);
+        SET_TK_TYPE_MAP(K_extend);
 #undef SET_TK_TYPE_MAP
         // this is a runtime check that will warn if we forgot any
         for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
@@ -260,6 +265,7 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("match", K_match);
         PUSH_KEY_IDENT("true", K_true);
         PUSH_KEY_IDENT("false", K_false);
+        PUSH_KEY_IDENT("extend", K_extend);
         if (is_ident_start_char(src->peek()))
         {
             std::stringstream ident;
@@ -283,10 +289,12 @@ continue; \
 #define PUSH_TOKEN_2C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1]) PUSH_TOKEN_BODY(str, id)
 #define PUSH_TOKEN_3C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1] && src->peek(2) == (str[2])) PUSH_TOKEN_BODY(str, id)
 
-        //PUSH_TOKEN_3C("<=>", Compare);
-        //PUSH_TOKEN_3C("[]=", Op_Index_Set);
-        //PUSH_TOKEN_2C("[]", Op_Index_Get);
+        PUSH_TOKEN_3C("<=>", Compare);
+        PUSH_TOKEN_3C("[]=", Op_Index_Set);
+        PUSH_TOKEN_2C("[]", Op_Index_Get);
 
+        PUSH_TOKEN_2C("-@", Minus_At);
+        PUSH_TOKEN_2C("+@", Plus_At);
         PUSH_TOKEN_2C("->", Right_Arrow);
         PUSH_TOKEN_2C("<<", L_Shift);
         PUSH_TOKEN_2C(">>", R_Shift);

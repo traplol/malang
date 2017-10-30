@@ -138,6 +138,7 @@ static uptr<Ast_Node> parse_statement(Parser &parser);
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body);
 static uptr<Fn_Node> parse_fn(Parser &parser);
 static uptr<Class_Def_Node> parse_class(Parser &parser);
+static uptr<Extend_Node> parse_extend(Parser &parser);
 
 #define SAVE auto _save_idx = parser.lex_idx
 #define RESTORE parser.lex_idx = _save_idx
@@ -799,6 +800,7 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
 static uptr<Type_Node> parse_type(Parser &parser)
 {   // type :=
     //     ident
+    //     [ ] type
     //     [] type
     //     fn ( ) -> type
     //     fn ( type ) -> type
@@ -841,9 +843,15 @@ static uptr<Type_Node> parse_type(Parser &parser)
         parser.report_error(first_tk, "Tuple type not implemented yet.");
         PARSE_FAIL;
     }
-    else if (parser.accept(first_tk, {Token_Id::Open_Square}))
+    else if (parser.accept(first_tk, {Token_Id::Op_Index_Get})) // []
     {
-        parser.expect(Token_Id::Close_Square);
+        auto of_ty_node = parse_type(parser);
+        auto array_type = parser.types->get_array_type(of_ty_node->type);
+        return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), array_type));
+    }
+    else if (parser.accept(first_tk, {Token_Id::Open_Square})) // [
+    {
+        parser.expect(Token_Id::Close_Square);                 // ]
         auto of_ty_node = parse_type(parser);
         auto array_type = parser.types->get_array_type(of_ty_node->type);
         return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), array_type));
@@ -945,7 +953,31 @@ static uptr<Fn_Node> parse_bound_fn(Parser &parser)
     Token tk_fn;
     ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
     Token tk_ident;
-    ACCEPT_OR_FAIL(tk_ident, {Token_Id::Identifier});
+    ACCEPT_OR_FAIL(tk_ident, {
+            Token_Id::Identifier,
+                Token_Id::Plus,
+                Token_Id::Minus,
+                Token_Id::Star,
+                Token_Id::Slash,
+                Token_Id::Equals_Equals,
+                Token_Id::Not_Equals,
+                Token_Id::Less,
+                Token_Id::Less_Equals,
+                Token_Id::Greater,
+                Token_Id::Greater_Equals,
+                Token_Id::Mod,
+                Token_Id::L_Shift,
+                Token_Id::R_Shift,
+                Token_Id::Bit_And,
+                Token_Id::Bit_Xor,
+                Token_Id::Bit_Or,
+                Token_Id::Invert,
+                Token_Id::Not,
+                Token_Id::Plus_At,
+                Token_Id::Minus_At,
+                Token_Id::Op_Index_Get,
+                Token_Id::Op_Index_Set,
+                });
     std::vector<Decl_Node*> params;
     Type_Node *ret_ty;
     std::vector<Ast_Node*> body;
@@ -1012,6 +1044,29 @@ static uptr<Class_Def_Node> parse_class(Parser &parser)
     CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
     return class_def;
 }
+static uptr<Extend_Node> parse_extend(Parser &parser)
+{
+    SAVE;
+    Token extend_tk;
+    ACCEPT_OR_FAIL(extend_tk, {Token_Id::K_extend});
+    auto for_type = parse_type(parser);
+    CHECK_OR_ERROR(for_type, extend_tk, "Expected type to follow extend.");
+    CHECK_OR_FAIL(parser.expect(Token_Id::Open_Curly));
+    Ast_Bound_Functions body;
+    while (true)
+    {
+        // @FixMe: ensure method signatures are unique
+        if (auto bound_fn = parse_bound_fn(parser))
+        {
+            body.push_back(bound_fn.release());
+            continue;
+        }
+        // didn't parse anything, so we're done
+        break;
+    }
+    CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
+    return uptr<Extend_Node>(new Extend_Node(extend_tk.src_loc(), for_type.release(), body));
+}
 static uptr<Ast_Node> parse_statement(Parser &parser)
 {   // statement :=
     //     declaration statement
@@ -1074,6 +1129,10 @@ static Ast_Node *parse_top_level(Parser &parser)
     //     statement top-level
     SAVE;
     if (auto top = parse_class(parser))
+    {
+        return top.release();
+    }
+    if (auto top = parse_extend(parser))
     {
         return top.release();
     }

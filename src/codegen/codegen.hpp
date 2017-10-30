@@ -67,7 +67,6 @@ struct Codegen
     void push_back_call_primitive_dyn(int32_t index);
     void push_back_call_primitive_dyn();
     void push_back_call_code(int32_t code);
-    void push_back_call_code();
     void push_back_call_code_dyn(int32_t code);
     void push_back_call_code_dyn();
     void push_back_return(bool fast);
@@ -84,6 +83,7 @@ struct Codegen
     void push_back_drop(uint16_t n);
 
     // Returns the index into the code where the dummy value is.
+    size_t push_back_call_code();
     size_t push_back_branch();
     size_t push_back_pop_branch_if_false();
     size_t push_back_pop_branch_if_true();
@@ -95,6 +95,7 @@ struct Codegen
     void push_back_branch_if_false_or_pop(int32_t n);
     void push_back_branch_if_true_or_pop(int32_t n);
 
+    size_t make_dummy_32();
     void set_raw_8(size_t index, byte value);
     void set_raw_16(size_t index, int16_t value);
     void set_raw_32(size_t index, int32_t value);

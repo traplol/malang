@@ -398,7 +398,16 @@ void IR_To_Code::binary_op_helper(struct IR_Binary_Operation &bop)
         {
             convert_one(*bop.lhs);
             convert_one(*bop.rhs);
-            cg->push_back_call_code(m->code_function());
+            auto label = m->code_function();
+            if (label->is_resolved())
+            {
+                cg->push_back_call_code(label->address());
+            }
+            else
+            {
+                auto idx = cg->push_back_call_code();
+                label->please_backfill_on_resolve(cg, idx);
+            }
         }
     }
 }

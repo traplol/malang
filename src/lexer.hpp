@@ -12,54 +12,59 @@ enum class Token_Id : size_t
     Integer,
     Real,
     String,
-    Equals,
-    Colon,
-    Semicolon,
-    Open_Paren,
-    Close_Paren,
-    Open_Square,
-    Close_Square,
-    Open_Curly,
-    Close_Curly,
-    Comma,
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Equals_Equals,
-    Not_Equals,
-    Less,
-    Less_Equals,
-    Greater,
-    Greater_Equals,
+    Equals,             // =
+    Colon,              // :
+    Semicolon,          // ;
+    Open_Paren,         // (
+    Close_Paren,        // )
+    Open_Square,        // [
+    Close_Square,       // ]
+    Open_Curly,         // {
+    Close_Curly,        // }
+    Comma,              // ,
+    Plus,               // +
+    Minus,              // -
+    Star,               // *
+    Slash,              // /
+    Equals_Equals,      // ==
+    Not_Equals,         // !=
+    Less,               // <
+    Less_Equals,        // <=
+    Greater,            // >
+    Greater_Equals,     // >=
     Identifier,
-    Dot,
-    Mod,
-    L_Shift,
-    R_Shift,
-    Compare,
-    Bit_And,
-    Bit_Xor,
-    Bit_Or,
-    Log_And,
-    Log_Or,
-    Invert,
-    Not,
-    Right_Arrow,
+    Dot,                // .
+    Mod,                // %
+    L_Shift,            // <<
+    R_Shift,            // >>
+    Compare,            // <=>
+    Bit_And,            // &
+    Bit_Xor,            // ^
+    Bit_Or,             // |
+    Log_And,            // and &&
+    Log_Or,             // or ||
+    Invert,             // ~
+    Not,                // !
+    Right_Arrow,        // ->
 
-    K_b_op,
-    K_u_op,
-    //K_proc,
-    K_for,
-    K_while,
-    K_return,
-    K_if,
-    K_else,
-    K_fn,
-    K_class,
-    K_match,
-    K_true,
-    K_false,
+    Plus_At,            // +@
+    Minus_At,           // -@
+    Op_Index_Get,       // []
+    Op_Index_Set,       // []=
+
+    K_b_op,             // b_op
+    K_u_op,             // u_op
+    K_for,              // for
+    K_while,            // while
+    K_return,           // return
+    K_if,               // if
+    K_else,             // else
+    K_fn,               // fn
+    K_class,            // class
+    K_match,            // match
+    K_true,             // true
+    K_false,            // false
+    K_extend,           // extend
 
     NUM_TOKEN_TYPES
 };

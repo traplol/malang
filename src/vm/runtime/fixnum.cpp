@@ -219,8 +219,8 @@ void Malang_Runtime::runtime_fixnum_init(Primitive_Function_Map &b, Type_Map &m)
     auto _double = m.get_double();
     auto _bool   = m.get_bool();
     add_una_op_method(b, m, _int, "~",  _int, i_invert);
-    add_una_op_method(b, m, _int, "+",  _int, i_pos);
-    add_una_op_method(b, m, _int, "-",  _int, i_neg);
+    add_una_op_method(b, m, _int, "+@", _int, i_pos);
+    add_una_op_method(b, m, _int, "-@", _int, i_neg);
 
     add_bin_op_method(b, m, _int, "+",  _int, _int, ii_add);
     add_bin_op_method(b, m, _int, "-",  _int, _int, ii_sub);
