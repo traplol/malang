@@ -355,3 +355,7 @@ Oct 28, 2017:
     + Implemented a map to lookup bound native and compiled functions, still need to move
     all of the primitives and builtins into this map.
 
+Oct 29, 2017:
+    + Partially implemented type extensions which allow for operator overloading of the
+    operators:
+        +, -, *, /, !, ~, &, |, ^, [], []=, <<, >>, <, >, <=, >=, ==, !=

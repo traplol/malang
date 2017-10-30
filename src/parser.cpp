@@ -12,6 +12,7 @@ Ast Parser::parse(Source_Code *src_code)
     code = src_code;
     lexer.lex(code);
     //lexer.dump();
+    is_extending = nullptr;
     lex_idx = 0;
     Ast ast;
     while (auto root = parse_top_level(*this))
@@ -140,8 +141,14 @@ static uptr<Fn_Node> parse_fn(Parser &parser);
 static uptr<Class_Def_Node> parse_class(Parser &parser);
 static uptr<Extend_Node> parse_extend(Parser &parser);
 
-#define SAVE auto _save_idx = parser.lex_idx
-#define RESTORE parser.lex_idx = _save_idx
+#define SAVE                                        \
+    auto _save_idx = parser.lex_idx;                \
+    auto _save_is_extending = parser.is_extending
+    
+#define RESTORE                                 \
+    parser.lex_idx = _save_idx;                 \
+    parser.is_extending = _save_is_extending
+    
 #define PARSE_FAIL {RESTORE; return nullptr;}
 #define ACCEPT_OR_FAIL(...) if (!parser.accept(__VA_ARGS__)) { PARSE_FAIL; }
 #define CHECK_OR_FAIL(check) if (!(check)) PARSE_FAIL;
@@ -953,6 +960,7 @@ static uptr<Fn_Node> parse_bound_fn(Parser &parser)
     Token tk_fn;
     ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
     Token tk_ident;
+    if (parser.is_extending) {
     ACCEPT_OR_FAIL(tk_ident, {
             Token_Id::Identifier,
                 Token_Id::Plus,
@@ -978,6 +986,11 @@ static uptr<Fn_Node> parse_bound_fn(Parser &parser)
                 Token_Id::Op_Index_Get,
                 Token_Id::Op_Index_Set,
                 });
+    }
+    else
+    {
+        ACCEPT_OR_FAIL(tk_ident, {Token_Id::Identifier});
+    }
     std::vector<Decl_Node*> params;
     Type_Node *ret_ty;
     std::vector<Ast_Node*> body;
@@ -1051,6 +1064,8 @@ static uptr<Extend_Node> parse_extend(Parser &parser)
     ACCEPT_OR_FAIL(extend_tk, {Token_Id::K_extend});
     auto for_type = parse_type(parser);
     CHECK_OR_ERROR(for_type, extend_tk, "Expected type to follow extend.");
+    auto old_extending = parser.is_extending;
+    parser.is_extending = for_type->type;
     CHECK_OR_FAIL(parser.expect(Token_Id::Open_Curly));
     Ast_Bound_Functions body;
     while (true)
@@ -1065,6 +1080,7 @@ static uptr<Extend_Node> parse_extend(Parser &parser)
         break;
     }
     CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
+    parser.is_extending = old_extending;
     return uptr<Extend_Node>(new Extend_Node(extend_tk.src_loc(), for_type.release(), body));
 }
 static uptr<Ast_Node> parse_statement(Parser &parser)

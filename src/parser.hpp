@@ -26,6 +26,7 @@ struct Parser
     Source_Code *code;
     Lexer lexer;
     size_t lex_idx;
+    Type_Info *is_extending;
 };
 
 #endif /* MALANG_PARSER_HPP */
