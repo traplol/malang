@@ -15,4 +15,30 @@ fn foo(a: bool) {
 #    println(x)
 }
 
+fn local_test() {
+    x := 42
+    local_fn_2 :: fn() {
+        x := 99
+        println(x)
+        println("local2")
+    }
+    local_fn_1 :: fn() {
+        x := 123
+        println(x)
+        println("local1")
+    }
+    local_fn_3 :: fn() {
+        x := -1
+        println(x)
+        println("local3")
+    }
+    println(x)
+    local_fn_1()
+    local_fn_2()
+    local_fn_3()
+    println(x)
+}
+
 foo(false)
+
+local_test()

@@ -215,11 +215,11 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto old_locals_count = cur_locals_count;
     auto old_fn = cur_fn;
     auto old_returns = all_returns_this_fn;
-    if (old_fn)
-    {
-        n.src_loc.report("NYI", "Support for closures is not yet implemented");
-        abort();
-    }
+    //if (old_fn)
+    //{
+    //    n.src_loc.report("NYI", "Support for closures is not yet implemented");
+    //    abort();
+    //}
     cur_fn = &n;
 
     if (n.is_bound())
@@ -240,7 +240,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
     const bool is_void_return = n.fn_type->return_type() == types->get_void();
-    locality->push();
+    locality->push(old_fn == nullptr);
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
     // Since code can be free (outside of a function), we opt to define a function wherever we
