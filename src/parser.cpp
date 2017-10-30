@@ -841,8 +841,8 @@ static uptr<Type_Node> parse_type(Parser &parser)
         {
             params_types.push_back(n->type);
         }
-        const auto is_primitive = false;
-        auto fn_type = parser.types->declare_function(params_types, ret_ty_node->type, is_primitive);
+        const auto is_native = false;
+        auto fn_type = parser.types->declare_function(params_types, ret_ty_node->type, is_native);
         return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), fn_type));
     }
     else if (parser.accept(first_tk, {Token_Id::Open_Paren}))
@@ -948,8 +948,8 @@ static void *parse_fn_shared(Parser &parser, std::vector<Decl_Node*> &params, Ty
     {
         p_types.push_back(decl->type->type);
     }
-    const auto is_primitive = false;
-    *fn_ty = parser.types->declare_function(p_types, (*ret_ty)->type, is_primitive);
+    const auto is_native = false;
+    *fn_ty = parser.types->declare_function(p_types, (*ret_ty)->type, is_native);
     return reinterpret_cast<void*>(1);
 }
 static uptr<Fn_Node> parse_bound_fn(Parser &parser)

@@ -61,11 +61,11 @@ struct Codegen
     void push_back_raw_16(int16_t n);
     void push_back_raw_32(int32_t n);
 
-    void push_back_call_primitive(const Primitive_Function &primitive);
-    void push_back_call_primitive(int32_t index);
-    void push_back_call_primitive_dyn(const Primitive_Function &primitive);
-    void push_back_call_primitive_dyn(int32_t index);
-    void push_back_call_primitive_dyn();
+    void push_back_call_native(const Native_Function &native);
+    void push_back_call_native(int32_t index);
+    void push_back_call_native_dyn(const Native_Function &native);
+    void push_back_call_native_dyn(int32_t index);
+    void push_back_call_native_dyn();
     void push_back_call_code(int32_t code);
     void push_back_call_code_dyn(int32_t code);
     void push_back_call_code_dyn();

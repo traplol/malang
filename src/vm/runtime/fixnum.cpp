@@ -213,7 +213,7 @@ static void id_neql(Malang_VM &vm)
     vm.push_data(a != b);
 }
 
-void Malang_Runtime::runtime_fixnum_init(Primitive_Function_Map &b, Type_Map &m)
+void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _int    = m.get_int();
     auto _double = m.get_double();

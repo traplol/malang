@@ -93,7 +93,7 @@ struct Method_Info
         {}
     */
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type, Primitive_Function *prim)
+    Method_Info(const std::string &name, Function_Type_Info *fn_type, Native_Function *prim)
         : m_name(name)
         , m_fn_type(fn_type)
         {
@@ -112,18 +112,18 @@ struct Method_Info
     const Function_Parameters &parameter_types() const;
     Type_Info *return_type() const;
 
-    void set_function(Primitive_Function *prim);
+    void set_function(Native_Function *prim);
     void set_function(IR_Label *code_ip);
     bool is_native() const;
     IR_Label *code_function() const;
-    Primitive_Function *primitive_function() const;
+    Native_Function *native_function() const;
 
 private:
     std::string m_name;
     Function_Type_Info *m_fn_type;
     bool m_is_native;
     union {
-        Primitive_Function *prim;
+        Native_Function *prim;
         IR_Label *code_ip;
     } m_fn;
 };

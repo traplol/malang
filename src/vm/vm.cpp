@@ -19,10 +19,10 @@ Malang_VM::~Malang_VM()
 }
 
 Malang_VM::Malang_VM(Type_Map *types,
-                     const std::vector<Native_Code> &primitives,
+                     const std::vector<Native_Code> &natives,
                      const std::vector<String_Constant> &string_constants,
                      size_t gc_run_interval, size_t max_num_objects)
-    : primitives(std::move(primitives))
+    : natives(std::move(natives))
     , string_constants(std::move(string_constants))
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
@@ -537,12 +537,12 @@ static void run_code(Malang_VM &vm)
                 ip = first_ip + idx;
                 DISPATCH_NEXT;
             }
-            DISPATCH(Call_Primitive)
+            DISPATCH(Call_Native)
             {
                 ip++;
                 auto idx = fetch32(ip);
                 ip += sizeof(idx);
-                vm.primitives[idx](vm);
+                vm.natives[idx](vm);
                 DISPATCH_NEXT;
             }
             DISPATCH(Call_Dyn)
@@ -552,11 +552,11 @@ static void run_code(Malang_VM &vm)
                 ip = first_ip + new_ip;
                 DISPATCH_NEXT;
             }
-            DISPATCH(Call_Primitive_Dyn)
+            DISPATCH(Call_Native_Dyn)
             {
                 ip++;
                 auto idx = vm.pop_data().as_fixnum();
-                vm.primitives[idx](vm);
+                vm.natives[idx](vm);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Global)

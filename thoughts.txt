@@ -127,9 +127,9 @@ VM Calling Convention:
 ==============================================================================================
 Type syntax:
 
-    type aliast cents   = int
-    type aliast dollars = int
-    type aliast time_ms = int
+    type alias cents   = int
+    type alias dollars = int
+    type alias time_ms = int
 
     to_cents :: fn(dollars: dollars) -> cents {
         return cast(cents, dollars*100)
@@ -156,12 +156,12 @@ Type syntax:
         greeting : Greeting,
         has_greeted := false,
         greet :: fn (who: Name) {
-            println("#{@greeting} #{who}, I am #{@name}")
-            @has_greeted = true
+            println("#{self.greeting} #{who}, I am #{self.name}")
+            self.has_greeted = true
         },
         PI :: 3.14159,
         say_pi :: fn () {
-            println("#{@PI}, I'm #{@name}... get it?")
+            println("#{self.PI}, I'm #{self.name}... get it?")
         }
     }
 

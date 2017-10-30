@@ -1,5 +1,5 @@
-#ifndef MALANG_RUNTIME_PRIMITIVE_TYPES_HPP
-#define MALANG_RUNTIME_PRIMITIVE_TYPES_HPP
+#ifndef MALANG_RUNTIME_NATIVE_TYPES_HPP
+#define MALANG_RUNTIME_NATIVE_TYPES_HPP
 
 #include <stdint.h>
 #include <string>
@@ -110,9 +110,9 @@ private:
     Char *m_data;
 };
 
-struct Primitive_Function
+struct Native_Function
 {
-    Primitive_Function(const std::string &name, Fixnum index, Native_Code native_code, struct Function_Type_Info *fn_type)
+    Native_Function(const std::string &name, Fixnum index, Native_Code native_code, struct Function_Type_Info *fn_type)
         : name(name)
         , index(index)
         , native_code(native_code)

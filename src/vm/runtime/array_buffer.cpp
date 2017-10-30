@@ -3,7 +3,7 @@
 #include "../vm.hpp"
 #include "../../type_map.hpp"
 
-void Malang_Runtime::runtime_buffer_init(Primitive_Function_Map &b, Type_Map &m)
+void Malang_Runtime::runtime_buffer_init(Bound_Function_Map&, Type_Map &m)
 {
     auto length_field = new Field_Info{"length", m.get_int()};
     auto _buffer = m.get_buffer();

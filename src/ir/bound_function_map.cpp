@@ -1,36 +1,49 @@
 #include "bound_function_map.hpp"
 
-bool Bound_Function_Map::add_function(Primitive_Function *primitive)
+bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native)
 {
-    assert(primitive);
-    auto n2p = m_bound_functions.find(primitive->name);
-    if (n2p != m_bound_functions.end())
+    assert(to_type);
+    assert(!name.empty());
+    assert(fn_type);
+    assert(native);
+    auto index = static_cast<Fixnum>(m_all_natives.size());
+    auto pfn = new Native_Function{name, index, native, fn_type};
+    auto method = new Method_Info{name, fn_type, pfn};
+    if (!to_type->add_method(method))
     {
-        auto it = n2p->second.find(primitive->fn_type->parameter_types());
-        if (it != n2p->second.end())
-        {
-            return false;
-        }
-        // subsequent
-        m_bound_functions[primitive->name][primitive->fn_type->parameter_types()] =
-            Bound_Function(primitive);
+        printf("Couldn't add method %s to %s\n", name.c_str(), to_type->name().c_str());
+        delete pfn;
+        delete method;
+        abort();
+        //return false;
     }
-    else
-    {   // first
-        m_bound_functions[primitive->name] = {
-            {primitive->fn_type->parameter_types(), Bound_Function(primitive)}
-        };
+    m_all_natives.push_back(native);
+    return true;
+}
+
+bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, IR_Label *code)
+{
+    assert(to_type);
+    assert(!name.empty());
+    assert(fn_type);
+    assert(code);
+
+    auto method = new Method_Info{name, fn_type, code};
+    if (!to_type->add_method(method))
+    {
+        printf("Couldn't add method %s to %s\n", name.c_str(), to_type->name().c_str());
+        delete method;
+        abort();
+        //return false;
     }
     return true;
 }
 
-bool Bound_Function_Map::add_function(const std::string &name, Function_Type_Info *fn_type, IR_Label *code)
+
+bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_type, Native_Code native)
 {
-    assert(!name.empty());
-    assert(fn_type);
-    assert(code);
-    auto n2p = m_bound_functions.find(name);
-    if (n2p != m_bound_functions.end())
+    auto n2p = m_free_functions.find(name);
+    if (n2p != m_free_functions.end())
     {
         auto it = n2p->second.find(fn_type->parameter_types());
         if (it != n2p->second.end())
@@ -38,19 +51,48 @@ bool Bound_Function_Map::add_function(const std::string &name, Function_Type_Inf
             return false;
         }
         // subsequent
-        m_bound_functions[name][fn_type->parameter_types()] = Bound_Function(fn_type, code);
+        auto index = static_cast<Fixnum>(m_all_natives.size());
+        auto pfn = new Native_Function{name, index, native, fn_type};
+        m_free_functions[name][fn_type->parameter_types()] = Bound_Function(pfn);
+        m_all_natives.push_back(native);
     }
     else
     {   // first
-        m_bound_functions[name] = {{fn_type->parameter_types(), Bound_Function(fn_type, code)}};
+        auto index = static_cast<Fixnum>(m_all_natives.size());
+        auto pfn = new Native_Function{name, index, native, fn_type};
+        m_free_functions[name] = {{fn_type->parameter_types(), Bound_Function(pfn)}};
+        m_all_natives.push_back(native);
     }
     return true;
 }
 
-Bound_Function Bound_Function_Map::get_function(const std::string &name, const Function_Parameters &params)
+bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_type, IR_Label *code)
 {
-    auto n2p = m_bound_functions.find(name);
-    if (n2p != m_bound_functions.end())
+    assert(!name.empty());
+    assert(fn_type);
+    assert(code);
+    auto n2p = m_free_functions.find(name);
+    if (n2p != m_free_functions.end())
+    {
+        auto it = n2p->second.find(fn_type->parameter_types());
+        if (it != n2p->second.end())
+        {
+            return false;
+        }
+        // subsequent
+        m_free_functions[name][fn_type->parameter_types()] = Bound_Function(fn_type, code);
+    }
+    else
+    {   // first
+        m_free_functions[name] = {{fn_type->parameter_types(), Bound_Function(fn_type, code)}};
+    }
+    return true;
+}
+
+Bound_Function Bound_Function_Map::get(const std::string &name, const Function_Parameters &params) const
+{
+    auto n2p = m_free_functions.find(name);
+    if (n2p != m_free_functions.end())
     {
         auto it = n2p->second.find(params);
         if (it != n2p->second.end())
@@ -61,11 +103,11 @@ Bound_Function Bound_Function_Map::get_function(const std::string &name, const F
     return Bound_Function();
 }
 
-Bound_Functions Bound_Function_Map::get_functions(const std::string &name)
+Bound_Functions Bound_Function_Map::get(const std::string &name) const
 {
     Bound_Functions bfs;
-    auto n2p = m_bound_functions.find(name);
-    if (n2p != m_bound_functions.end())
+    auto n2p = m_free_functions.find(name);
+    if (n2p != m_free_functions.end())
     {
         for (auto &&f : n2p->second)
         {
@@ -75,7 +117,12 @@ Bound_Functions Bound_Function_Map::get_functions(const std::string &name)
     return bfs;
 }
 
-bool Bound_Function_Map::any(const std::string &name)
+std::vector<Native_Code> Bound_Function_Map::natives() const
 {
-    return m_bound_functions.find(name) != m_bound_functions.end();
+    return m_all_natives;
+}
+
+bool Bound_Function_Map::any(const std::string &name) const
+{
+    return m_free_functions.find(name) != m_free_functions.end();
 }

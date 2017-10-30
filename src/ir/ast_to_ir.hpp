@@ -8,20 +8,21 @@
 #include "symbol_map.hpp"
 #include "bound_function_map.hpp"
 #include "../vm/runtime/primitive_types.hpp"
+#include "scope_lookup.hpp"
 
-struct Locality
-{
-    Locality(struct Malang_IR *);
-    ~Locality();
-    Symbol_Map *symbols;
-    Bound_Function_Map *bound_functions;
-    bool any(const std::string &name) const;
-};
+//struct Locality
+//{
+//    Locality(struct Malang_IR *);
+//    ~Locality();
+//    Symbol_Map *symbols;
+//    Bound_Function_Map *bound_functions;
+//    bool any(const std::string &name) const;
+//};
 
 struct Ast_To_IR : Ast_Visitor
 {
     ~Ast_To_IR();
-    Ast_To_IR(struct Primitive_Function_Map *primitives,
+    Ast_To_IR(Bound_Function_Map *bound_functions,
               std::vector<String_Constant> *strings,
               Type_Map *types);
 
@@ -73,27 +74,25 @@ struct Ast_To_IR : Ast_Visitor
     Malang_IR *convert(Ast &ast);
 
 private:
-    Primitive_Function_Map *primitives;
+    Bound_Function_Map *bound_functions;
     Type_Map *types;
-    Locality *locality;
     Type_Info *is_extending;
     struct Fn_Node *cur_fn;
     IR_Label *cur_true_label, *cur_false_label;
     Function_Parameters *cur_call_arg_types;
     Malang_IR *ir;
     IR_Node *tree;
-    Symbol_Scope cur_symbol_scope;
-    uint16_t cur_locals_count;
-    std::vector<Locality*> scopes;
     std::vector<String_Constant> *strings;
     std::vector<IR_Return*> *all_returns_this_fn;
+    //Locality *locality;
+    Scope_Lookup *locality;
+    Symbol_Scope cur_symbol_scope;
+    uint16_t cur_locals_count;
+    //std::vector<Locality*> scopes;
 
-    void push_locality();
-    void pop_locality();
     IR_Symbol *find_symbol(const std::string &name);
     void convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, struct IR_Value **last_node_as_value = nullptr);
     bool symbol_already_declared_here(const std::string &name);
-    bool symbol_already_declared_anywhere(const std::string &name);
 
     template<typename T = IR_Node*>
     T get(Ast_Node &n)

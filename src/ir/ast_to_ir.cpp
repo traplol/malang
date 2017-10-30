@@ -2,7 +2,6 @@
 #include "ast_to_ir.hpp"
 #include "../ast/nodes.hpp"
 #include "../vm/runtime/reflection.hpp"
-#include "../vm/runtime/primitive_function_map.hpp"
 #include "nodes.hpp"
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
@@ -33,58 +32,44 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
-Locality::Locality(Malang_IR *ir)
-    : symbols(new Symbol_Map{ir})
-    , bound_functions(new Bound_Function_Map)
-{}
-Locality::~Locality()
-{
-    delete symbols;
-    symbols = nullptr;
-    delete bound_functions;
-    bound_functions = nullptr;
-}
-bool Locality::any(const std::string &name) const
-{
-    if (bound_functions->any(name))
-    {
-        return true;
-    }
-    if (symbols->get_symbol(name))
-    {
-        return true;
-    }
-    return false;
-}
 Ast_To_IR::~Ast_To_IR()
 {
     delete locality;
-    locality = nullptr;
 }
-Ast_To_IR::Ast_To_IR(Primitive_Function_Map *primitives,
+Ast_To_IR::Ast_To_IR(Bound_Function_Map *bound_functions,
                      std::vector<String_Constant> *strings,
                      Type_Map *types)
-    : primitives(primitives)
+    : bound_functions(bound_functions)
     , types(types)
-    , locality(nullptr)
     , ir(nullptr)
     , strings(strings)
+    , locality(nullptr)
 {}
 
 void Ast_To_IR::visit(Variable_Node &n)
 {
-    if (primitives->builtin_exists(n.name))
+    if (bound_functions->any(n.name))
     {
         if (!cur_call_arg_types)
         {
             n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
             abort();
         }
-        auto prim_fn = primitives->get_builtin(n.name, *cur_call_arg_types);
-        if (prim_fn)
+        auto fn = bound_functions->get(n.name, *cur_call_arg_types);
+        if (fn.is_valid())
         {
-            auto callable = ir->alloc<IR_Callable>(n.src_loc, prim_fn->index, prim_fn->fn_type);
-            _return(callable);
+            if (fn.is_native())
+            {
+                auto native = fn.native();
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, native->index, fn.fn_type());
+                _return(callable);
+            }
+            else
+            {
+                auto code = fn.code();
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, code, fn.fn_type());
+                _return(callable);
+            }
         }
         else
         {
@@ -100,19 +85,19 @@ void Ast_To_IR::visit(Variable_Node &n)
             abort();
         }
     }
-    else if (locality->bound_functions->any(n.name))
+    else if (locality->current().bound_functions().any(n.name))
     {
         if (!cur_call_arg_types)
         {
             n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
             abort();
         }
-        auto bound_fn = locality->bound_functions->get_function(n.name, *cur_call_arg_types);
+        auto bound_fn = locality->current().bound_functions().get(n.name, *cur_call_arg_types);
         if (bound_fn.is_valid())
         {
-            if (bound_fn.is_primitive())
+            if (bound_fn.is_native())
             {
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.primitive()->index,
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
                                                        bound_fn.fn_type());
                 _return(callable);
             }
@@ -159,15 +144,12 @@ void Ast_To_IR::visit(Decl_Node &n)
 {
     assert(n.type);
     assert(n.type->type);
-    //auto exists = locality->symbols->get_symbol(n.variable_name);
-    //if (exists)
     if (symbol_already_declared_here(n.variable_name))
     {
         n.src_loc.report("error", "Cannot declare variable because it has already been declared");
-        //exists->src_loc.report("here", "");
         abort();
     }
-    auto symbol = locality->symbols->make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
+    auto symbol = locality->current().symbols().make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
     if (cur_symbol_scope == Symbol_Scope::Local)
     {
         ++cur_locals_count;
@@ -258,7 +240,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
     const bool is_void_return = n.fn_type->return_type() == types->get_void();
-    push_locality();
+    locality->push();
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
     // Since code can be free (outside of a function), we opt to define a function wherever we
@@ -344,11 +326,11 @@ void Ast_To_IR::visit(Fn_Node &n)
     ir->roots.push_back(branch_over_body);
     ir->roots.push_back(fn_body);
 
-    pop_locality();
+    locality->pop();
 
     if (n.is_bound())
     {
-        if (!locality->bound_functions->add_function(n.bound_name, n.fn_type, fn_body))
+        if (!locality->current().bound_functions().add(n.bound_name, n.fn_type, fn_body))
         {
             n.src_loc.report("error", "Cannot bind %s to `%s' because it already exists",
                              n.fn_type->name().c_str(), n.bound_name.c_str());
@@ -600,7 +582,7 @@ void Ast_To_IR::visit(Call_Node &n)
         {
             if (method->is_native())
             {
-                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->primitive_function()->index, method->type());
+                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->native_function()->index, method->type());
             }
             else
             {
@@ -871,13 +853,13 @@ void Ast_To_IR::visit(While_Node &n)
     // We push here so variables can be declared inside the loop body but cannot
     // be referenced outside of the loop body while still allowing the loop body
     // to access variables declared outside its own scope.
-    locality->symbols->push();
+    locality->push();
     {
         convert_body(n.body, loop_block->body());
         // The end of a while loop is always a branch back to the condition check.
         loop_block->body().push_back(ir->alloc<IR_Branch>(n.src_loc, condition_check_label));
     }
-    locality->symbols->pop();
+    locality->pop();
 
     block.push_back(loop_block);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
@@ -933,14 +915,18 @@ void Ast_To_IR::visit(If_Else_Node &n)
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
     block.push_back(cons_begin_label);
+    locality->push();
     convert_body(n.consequence, block, (is_either_empty ? nullptr : &last_conseq));
+    locality->pop();
     if (!n.alternative.empty())
     {
         auto end_label = ir->labels->make_label(label_name_gen(), n.src_loc);
         auto branch_to_end = ir->alloc<IR_Branch>(n.src_loc, end_label);
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
+        locality->push();
         convert_body(n.alternative, block, (is_either_empty ? nullptr : &last_altern));
+        locality->pop();
         block.push_back(end_label);
     }
     else
@@ -990,59 +976,17 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     is_extending = nullptr;
     cur_true_label = cur_false_label = nullptr;
     ir = new Malang_IR{types};
-    locality = new Locality{ir};
+    locality = new Scope_Lookup{ir};
     convert_body(ast.roots, ir->roots);
     return ir;
 }
 
-void Ast_To_IR::push_locality()
-{
-    scopes.push_back(locality);
-    locality = new Locality{ir};
-}
-
-void Ast_To_IR::pop_locality()
-{
-    assert(!scopes.empty());
-    auto to_free = locality;
-    locality = scopes.back();
-    scopes.pop_back();
-    delete to_free;
-}
-
 IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)
 {
-    if (auto sym = locality->symbols->get_symbol(name))
-    {
-        return sym;
-    }
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
-    {
-        if (auto sym = (*it)->symbols->get_symbol(name))
-        {
-            return sym;
-        }
-    }
-    return nullptr;
+    return locality->current().find_symbol(name);
 }
 
 bool Ast_To_IR::symbol_already_declared_here(const std::string &name)
 {
-    return locality->any(name);
-}
-
-bool Ast_To_IR::symbol_already_declared_anywhere(const std::string &name)
-{
-    if (locality->any(name))
-    {
-        return true;
-    }
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
-    {
-        if ((*it)->any(name))
-        {
-            return true;
-        }
-    }
-    return false;
+    return locality->current().symbols().any(name);
 }

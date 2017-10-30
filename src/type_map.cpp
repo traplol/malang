@@ -95,13 +95,13 @@ Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
 }
 
 static
-std::string create_function_typename(Type_Info *return_type, const std::vector<Type_Info*> parameter_types, bool is_primitive)
+std::string create_function_typename(Type_Info *return_type, const std::vector<Type_Info*> parameter_types, bool is_native)
 {
     // This should generate a string in the form of:
     // "fn (int, string, MyObj) -> void"
     assert(return_type);
     std::stringstream ss;
-    ss << (is_primitive ? "pfn (" : "fn (");
+    ss << (is_native ? "pfn (" : "fn (");
     for (size_t i = 0; i < parameter_types.size(); ++i)
     {
         auto pt = parameter_types[i];
@@ -116,10 +116,10 @@ std::string create_function_typename(Type_Info *return_type, const std::vector<T
     return ss.str();
 }
 
-Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &parameter_types, Type_Info *return_type, bool is_primitive)
+Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &parameter_types, Type_Info *return_type, bool is_native)
 {
     assert(return_type);
-    auto type_name = create_function_typename(return_type, parameter_types, is_primitive);
+    auto type_name = create_function_typename(return_type, parameter_types, is_native);
     if (auto exists = get_type(type_name))
     {
         auto fn_ty = dynamic_cast<Function_Type_Info*>(exists);
@@ -127,7 +127,7 @@ Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &pa
         return fn_ty;
     }
     auto type_token = static_cast<Type_Token>(m_types_fast.size());
-    auto fn_type = new Function_Type_Info{nullptr, type_token, type_name, return_type, parameter_types, is_primitive};
+    auto fn_type = new Function_Type_Info{nullptr, type_token, type_name, return_type, parameter_types, is_native};
     m_types[fn_type->name()] = fn_type;
     m_types_fast.push_back(fn_type);
     assert(m_types_fast[fn_type->type_token()] == fn_type);

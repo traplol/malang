@@ -81,7 +81,7 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Store_Global:
             case Instruction::Literal_32:
             case Instruction::Call:
-            case Instruction::Call_Primitive:
+            case Instruction::Call_Native:
             case Instruction::Array_New:
             case Instruction::Load_String_Constant:
             {

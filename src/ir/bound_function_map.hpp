@@ -11,15 +11,15 @@ struct Bound_Function
 {
     // Does this need the name it is bound to?
     
-    Bound_Function(Primitive_Function *primitive)
-        : m_is_primitive(true)
+    Bound_Function(Native_Function *native)
+        : m_is_native(true)
         , m_is_valid(true)
-        , m_fn_type(primitive->fn_type)
+        , m_fn_type(native->fn_type)
     {
-        m_u.primitive = primitive;
+        m_u.native = native;
     }
     Bound_Function(Function_Type_Info *fn_type, IR_Label *code)
-        : m_is_primitive(false)
+        : m_is_native(false)
         , m_is_valid(true)
         , m_fn_type(fn_type)
     {
@@ -28,31 +28,31 @@ struct Bound_Function
 
     Bound_Function() : m_is_valid(false) {}
 
-    inline bool is_primitive() const { return m_is_primitive; }
+    inline bool is_native() const { return m_is_native; }
     inline bool is_valid() const { return m_is_valid; }
     inline IR_Label *code() const
     {
         assert(is_valid());
-        assert(!is_primitive());
+        assert(!is_native());
         return m_u.code;
     }
-    inline Primitive_Function *primitive() const
+    inline Native_Function *native() const
     {
         assert(is_valid());
-        assert(is_primitive());
-        return m_u.primitive;
+        assert(is_native());
+        return m_u.native;
     }
     inline Function_Type_Info *fn_type() const
     {
-        //assert(is_valid());
+        assert(is_valid());
         return m_fn_type;
     }
 private:
-    bool m_is_primitive;
+    bool m_is_native;
     bool m_is_valid;
     union {
         IR_Label *code;
-        Primitive_Function *primitive;
+        Native_Function *native;
     } m_u;
     Function_Type_Info *m_fn_type;
 };
@@ -61,15 +61,21 @@ using Bound_Functions = std::vector<Bound_Function>;
 
 struct Bound_Function_Map
 {
-    bool add_function(Primitive_Function *primitive);
-    bool add_function(const std::string &name, Function_Type_Info *fn_type, IR_Label *code);
-    Bound_Function get_function(const std::string &name, const Function_Parameters &params);
-    Bound_Functions get_functions(const std::string &name);
-    bool any(const std::string &name);
+    bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native);
+    bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, IR_Label *code);
+    bool add(const std::string &name, Function_Type_Info *fn_type, Native_Code native);
+    bool add(const std::string &name, Function_Type_Info *fn_type, IR_Label *code);
+    Bound_Function get(const std::string &name, const Function_Parameters &params) const;
+    Bound_Functions get(const std::string &name) const;
+
+    bool any(const std::string &name) const;
+
+    std::vector<Native_Code> natives() const;
 private:
     using Params_To_Function_Map = std::unordered_map<Function_Parameters, Bound_Function>;
     using Name_To_Params_To_Bound_Function_Map = std::map<std::string, Params_To_Function_Map>;
-    Name_To_Params_To_Bound_Function_Map m_bound_functions;
+    Name_To_Params_To_Bound_Function_Map m_free_functions;
+    std::vector<Native_Code> m_all_natives;
 };
 
 #endif /* MALANG_IR_BOUND_FUNCTION_MAP_HPP */

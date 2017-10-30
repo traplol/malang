@@ -170,7 +170,7 @@ static void di_neql(Malang_VM &vm)
     vm.push_data(a != b);
 }
 
-void Malang_Runtime::runtime_double_init(Primitive_Function_Map &b, Type_Map &m)
+void Malang_Runtime::runtime_double_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _int    = m.get_int();
     auto _double = m.get_double();

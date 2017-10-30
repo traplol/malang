@@ -106,15 +106,15 @@ ITEM(Return_Fast)
 ITEM(Call)
 
 // setup call frame, assumes the next 4 bytes of the bytecode is a 32-bit integer
-// representing an index into the primitives table, call this primitive
-ITEM(Call_Primitive)
+// representing an index into the natives table, call this native
+ITEM(Call_Native)
 
 // setup call frame, pop value from datastack and set IP to that value
 ITEM(Call_Dyn)
 
-// setup call frame, pop value from datastack as an index into the primitives table
-// and call this primitive
-ITEM(Call_Primitive_Dyn)
+// setup call frame, pop value from datastack as an index into the natives table
+// and call this native
+ITEM(Call_Native_Dyn)
 
 // the next 4 bytes of the bytecode is a 32-bit index into the globals table, push the value
 // pointed at by this index to the top of the datastack

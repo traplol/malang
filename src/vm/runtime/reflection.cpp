@@ -32,10 +32,10 @@ const std::string &Method_Info::name() const
     return m_name;
 }
 
-void Method_Info::set_function(Primitive_Function *primitive)
+void Method_Info::set_function(Native_Function *native)
 {
     m_is_native = true;
-    m_fn.prim = primitive;
+    m_fn.prim = native;
 }
 
 void Method_Info::set_function(IR_Label *code_ip)
@@ -55,7 +55,7 @@ IR_Label *Method_Info::code_function() const
     return m_fn.code_ip;
 }
 
-Primitive_Function *Method_Info::primitive_function() const
+Native_Function *Method_Info::native_function() const
 {
     assert(is_native());
     return m_fn.prim;

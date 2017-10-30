@@ -125,7 +125,7 @@ void IR_To_Code::visit(IR_Indexable &n)
         {
             if (method->is_native())
             {
-                cg->push_back_call_primitive(method->primitive_function()->index);
+                cg->push_back_call_native(method->native_function()->index);
             }
             else
             {
@@ -178,7 +178,7 @@ void IR_To_Code::visit(IR_Call &n)
     }
 
     // Simple optimization if we know ahead of time the thing we're calling is literally
-    // a callable. This is most useful for calling primitive builtin functions directly
+    // a callable. This is most useful for calling native builtin functions directly
     // otherwise we would waste time pushing a value to the stack before popping it and
     // finally calling it.
     if (auto callable = dynamic_cast<IR_Callable*>(n.callee))
@@ -189,7 +189,7 @@ void IR_To_Code::visit(IR_Call &n)
         }
         if (callable->fn_type->is_native())
         {
-            cg->push_back_call_primitive(callable->u.index);
+            cg->push_back_call_native(callable->u.index);
         }
         else // @FixMe: Allow backfilling labels.
         {
@@ -202,7 +202,7 @@ void IR_To_Code::visit(IR_Call &n)
         convert_one(*n.callee);
         if (n.get_fn_type()->is_native())
         {
-            cg->push_back_call_primitive_dyn();
+            cg->push_back_call_native_dyn();
         }
         else
         {
@@ -384,7 +384,7 @@ void IR_To_Code::visit(IR_Assignment &n)
             {
                 if (method->is_native())
                 {
-                    cg->push_back_call_primitive(method->primitive_function()->index);
+                    cg->push_back_call_native(method->native_function()->index);
                 }
                 else
                 {
@@ -453,7 +453,7 @@ void IR_To_Code::binary_op_helper(IR_Binary_Operation &bop)
         {
             convert_one(*bop.lhs);
             convert_one(*bop.rhs);
-            cg->push_back_call_primitive(*m->primitive_function());
+            cg->push_back_call_native(*m->native_function());
         }
         else
         {
@@ -723,7 +723,7 @@ void IR_To_Code::unary_op_helper(IR_Unary_Operation &uop)
         if (m->is_native())
         {
             convert_one(*uop.operand);
-            cg->push_back_call_primitive(*m->primitive_function());
+            cg->push_back_call_native(*m->native_function());
         }
         else
         {

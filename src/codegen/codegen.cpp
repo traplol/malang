@@ -308,27 +308,27 @@ void Codegen::push_back_raw_32(int32_t n)
     *slot = n;
 }
 
-void Codegen::push_back_call_primitive(const Primitive_Function &primitive)
+void Codegen::push_back_call_native(const Native_Function &native)
 {
-    push_back_call_primitive(primitive.index);
+    push_back_call_native(native.index);
 }
-void Codegen::push_back_call_primitive(int32_t index)
+void Codegen::push_back_call_native(int32_t index)
 {
-    push_back_instruction(Instruction::Call_Primitive);
+    push_back_instruction(Instruction::Call_Native);
     push_back_raw_32(index);
 }
-void Codegen::push_back_call_primitive_dyn(const Primitive_Function &primitive)
+void Codegen::push_back_call_native_dyn(const Native_Function &native)
 {
-    push_back_call_primitive_dyn(primitive.index);
+    push_back_call_native_dyn(native.index);
 }
-void Codegen::push_back_call_primitive_dyn(int32_t index)
+void Codegen::push_back_call_native_dyn(int32_t index)
 {
     push_back_literal_32(index);
-    push_back_call_primitive_dyn();
+    push_back_call_native_dyn();
 }
-void Codegen::push_back_call_primitive_dyn()
+void Codegen::push_back_call_native_dyn()
 {
-    push_back_instruction(Instruction::Call_Primitive_Dyn);
+    push_back_instruction(Instruction::Call_Native_Dyn);
 }
 void Codegen::push_back_call_code(int32_t code)
 {

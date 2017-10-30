@@ -13,7 +13,7 @@ struct Malang_VM
 {
     ~Malang_VM();
     Malang_VM(Type_Map *types,
-              const std::vector<Native_Code> &primitives,
+              const std::vector<Native_Code> &natives,
               const std::vector<String_Constant> &string_constants,
               size_t gc_run_interval = 50, size_t max_num_objects = 1000);
 
@@ -23,7 +23,7 @@ struct Malang_VM
     struct Malang_GC *gc;
 
     std::vector<byte> code;
-    std::vector<Native_Code> primitives;
+    std::vector<Native_Code> natives;
     std::vector<String_Constant> string_constants;
 
     uintptr_t locals_frames_top;
