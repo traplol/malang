@@ -281,7 +281,6 @@ void Ast_To_IR::visit(Fn_Node &n)
             delete method;
             abort();
         }
-        ++cur_locals_count;
         self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}};
         assert(self_decl);
         params_copy.insert(params_copy.begin(), self_decl);
@@ -593,16 +592,42 @@ void Ast_To_IR::visit(Call_Node &n)
 
     auto callee = get<IR_Value*>(*n.callee);
     assert(callee);
-    auto fn_type = dynamic_cast<Function_Type_Info*>(callee->get_type());
-    if (!fn_type)
+    if (auto member = dynamic_cast<IR_Member_Access*>(callee))
     {
-        n.src_loc.report("error", "Attempted to call non-function type `%s'",
-                 callee->get_type()->name().c_str());
-        abort();
+        auto thing_ty = member->thing->get_type();
+        assert(thing_ty);
+        if (auto method = thing_ty->get_method(member->member_name, args_types))
+        {
+            if (method->is_native())
+            {
+                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->primitive_function()->index, method->type());
+            }
+            else
+            {
+                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->code_function(), method->type());
+            }
+        }
+        else
+        {
+            n.src_loc.report("error", "method `%s' not implemented for type `%s'",
+                             member->member_name.c_str(), 
+                             thing_ty->name().c_str());
+            abort();
+        }
     }
-    if (!type_check(n.src_loc, args, fn_type->parameter_types()))
+    else
     {
-        abort();
+        auto fn_type = dynamic_cast<Function_Type_Info*>(callee->get_type());
+        if (!fn_type)
+        {
+            n.src_loc.report("error", "Attempted to call non-function type `%s'",
+                             callee->get_type()->name().c_str());
+            abort();
+        }
+        if (!type_check(n.src_loc, args, fn_type->parameter_types()))
+        {
+            abort();
+        }
     }
     auto call = ir->alloc<IR_Call>(n.src_loc, callee, args);
     cur_call_arg_types = old_cur_call_arg_types;

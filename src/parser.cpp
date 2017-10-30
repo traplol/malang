@@ -953,39 +953,40 @@ static void *parse_fn_shared(Parser &parser, std::vector<Decl_Node*> &params, Ty
     return reinterpret_cast<void*>(1);
 }
 static uptr<Fn_Node> parse_bound_fn(Parser &parser)
-{   // function :=
+{   // bound_function :=
     //     fn ident ( ) -> type { body }
     //     fn ident ( decl_list ) -> type { body }
+
     SAVE;
     Token tk_fn;
     ACCEPT_OR_FAIL(tk_fn, {Token_Id::K_fn});
     Token tk_ident;
     if (parser.is_extending) {
-    ACCEPT_OR_FAIL(tk_ident, {
-            Token_Id::Identifier,
-                Token_Id::Plus,
-                Token_Id::Minus,
-                Token_Id::Star,
-                Token_Id::Slash,
-                Token_Id::Equals_Equals,
-                Token_Id::Not_Equals,
-                Token_Id::Less,
-                Token_Id::Less_Equals,
-                Token_Id::Greater,
-                Token_Id::Greater_Equals,
-                Token_Id::Mod,
-                Token_Id::L_Shift,
-                Token_Id::R_Shift,
-                Token_Id::Bit_And,
-                Token_Id::Bit_Xor,
-                Token_Id::Bit_Or,
-                Token_Id::Invert,
-                Token_Id::Not,
-                Token_Id::Plus_At,
-                Token_Id::Minus_At,
-                Token_Id::Op_Index_Get,
-                Token_Id::Op_Index_Set,
-                });
+        ACCEPT_OR_FAIL(tk_ident, {
+                Token_Id::Identifier,
+                    Token_Id::Plus,
+                    Token_Id::Minus,
+                    Token_Id::Star,
+                    Token_Id::Slash,
+                    Token_Id::Equals_Equals,
+                    Token_Id::Not_Equals,
+                    Token_Id::Less,
+                    Token_Id::Less_Equals,
+                    Token_Id::Greater,
+                    Token_Id::Greater_Equals,
+                    Token_Id::Mod,
+                    Token_Id::L_Shift,
+                    Token_Id::R_Shift,
+                    Token_Id::Bit_And,
+                    Token_Id::Bit_Xor,
+                    Token_Id::Bit_Or,
+                    Token_Id::Invert,
+                    Token_Id::Not,
+                    Token_Id::Plus_At,
+                    Token_Id::Minus_At,
+                    Token_Id::Op_Index_Get,
+                    Token_Id::Op_Index_Set,
+                    });
     }
     else
     {

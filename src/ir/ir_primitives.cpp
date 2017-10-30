@@ -30,14 +30,3 @@ IR_NODE_OVERRIDES_IMPL(IR_String);
 IR_String::~IR_String()
 {
 }
-IR_NODE_OVERRIDES_IMPL(IR_Callable);
-IR_Callable::~IR_Callable()
-{
-}
-IR_NODE_OVERRIDES_IMPL(IR_Indexable);
-IR_Indexable::~IR_Indexable()
-{
-    thing = nullptr;
-    index = nullptr;
-}
-

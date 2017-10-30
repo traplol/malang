@@ -19,6 +19,7 @@ struct IR_Visitor
     virtual void visit(struct IR_String&) = 0;
     virtual void visit(struct IR_Symbol&) = 0;
     virtual void visit(struct IR_Callable&) = 0;
+    virtual void visit(struct IR_Method&) = 0;
     virtual void visit(struct IR_Indexable&) = 0;
     virtual void visit(struct IR_Member_Access&) = 0;
 

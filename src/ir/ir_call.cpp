@@ -30,3 +30,18 @@ struct Function_Type_Info *IR_Call::get_fn_type() const
     }
     return fn_ty;
 }
+
+IR_NODE_OVERRIDES_IMPL(IR_Callable);
+IR_Callable::~IR_Callable()
+{
+}
+IR_NODE_OVERRIDES_IMPL(IR_Method);
+IR_Method::~IR_Method()
+{
+}
+IR_NODE_OVERRIDES_IMPL(IR_Indexable);
+IR_Indexable::~IR_Indexable()
+{
+    thing = nullptr;
+    index = nullptr;
+}

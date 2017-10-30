@@ -81,15 +81,15 @@ void IR_To_Code::visit(IR_Symbol &n)
     }
 }
 
-void IR_To_Code::visit(struct IR_Callable &n)
+void IR_To_Code::visit(IR_Callable &n)
 {
+    printf("%s\n", n.fn_type->name().c_str());
     if (n.fn_type->is_native())
     {
         cg->push_back_literal_32(n.u.index);
     }
     else if (!n.is_special_bound)
     {
-        printf("%s\n", n.fn_type->name().c_str());
         assert(n.u.label->is_resolved());
         cg->push_back_literal_32(n.u.label->address());
     }
@@ -100,7 +100,12 @@ void IR_To_Code::visit(struct IR_Callable &n)
     }
 }
 
-void IR_To_Code::visit(struct IR_Indexable &n)
+void IR_To_Code::visit(IR_Method &n)
+{
+    NOT_IMPL;
+}
+
+void IR_To_Code::visit(IR_Indexable &n)
 {
     convert_one(*n.thing);
     convert_one(*n.index);
@@ -144,7 +149,7 @@ void IR_To_Code::visit(struct IR_Indexable &n)
     }
 }
 
-void IR_To_Code::visit(struct IR_Member_Access &n)
+void IR_To_Code::visit(IR_Member_Access &n)
 {
     convert_one(*n.thing);
     auto thing_ty = n.thing->get_type();
@@ -178,11 +183,15 @@ void IR_To_Code::visit(IR_Call &n)
     // finally calling it.
     if (auto callable = dynamic_cast<IR_Callable*>(n.callee))
     {
+        if (auto method = dynamic_cast<IR_Method*>(n.callee))
+        {
+            convert_one(*method->thing);
+        }
         if (callable->fn_type->is_native())
         {
             cg->push_back_call_primitive(callable->u.index);
         }
-        else
+        else // @FixMe: Allow backfilling labels.
         {
             assert(callable->u.label->is_resolved());
             cg->push_back_call_code(callable->u.label->address());
@@ -435,7 +444,7 @@ void IR_To_Code::visit(IR_Assign_Top &n)
 }
 
 inline
-void IR_To_Code::binary_op_helper(struct IR_Binary_Operation &bop)
+void IR_To_Code::binary_op_helper(IR_Binary_Operation &bop)
 {
     auto m = bop.get_method_to_call();
     assert(m);
@@ -689,7 +698,7 @@ void IR_To_Code::visit(IR_B_Equals &n)
     }
 }
 
-void IR_To_Code::visit(struct IR_B_Not_Equals &n)
+void IR_To_Code::visit(IR_B_Not_Equals &n)
 {
     auto _int = ir->types->get_int();
     if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
@@ -706,7 +715,7 @@ void IR_To_Code::visit(struct IR_B_Not_Equals &n)
 
 
 inline
-void IR_To_Code::unary_op_helper(struct IR_Unary_Operation &uop)
+void IR_To_Code::unary_op_helper(IR_Unary_Operation &uop)
 {
     auto m = uop.get_method_to_call();
     assert(m);
@@ -790,7 +799,7 @@ void IR_To_Code::visit(IR_Deallocate_Object &n)
 {
     NOT_IMPL;
 }
-void IR_To_Code::visit(struct IR_Allocate_Locals &n)
+void IR_To_Code::visit(IR_Allocate_Locals &n)
 {
     cg->push_back_alloc_locals(n.num_to_alloc);
 }

@@ -359,3 +359,14 @@ Oct 29, 2017:
     + Partially implemented type extensions which allow for operator overloading of the
     operators:
         +, -, *, /, !, ~, &, |, ^, [], []=, <<, >>, <, >, <=, >=, ==, !=
+    + Implemented extension methods e.g:
+    extend int {
+        fn print() -> void {
+            println(self)
+        }
+        fn rets42() -> int {
+            return 42
+        }
+    }
+    123.rets42().print() # prints 42
+
