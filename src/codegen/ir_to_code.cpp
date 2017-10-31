@@ -6,7 +6,7 @@
 
 #define NOT_IMPL {printf("IR_To_Code visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
-void IR_To_Code::visit(IR_Noop &n)
+void IR_To_Code::visit(IR_Noop &)
 {
     cg->push_back_noop();
 }
@@ -16,6 +16,11 @@ void IR_To_Code::visit(IR_Discard_Result &n)
     if (!skip_next_drop)
         cg->push_back_drop(n.num);
     skip_next_drop = false;
+}
+
+void IR_To_Code::visit(IR_Duplicate_Result &)
+{
+    cg->push_back_dup_1();
 }
 
 void IR_To_Code::visit(IR_Block &n)
@@ -76,7 +81,7 @@ void IR_To_Code::visit(IR_Symbol &n)
             cg->push_back_load_local(n.index);
             break;
         case Symbol_Scope::Field:
-            NOT_IMPL;
+            cg->push_back_load_field(n.index);
             break;
     }
 }
@@ -367,7 +372,7 @@ void IR_To_Code::visit(IR_Assignment &n)
                 cg->push_back_store_local(var->index);
                 break;
             case Symbol_Scope::Field:
-                NOT_IMPL;
+                cg->push_back_store_field(var->index);
                 break;
         }
     }
@@ -465,7 +470,7 @@ void IR_To_Code::visit(IR_Assign_Top &n)
                 cg->push_back_store_local(var->index);
                 break;
             case Symbol_Scope::Field:
-                NOT_IMPL;
+                cg->push_back_store_field(var->index);
                 break;
         }
     }
@@ -820,7 +825,44 @@ void IR_To_Code::visit(IR_U_Positive &n)
 
 void IR_To_Code::visit(IR_Allocate_Object &n)
 {
-    NOT_IMPL;
+    assert(n.for_type);
+    assert(n.for_type->init());
+    assert(n.which_ctor);
+    cg->push_back_alloc_object(n.for_type->type_token());
+    // TOS is now an uninitialized object with however many fields we need, this being first
+    // also puts it in Local_0 when it comes time to call the ctor
+    // .init leaves our object reference on the stack so no need to duplicate it.
+    auto init = n.for_type->init();
+    if (init->is_native())
+    {
+        cg->push_back_call_native(*init->native_function());
+    }
+    else
+    {
+        // @FixMe: make this backfill, this is a common occurence and can be factored.
+        auto init_code = init->code_function();
+        assert(init_code->is_resolved());
+        cg->push_back_call_code(init_code->address());
+    }
+    // however the constructor does not return the object back so we much duplicate the
+    // reference to it
+    cg->push_back_dup_1();
+    for (auto &&a : n.args)
+    { // args from left to right.
+        convert_one(*a);
+    }
+    if (n.which_ctor->is_native())
+    {
+        cg->push_back_call_native(*n.which_ctor->native_function());
+    }
+    else
+    {
+        // @FixMe: make this backfill, this is a common occurence and can be factored.
+        auto ctor_code = n.which_ctor->code_function();
+        assert(ctor_code->is_resolved());
+        cg->push_back_call_code(ctor_code->address());
+    }
+    // and now we are left with 1 object reference on the stack
 }
 
 void IR_To_Code::visit(IR_Deallocate_Object &n)

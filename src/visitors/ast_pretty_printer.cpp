@@ -269,15 +269,25 @@ void Ast_Pretty_Printer::visit(Invert_Node &n)
     assert(n.operand);
     str << "(~"; to_string(*n.operand); str << ")";
 }
-void Ast_Pretty_Printer::visit(Class_Def_Node &n)
+void Ast_Pretty_Printer::visit(Constructor_Node &n)
 {
-    assert(n.type_info);
-    str << "class " << n.type_info->name();
-    if (n.has_explicit_supertype)
+    str << "new (";
+    for (size_t i = 0; i < n.params.size(); ++i)
     {
-        str << " : " << n.type_info->get_parent()->name();
+        assert(n.params[i]);
+        to_string(*n.params[i]);
+        if (i + 1 < n.params.size())
+        {
+            str << ", ";
+        }
     }
-    str << " {\n";
+    str << ")";
+    do_body(n.body);
+}
+void Ast_Pretty_Printer::visit(Type_Def_Node &n)
+{
+    assert(n.type);
+    str << "type " << n.type->name() << " = {\n";
     indent();
     for (auto &&f : n.fields)
     {

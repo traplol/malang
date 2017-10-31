@@ -41,4 +41,5 @@ struct Fn_Node : Ast_RValue
 using Ast_Functions = std::vector<Fn_Node*>;
 using Ast_Bound_Functions = Ast_Functions;
 
+
 #endif /* MALANG_AST_AST_FN_HPP */

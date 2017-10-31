@@ -63,19 +63,20 @@ enum class Token_Id : size_t
     Op_Index_Get,       // []
     Op_Index_Set,       // []=
 
-    K_b_op,             // b_op
-    K_u_op,             // u_op
     K_for,              // for
     K_while,            // while
     K_return,           // return
     K_if,               // if
     K_else,             // else
     K_fn,               // fn
-    K_class,            // class
     K_match,            // match
     K_true,             // true
     K_false,            // false
     K_extend,           // extend
+    K_type,             // type
+    K_alias,            // alias
+    K_break,            // break
+    K_continue,         // continue
 
     NUM_TOKEN_TYPES
 };

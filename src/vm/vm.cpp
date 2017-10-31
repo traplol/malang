@@ -1072,6 +1072,15 @@ static void run_code(Malang_VM &vm)
                 ip += sizeof(idx);
                 DISPATCH_NEXT;
             }
+            DISPATCH(Alloc_Object)
+            {
+                ip++;
+                auto type_token = fetch32(ip);
+                auto obj_ref = vm.gc->allocate_object(type_token);
+                vm.push_data(obj_ref);
+                ip += sizeof(type_token);
+                DISPATCH_NEXT;
+            }
         }
     }
 }

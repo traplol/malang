@@ -49,7 +49,12 @@ Ast_To_IR::Ast_To_IR(Bound_Function_Map *bound_functions,
 void Ast_To_IR::visit(Variable_Node &n)
 {
 
-    if (cur_fn && n.name == "recurse")
+    if (auto type = ir->types->get_type(n.name))
+    {
+        auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
+        _return(alloc);
+    }
+    else if (cur_fn && n.name == "recurse")
     {
         assert(cur_fn_ep);
         auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep,
@@ -238,11 +243,6 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto old_fn = cur_fn;
     auto old_fn_ep = cur_fn_ep;
     auto old_returns = all_returns_this_fn;
-    //if (old_fn)
-    //{
-    //    n.src_loc.report("NYI", "Support for closures is not yet implemented");
-    //    abort();
-    //}
     cur_fn = &n;
 
     if (n.is_bound())
@@ -277,15 +277,26 @@ void Ast_To_IR::visit(Fn_Node &n)
     Decl_Node *self_decl = nullptr;
     if (is_extending)
     {
-        auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
-        if (!is_extending->add_method(method))
+        if (auto method_exists =
+            is_extending->get_method(n.bound_name, n.fn_type->parameter_types()))
         {
-            n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
-                             n.bound_name.c_str(),
-                             n.fn_type->name().c_str(),
-                             is_extending->name().c_str());
-            delete method;
-            abort();
+            if (method_exists->is_waiting_for_definition())
+            {
+                method_exists->set_function(fn_body);
+            }
+            else
+            {
+                n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
+                                 n.bound_name.c_str(),
+                                 n.fn_type->name().c_str(),
+                                 is_extending->name().c_str());
+                abort();
+            }
+        }
+        else
+        {
+            auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
+            is_extending->add_method(method);
         }
         self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
         assert(self_decl);
@@ -347,6 +358,9 @@ void Ast_To_IR::visit(Fn_Node &n)
             ret->should_leave = true;
         }
     }
+
+    // @FixMe: find a way for this to just return a block instead of directly inserting
+    // like this
     ir->roots.push_back(branch_over_body);
     ir->roots.push_back(fn_body);
 
@@ -598,7 +612,20 @@ void Ast_To_IR::visit(Call_Node &n)
 
     auto callee = get<IR_Value*>(*n.callee);
     assert(callee);
-    if (auto member = dynamic_cast<IR_Member_Access*>(callee))
+    if (auto alloc = dynamic_cast<IR_Allocate_Object*>(callee))
+    {   // figure out which ctor to call or error...
+        auto ctor = alloc->for_type->get_constructor(fp);
+        if (!ctor)
+        {
+            n.src_loc.report("error", "No constructor for `%s' matches arguments TODO: print arg types",
+                             alloc->for_type->name().c_str());
+            abort();
+        }
+        alloc->args = args;
+        alloc->which_ctor = ctor;
+        _return(alloc);
+    }
+    else if (auto member = dynamic_cast<IR_Member_Access*>(callee))
     {
         auto thing_ty = member->thing->get_type();
         assert(thing_ty);
@@ -733,9 +760,270 @@ void Ast_To_IR::visit(Invert_Node &n)
     _return(uop);
 }
 
-void Ast_To_IR::visit(Class_Def_Node &n)
+void Ast_To_IR::visit(Constructor_Node &n)
 {
-    NOT_IMPL;
+
+    /*
+     * FixMe: Alot of this code is shared with Fn_Node and severely needs to be factored.
+     */
+
+
+
+    // Use the stack to save state becaue functions can be nested
+    auto old_scope = cur_symbol_scope;
+    auto old_locals_count = cur_locals_count;
+
+    // we need some way to store all returns created during this function definition so we can
+    // decide whether or not we use the Return_Fast instruction
+    std::vector<IR_Return*> returns_this_fn;
+    all_returns_this_fn = &returns_this_fn;
+    const bool is_void_return = n.fn_type->return_type() == types->get_void();
+    assert(is_void_return); // constructor must be void return.
+    assert(is_extending);
+
+    locality->push();
+    auto ctor_body =
+        ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
+    assert(ctor_body);
+    auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, ctor_body->end());
+
+    cur_symbol_scope = Symbol_Scope::Local;
+    if (auto ctor_exists =
+        is_extending->get_constructor(n.fn_type->parameter_types()))
+    {
+        if (ctor_exists->is_waiting_for_definition())
+        {
+            ctor_exists->set_function(ctor_body);
+        }
+        else
+        {
+            n.src_loc.report("error", "Constructor `%s' already defined for type `%s'",
+                             n.fn_type->name().c_str(),
+                             is_extending->name().c_str());
+            abort();
+        }
+    }
+    else
+    {
+        auto ctor = new Constructor_Info(n.fn_type, ctor_body);
+        is_extending->add_constructor(ctor);
+    }
+    auto self_decl =
+        new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
+
+    auto params_copy = n.params;
+    params_copy.insert(params_copy.begin(), self_decl);
+    std::vector<IR_Symbol*> arg_symbols;
+    for (auto &&a : params_copy)
+    {   // Declare args in order from left to right
+        auto p_sym = get<IR_Symbol*>(*a);
+        assert(p_sym);
+        p_sym->is_initialized = true;
+        arg_symbols.push_back(p_sym);
+    }
+    for (auto &&it = arg_symbols.rbegin(); it != arg_symbols.rend(); ++it)
+    {   // Args are pushed on the stack from left to right so they need to be pulled out
+        // in the reverse order they were declared.
+        auto assign_arg_to_local = ir->alloc<IR_Assign_Top>((*it)->src_loc, *it, cur_symbol_scope);
+        ctor_body->body().push_back(assign_arg_to_local);
+    }
+    if (self_decl)
+    {
+        delete self_decl; // @XXX this is shite.
+    }
+    convert_body(n.body, ctor_body->body());
+    if (ctor_body->body().empty())
+    {
+        auto empty_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+        all_returns_this_fn->push_back(empty_retn);
+        ctor_body->body().push_back(empty_retn); // @FixMe: src_loc should be close curly of function def
+    }
+    else if (auto last = ctor_body->body().back())
+    {
+        if (dynamic_cast<IR_Return*>(last) == nullptr)
+        {
+            auto last_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
+            all_returns_this_fn->push_back(last_retn);
+            ctor_body->body().push_back(last_retn); // @FixMe: src_loc should be close curly of function def
+        }
+    }
+    if (cur_locals_count > 0)
+    {
+        auto num_locals_to_alloc = ir->alloc<IR_Allocate_Locals>(n.src_loc, cur_locals_count);
+        ctor_body->body().insert(ctor_body->body().begin(), num_locals_to_alloc);
+        for (auto &&ret : *all_returns_this_fn)
+        {
+            ret->should_leave = true;
+        }
+    }
+
+    std::vector<IR_Node*> ctor_block;
+    ctor_block.push_back(branch_over_body);
+    ctor_block.push_back(ctor_body);
+
+    locality->pop();
+
+    // Restore the saved state
+    cur_symbol_scope = old_scope;
+    cur_locals_count = old_locals_count;
+    auto ctor = ir->alloc<IR_Block>(n.src_loc, ctor_block, ir->types->get_void());
+    _return(ctor)
+}
+
+void Ast_To_IR::visit(Type_Def_Node &n)
+{
+    /*
+      The most complicated part of this will be generating the hidden .init method 
+      to initialize default values.
+
+      Fields:
+      - declare fields for this type so they me be referenced inside of .init and 
+      constructors
+
+      .init:
+      it takes 1 argument with the same type as it is being implemented for and does
+      return back the constructed object.
+        + convert pure field declarations into default values if they are pimitive 
+        types: int = 0, double = 0.0, bool = false
+        + otherwise alloc + default construct them
+          * it is an error to declare a non-trivial type with no default constructor
+        + convert decl_assign and decl_const to their respective code + Set_Field <n>
+      
+      Constructors:
+      - ensure each constructor's signature is unique and translate into code and 
+      link to the type
+      
+      Methds:
+      - ensure each method's signature is unique and translate into code and link 
+      to the type
+      
+      Methods:
+     */
+    
+    assert(n.type);
+    auto old_type = is_extending;
+    auto old_scope = cur_symbol_scope;
+
+    locality->push();
+    is_extending = n.type;
+
+    std::vector<IR_Node*> type_definition;
+
+    cur_symbol_scope = Symbol_Scope::Field;
+    auto init = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
+    assert(init);
+    auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, init->end());
+
+    for (auto &&field : n.fields)
+    {   // These all eventually turn into a Store_Field <n> and the object being constructed
+        // is at the top of the stack when we enter here so we might as well make the
+        // hand-written code a little more optimized
+        auto dup = ir->alloc<IR_Duplicate_Result>(n.src_loc);
+        init->body().push_back(dup);
+
+        if (auto decl_assign = dynamic_cast<Decl_Assign_Node*>(field))
+        {
+            auto assign = get<IR_Assignment*>(*decl_assign);
+            auto field_info =
+                new Field_Info{decl_assign->decl->variable_name, assign->rhs->get_type(), false};
+            if (!is_extending->add_field(field_info))
+            {
+                field->src_loc.report("error", "Field `%s' already defined for `%s'",
+                                      decl_assign->decl->variable_name.c_str(),
+                                      is_extending->name().c_str());
+                abort();
+            }
+            init->body().push_back(assign);
+        }
+        else if (auto decl_cons = dynamic_cast<Decl_Constant_Node*>(field))
+        {
+            auto assign = get<IR_Assignment*>(*decl_cons);
+            auto field_info =
+                new Field_Info{decl_cons->decl->variable_name, assign->rhs->get_type(), true};
+            if (!is_extending->add_field(field_info))
+            {
+                field->src_loc.report("error", "Field `%s' already defined for `%s'",
+                                      decl_cons->decl->variable_name.c_str(),
+                                      is_extending->name().c_str());
+                abort();
+            }
+            init->body().push_back(assign);
+        }
+        else if (auto decl = dynamic_cast<Decl_Node*>(field))
+        {
+            auto symbol = get<IR_Symbol*>(*decl);
+            auto field_info =
+                new Field_Info{symbol->symbol, symbol->get_type(), false};
+            if (!is_extending->add_field(field_info))
+            {
+                field->src_loc.report("error", "Field `%s' already defined for `%s'",
+                                      decl->variable_name.c_str(),
+                                      is_extending->name().c_str());
+                abort();
+            }
+            init->body().push_back(symbol);
+            NOT_IMPL; // @TODO: Generate defaults...?
+        }
+        else
+        {
+            field->src_loc.report("error", "not sure how a %s ended up in the fields...",
+                                 field->type_name().c_str());
+            abort();
+        }
+    }
+    // no locals so we gotta go fast!
+    auto retn_fast = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), false);
+    init->body().push_back(retn_fast);
+    auto init_fn_ty = ir->types->declare_function({is_extending}, is_extending, false);
+    auto init_ctor = new Constructor_Info{init_fn_ty, init};
+    is_extending->init(init_ctor);
+    type_definition.push_back(branch_over_body);
+    type_definition.push_back(init);
+
+    for (auto &&method : n.methods)
+    {   // Declare methods so their ordering is agnostic
+        assert(method->is_bound()); // parsing messed up if this fails...
+        auto meth_info = new Method_Info{method->bound_name, method->fn_type};
+        if (!is_extending->add_method(meth_info))
+        {
+            method->src_loc.report("error", "Method `%s' already defined for type `%s'",
+                                   method->bound_name.c_str(), is_extending->name().c_str());
+            abort();
+        }
+    }
+    for (auto &&ctor : n.constructors)
+    {   // Declare constructors so their ordering is agnostic
+        auto ctor_info = new Constructor_Info{ctor->fn_type};
+        if (!is_extending->add_constructor(ctor_info))
+        {
+            ctor->src_loc.report("error", "Constructor `%s' already defined for type `%s'",
+                                 ctor->fn_type->name().c_str(), is_extending->name().c_str());
+            abort();
+        }
+    }
+
+    for (auto &&method : n.methods)
+    {
+        auto converted_method = get(*method);
+        assert(converted_method);
+        type_definition.push_back(converted_method);
+    }
+
+
+    cur_symbol_scope = Symbol_Scope::Local;
+    
+    for (auto &&ctor : n.constructors)
+    {
+        auto converted_ctor = get(*ctor);
+        assert(converted_ctor);
+        type_definition.push_back(converted_ctor);
+    }
+
+    locality->pop();
+    is_extending = old_type;
+    cur_symbol_scope = old_scope;
+    auto ret = ir->alloc<IR_Block>(n.src_loc, type_definition, types->get_void());
+    _return(ret);
 }
 
 void Ast_To_IR::visit(struct Extend_Node&n)
@@ -747,7 +1035,8 @@ void Ast_To_IR::visit(struct Extend_Node&n)
     auto old_is_extending = is_extending;
     is_extending = n.for_type->type;
     for (auto &&fn : n.body)
-    {
+    {   // @FixMe: Need to declare these so source ordering earlier defined functions may
+        // refer to later ones.
         auto converted = get(*fn);
         assert(converted);
         block.push_back(converted);

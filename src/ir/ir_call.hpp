@@ -13,12 +13,15 @@ struct IR_Call : IR_RValue
         , callee(callee)
         , arguments(std::move(arguments))
         {}
-    virtual struct Type_Info *get_type() const override;
-    struct Function_Type_Info *get_fn_type() const;
+
+    IR_NODE_OVERRIDES;
+
     IR_Value *callee;
     std::vector<IR_Value*> arguments;
 
-    IR_NODE_OVERRIDES;
+    virtual struct Type_Info *get_type() const override;
+    struct Function_Type_Info *get_fn_type() const;
+
 };
 
 struct IR_Call_Method : IR_Call
@@ -47,8 +50,9 @@ struct IR_Allocate_Locals : IR_Node
         , num_to_alloc(num_to_alloc)
         {}
 
-    uint16_t num_to_alloc;
     IR_NODE_OVERRIDES;
+
+    uint16_t num_to_alloc;
 };
 
 struct IR_Callable : IR_RValue
@@ -68,6 +72,8 @@ struct IR_Callable : IR_RValue
             u.index = index;
         }
 
+    IR_NODE_OVERRIDES;
+
     union {
         struct IR_Label *label;
         Fixnum index;
@@ -75,9 +81,8 @@ struct IR_Callable : IR_RValue
     struct Function_Type_Info *fn_type;
     bool is_special_bound;
     virtual Type_Info *get_type() const override { return fn_type; }
-
-    IR_NODE_OVERRIDES;
 };
+
 
 struct IR_Method: IR_Callable
 {
@@ -91,8 +96,10 @@ struct IR_Method: IR_Callable
         : IR_Callable(src_loc, index, fn_type)
         , thing(thing)
         {}
-    IR_Value *thing;
+
     IR_NODE_OVERRIDES;
+
+    IR_Value *thing;
 };
 
 struct IR_Indexable : IR_LValue
@@ -105,12 +112,29 @@ struct IR_Indexable : IR_LValue
         , value_type(value_type)
         {}
 
+    IR_NODE_OVERRIDES;
+
     IR_Value *thing;
     IR_Value *index;
     Type_Info *value_type;
     virtual Type_Info *get_type() const override { return value_type; };
+};
+
+struct IR_Allocate_Object : IR_RValue
+{
+    virtual ~IR_Allocate_Object() = default;
+    IR_Allocate_Object(const Source_Location &src_loc, Type_Info *for_type)
+        : IR_RValue(src_loc)
+        , for_type(for_type)
+        {}
 
     IR_NODE_OVERRIDES;
+
+    Type_Info *for_type;
+    Constructor_Info *which_ctor;
+    std::vector<IR_Value*> args;
+
+    virtual Type_Info *get_type() const override { return for_type; };
 };
 
 #endif /* MALANG_IR_IR_CALL_HPP */

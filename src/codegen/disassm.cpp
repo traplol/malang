@@ -85,6 +85,7 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Call:
             case Instruction::Call_Native:
             case Instruction::Array_New:
+            case Instruction::Alloc_Object:
             case Instruction::Load_String_Constant:
             {
                 ss << get_n_bytes(p, 5);

@@ -10,6 +10,7 @@ struct Array_Type_Info;
 struct Type_Info;
 struct IR_Label;
 using Type_Token = Fixnum;
+using Constructors = std::vector<struct Constructor_Info*>;
 using Methods = std::vector<struct Method_Info*>;
 using Fields = std::vector<struct Field_Info*>;
 using Types = std::vector<struct Type_Info*>;
@@ -83,17 +84,56 @@ namespace std
     };
 }
 
+struct Constructor_Info
+{
+    ~Constructor_Info();
+
+    Constructor_Info(Function_Type_Info *fn_type)
+        : m_fn_type(fn_type)
+        {
+            m_fn.code_ip = nullptr;
+        }
+
+    Constructor_Info(Function_Type_Info *fn_type, Native_Function *prim)
+        : m_fn_type(fn_type)
+        {
+            set_function(prim);
+        }
+
+    Constructor_Info(Function_Type_Info *fn_type, IR_Label *code_ip)
+        : m_fn_type(fn_type)
+        {
+            set_function(code_ip);
+        }
+
+    Function_Type_Info *type() const;
+    const Function_Parameters &parameter_types() const;
+
+    bool is_waiting_for_definition() const;
+    void set_function(Native_Function *prim);
+    void set_function(IR_Label *code_ip);
+    bool is_native() const;
+    IR_Label *code_function() const;
+    Native_Function *native_function() const;
+
+private:
+    Function_Type_Info *m_fn_type;
+    bool m_is_native;
+    union {
+        Native_Function *prim;
+        IR_Label *code_ip;
+    } m_fn;
+};
 struct Method_Info
 {
     ~Method_Info();
-    /*
+
     Method_Info(const std::string &name, Function_Type_Info *fn_type)
         : m_name(name)
         , m_fn_type(fn_type)
-        , m_is_native(false)
-        {}
-    */
-
+        {
+            m_fn.code_ip = nullptr;
+        }
     Method_Info(const std::string &name, Function_Type_Info *fn_type, Native_Function *prim)
         : m_name(name)
         , m_fn_type(fn_type)
@@ -113,6 +153,7 @@ struct Method_Info
     const Function_Parameters &parameter_types() const;
     Type_Info *return_type() const;
 
+    bool is_waiting_for_definition() const;
     void set_function(Native_Function *prim);
     void set_function(IR_Label *code_ip);
     bool is_native() const;
@@ -131,7 +172,7 @@ private:
 
 struct Field_Info
 {
-    Field_Info(const std::string &name, Type_Info *type, bool is_readonly = true)
+    Field_Info(const std::string &name, Type_Info *type, bool is_readonly)
         : m_index(-1)
         , m_name(name)
         , m_type(type)
@@ -160,6 +201,7 @@ struct Type_Info
         , m_is_gc_managed(true)
         , m_type_token(type_token)
         , m_name(name)
+        , m_init(nullptr)
         {}
 
     Type_Info *get_parent() const;
@@ -173,18 +215,20 @@ struct Type_Info
     const Fields &fields() const;
     Fields all_fields() const;
 
-    bool add_constructor(Method_Info *ctor);
-    const Methods &constructors() const;
+    Constructor_Info *init();
+    void init(Constructor_Info *init);
+    bool add_constructor(Constructor_Info *ctor);
+    const Constructors &constructors() const;
 
     bool add_method(Method_Info *method);
     const Methods &methods() const;
     Methods all_methods() const;
 
-    bool is_gc_managed() const { return m_is_gc_managed; }
+    bool is_gc_managed() const;
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
 
-    Method_Info *get_constructor(const Function_Parameters &param_types) const;
+    Constructor_Info *get_constructor(const Function_Parameters &param_types) const;
     Method_Info *get_method(const std::string &name, const Function_Parameters &param_types) const;
     Methods get_methods(const std::string &name) const;
     Field_Info *get_field(const std::string &name) const;
@@ -202,9 +246,10 @@ private:
     bool m_is_gc_managed;
     Type_Token m_type_token;
     std::string m_name;
+    Constructor_Info *m_init;
+    Constructors m_constructors;
     Fields m_fields;
     Methods m_methods;
-    Methods m_constructors;
     Types m_subtypes;
 };
 

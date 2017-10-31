@@ -193,25 +193,6 @@ void parse_tests()
          "x : fn () -> int : fn () -> int {\n"
          "}"},
 
-        {"class MyClass {}",
-         "class MyClass {\n"
-         "}"},
-
-        {"class Vec3 {\n"
-         "    x : double\n"
-         "    y : double\n"
-         "    z : double\n"
-         "}",
-         "class Vec3 {\n"
-         "    x : double\n"
-         "    y : double\n"
-         "    z : double\n"
-         "}"},
-
-        {"class MyDouble : double {}",
-         "class MyDouble : double {\n"
-         "}"},
-
         {"a[0] = 5", "a[0] = 5"},
 
         {"x:=-1", "x : int = (-1)"},
@@ -348,16 +329,52 @@ void parse_tests()
         {"x &= 1", "x = (x & 1)"},
         {"x |= 1", "x = (x | 1)"},
         {"x ^= 1", "x = (x ^ 1)"},
+
+        {"x += n * y", "x = (x + (n * y))"},
+
+        {"type alias Greeting = string", "type alias Greeting = string"},
+
+        {"type Greeter = { }",
+         "type Greeter = {\n"
+         "}"},
+        {"type Math = {\n"
+         "    PI :: 3.14159\n"
+         "}",
+         "type Math = {\n"
+         "    PI : double : 3.14159\n"
+         "}"},
+
+        {"type Vec3 = {\n"
+         "    x := 0.0\n"
+         "    y := 0.0\n"
+         "    z := 0.0\n"
+         "    new (x: double, y: double, z: double) {\n"
+         "        self.x = x\n"
+         "        self.y = y\n"
+         "        self.z = z\n"
+         "    }\n"
+         "}",
+         "type Vec3 = {\n"
+         "    x : double = 0\n"
+         "    y : double = 0\n"
+         "    z : double = 0\n"
+         "    new (x : double, y : double, z : double) {\n"
+         "        self.x = x\n"
+         "        self.y = y\n"
+         "        self.z = z\n"
+         "    }\n"
+         "}"},
          
     };
-    size_t total_run = 0;
+    int total_run = 0;
+    int errors = 0;
     for (auto &&it : tests)
     {
         auto actual = get_parse_test_output(it);
         if (actual.size() != it.expected.size())
         {
             //printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
-            //printf("x");
+            printf("x");
         }
         auto n = std::min(actual.size(), it.expected.size());
         for (size_t i = 0; i < n; ++i, ++total_run)
@@ -368,6 +385,7 @@ void parse_tests()
             }
             else
             {
+                errors++;
                 printf("\nexpected: %s\nactual:   %s\n",
                        it.expected[i].c_str(), actual[i].c_str());
             }
@@ -377,7 +395,7 @@ void parse_tests()
             }
         }
     }
-    printf(" %d\n", (int)total_run);
+    printf(" %d/%d\n", total_run-errors, total_run);
 }
 
 void parse_one()

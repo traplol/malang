@@ -103,6 +103,7 @@ struct Codegen
     void set_raw_32(size_t index, int32_t value);
 
     void push_back_alloc_locals(uint16_t num_to_alloc);
+    void push_back_alloc_object(Type_Token type);
 
     void push_back_array_new(Type_Token type, int32_t length);
     void push_back_array_new(Type_Token type);

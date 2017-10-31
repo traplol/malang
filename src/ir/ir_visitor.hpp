@@ -8,6 +8,7 @@ struct IR_Visitor
     virtual void visit(struct IR_Assign_Top&) = 0;
     virtual void visit(struct IR_Noop&) = 0;
     virtual void visit(struct IR_Discard_Result&) = 0;
+    virtual void visit(struct IR_Duplicate_Result&) = 0;
     virtual void visit(struct IR_Block&) = 0;
 
     virtual void visit(struct IR_Boolean&) = 0;

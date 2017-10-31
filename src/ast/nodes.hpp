@@ -11,7 +11,7 @@
 #include "ast_variable.hpp"
 #include "ast_list.hpp"
 #include "ast_fn.hpp"
-#include "ast_class_def.hpp"
+#include "ast_type_def.hpp"
 #include "ast_type.hpp"
 #include "ast_return.hpp"
 #include "ast_loop.hpp"

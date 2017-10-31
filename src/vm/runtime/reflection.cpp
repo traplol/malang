@@ -1,6 +1,60 @@
 #include <cassert>
 #include "reflection.hpp"
 
+Constructor_Info::~Constructor_Info()
+{
+    if (m_is_native)
+    {
+        delete m_fn.prim;
+        m_fn.prim = nullptr;
+    }
+}
+
+Function_Type_Info *Constructor_Info::type() const
+{
+    return m_fn_type;
+}
+
+const Function_Parameters &Constructor_Info::parameter_types() const
+{
+    assert(m_fn_type);
+    return m_fn_type->parameter_types();
+}
+
+void Constructor_Info::set_function(Native_Function *native)
+{
+    m_is_native = true;
+    m_fn.prim = native;
+}
+
+void Constructor_Info::set_function(IR_Label *code_ip)
+{
+    m_is_native = false;
+    m_fn.code_ip = code_ip;
+}
+
+bool Constructor_Info::is_native() const
+{
+    return m_is_native;
+}
+
+bool Constructor_Info::is_waiting_for_definition() const
+{
+    return m_fn.code_ip == nullptr;
+}
+
+IR_Label *Constructor_Info::code_function() const
+{
+    assert(!is_native());
+    return m_fn.code_ip;
+}
+
+Native_Function *Constructor_Info::native_function() const
+{
+    assert(is_native());
+    return m_fn.prim;
+}
+
 Method_Info::~Method_Info()
 {
     if (m_is_native)
@@ -47,6 +101,11 @@ void Method_Info::set_function(IR_Label *code_ip)
 bool Method_Info::is_native() const
 {
     return m_is_native;
+}
+
+bool Method_Info::is_waiting_for_definition() const
+{
+    return m_fn.code_ip == nullptr;
 }
 
 IR_Label *Method_Info::code_function() const
@@ -144,28 +203,27 @@ const Fields &Type_Info::fields() const
     return m_fields;
 }
 
-static
-Method_Info *find_method_impl(const Methods &methods, const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index)
+Constructor_Info *Type_Info::init()
 {
-    for (auto &&m : methods)
+    return m_init;
+}
+void Type_Info::init(Constructor_Info *init)
+{
+    assert(m_init == nullptr);
+    m_init = init;
+}
+
+Constructor_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
+{
+    for (auto &&c : m_constructors)
     {
-        if (m->name() == name)
-        {
-            if (m->parameter_types() == param_types)
-                return m;
-        }
-        ++index;
+        if (c->parameter_types() == param_types)
+            return c;
     }
     return nullptr;
 }
 
-Method_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
-{
-    Num_Fields_Limit _ = 0;
-    return find_method_impl(m_constructors, ".ctor", param_types, _);
-}
-
-bool Type_Info::add_constructor(Method_Info *ctor)
+bool Type_Info::add_constructor(Constructor_Info *ctor)
 {
     assert(ctor);
     if (get_constructor(ctor->parameter_types()))
@@ -184,7 +242,16 @@ Method_Info *Type_Info::find_method(const std::string &name, const Function_Para
         if (auto meth = m_parent->find_method(name, param_types, index))
             return meth;
     }
-    return find_method_impl(m_methods, name, param_types, index);
+    for (auto &&m : m_methods)
+    {
+        if (m->name() == name)
+        {
+            if (m->parameter_types() == param_types)
+                return m;
+        }
+        ++index;
+    }
+    return nullptr;
 }
 
 bool Type_Info::has_method(Method_Info *method) const
@@ -269,6 +336,10 @@ Fields Type_Info::all_fields() const
     return all_fields;
 }
 
+bool Type_Info::is_gc_managed() const
+{
+    return m_is_gc_managed;
+}
 bool Type_Info::is_assignable_to(Type_Info *other) const
 {
     if (this == other)

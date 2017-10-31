@@ -143,8 +143,9 @@ static uptr<Type_Node> parse_type(Parser &parser);
 static uptr<Ast_Node> parse_statement(Parser &parser);
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body);
 static uptr<Fn_Node> parse_fn(Parser &parser);
-static uptr<Class_Def_Node> parse_class(Parser &parser);
+static uptr<Constructor_Node> parse_ctor(Parser &parser);
 static uptr<Extend_Node> parse_extend(Parser &parser);
+static uptr<Type_Def_Node> parse_type_definition(Parser &parser);
 
 #define SAVE                                        \
     auto _save_idx = parser.lex_idx;                \
@@ -1106,50 +1107,74 @@ static uptr<Fn_Node> parse_fn(Parser &parser)
     CHECK_OR_FAIL(parse_fn_shared(parser, params, &ret_ty, body, &fn_ty));
     return uptr<Fn_Node>(new Fn_Node(tk_fn.src_loc(), params, ret_ty, body, fn_ty));
 }
-static uptr<Class_Def_Node> parse_class(Parser &parser)
+static uptr<Constructor_Node> parse_ctor(Parser &parser)
+{   // ctor :=
+    //     new ( ) { body }
+    //     new ( decl_list ) { body }
+    SAVE;
+    Token tk_new;
+    ACCEPT_OR_FAIL(tk_new, {Token_Id::Identifier});
+    CHECK_OR_FAIL(tk_new.to_string() == "new"); // contextual keyword.
+    std::vector<Decl_Node*> params;
+    std::vector<Ast_Node*> body;
+    Type_Node *ret_ty;
+    Function_Type_Info *fn_ty;
+    CHECK_OR_FAIL(parse_fn_shared(parser, params, &ret_ty, body, &fn_ty));
+    if (ret_ty->type != parser.types->get_void())
+    {
+        parser.report_error(tk_new, "Constructors cannot have a return type.");
+        delete ret_ty;
+        PARSE_FAIL;
+    }
+    delete ret_ty; // Return type is unused but the shared code still parses for it
+    return uptr<Constructor_Node>(
+        new Constructor_Node(tk_new.src_loc(), params, body, fn_ty));
+}
+static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
 {
     SAVE;
-    Token class_tk;
-    ACCEPT_OR_FAIL(class_tk, {Token_Id::K_class});
-    Token class_name_tk;
-    CHECK_OR_FAIL(parser.expect(class_name_tk, Token_Id::Identifier));
-    auto class_type = parser.types->declare_type(class_name_tk.to_string(), nullptr);
-    bool has_explicit_supertype = false;
-    if (parser.accept({Token_Id::Colon}))
-    {
-        Token super_class_name_tk;
-        CHECK_OR_FAIL(parser.expect(super_class_name_tk, Token_Id::Identifier));
-        auto super_type = parser.types->get_or_declare_type(super_class_name_tk.to_string());
-        class_type->set_parent(super_type);
-        has_explicit_supertype = true;
-    }
+    Token type_tk;
+    ACCEPT_OR_FAIL(type_tk, {Token_Id::K_type});
+    Token type_name_tk;
+    CHECK_OR_FAIL(parser.expect(type_name_tk, Token_Id::Identifier));
+    auto type = parser.types->declare_type(type_name_tk.to_string(), nullptr);
+    CHECK_OR_FAIL(parser.expect(Token_Id::Equals));
     CHECK_OR_FAIL(parser.expect(Token_Id::Open_Curly));
-    auto class_def = uptr<Class_Def_Node>(new Class_Def_Node(class_tk.src_loc(), class_type, has_explicit_supertype));
+    auto type_def = uptr<Type_Def_Node>(new Type_Def_Node(type_tk.src_loc(), type));
     while (true)
     {
+        if (auto ctor = parse_ctor(parser))
+        {
+            type_def->constructors.push_back(ctor.release());
+            continue;
+        }
         // @FixMe: ensure field names are unique
+        if (auto field = parse_decl_assign(parser))
+        {
+            type_def->fields.push_back(field.release());
+            continue;
+        }
+        if (auto field = parse_decl_constant(parser))
+        {
+            type_def->fields.push_back(field.release());
+            continue;
+        }
         if (auto field = parse_declaration(parser))
         {
-            class_def->fields.push_back(field.release());
+            type_def->fields.push_back(field.release());
             continue;
         }
-        // @FixMe: ensure method signatures are unique
-        if (auto method = parse_fn(parser))
+        if (auto method = parse_bound_fn(parser))
         {
-            class_def->methods.push_back(method.release());
+            type_def->methods.push_back(method.release());
             continue;
         }
-        // @FixMe: ensure ctor signatures are unique
-        //if (auto ctor = parse_ctor(parser, class_type->name()))
-        //{
-        //    class_def->constructors.push_back(ctor);
-        //}
 
         // didn't parse anything, so we're done
         break;
     }
     CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
-    return class_def;
+    return type_def;
 }
 static uptr<Extend_Node> parse_extend(Parser &parser)
 {
@@ -1243,21 +1268,21 @@ static Ast_Node *parse_top_level(Parser &parser)
     //     <nothing>
     //     statement top-level
     SAVE;
-    if (auto top = parse_class(parser))
+    if (auto type_def = parse_type_definition(parser))
     {
-        return top.release();
+        return type_def.release();
     }
-    if (auto top = parse_extend(parser))
+    if (auto extend = parse_extend(parser))
     {
-        return top.release();
+        return extend.release();
     }
-    if (auto top = parse_bound_fn(parser))
+    if (auto bound_fn = parse_bound_fn(parser))
     {
-        return top.release();
+        return bound_fn.release();
     }
-    if (auto top = parse_statement(parser))
+    if (auto stmt = parse_statement(parser))
     {
-        return top.release();
+        return stmt.release();
     }
     PARSE_FAIL;
 }

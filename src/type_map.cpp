@@ -156,7 +156,7 @@ Array_Type_Info *Type_Map::get_array_type(Type_Info *of_type)
     }
     auto type_token = static_cast<Type_Token>(m_types_fast.size());
     auto arr_type = new Array_Type_Info{type_token, array_type_name, of_type};
-    auto length_field = new Field_Info{"length", m_int};
+    auto length_field = new Field_Info{"length", m_int, true};
     arr_type->add_field(length_field);
     m_types[arr_type->name()] = arr_type;
     m_types_fast.push_back(arr_type);

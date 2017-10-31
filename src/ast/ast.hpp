@@ -38,7 +38,7 @@ struct Ast
 {
     ~Ast();
     std::vector<Ast_Node*> roots;
-    //std::vector<struct Class_Def_Node*> class_definitions;
+    //std::vector<struct Type_Def_Node*> type_definitions;
 };
 
 

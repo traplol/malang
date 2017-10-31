@@ -94,20 +94,20 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Minus_At);
         SET_TK_TYPE_MAP(Op_Index_Get);
         SET_TK_TYPE_MAP(Op_Index_Set);
-        SET_TK_TYPE_MAP(K_b_op);
-        SET_TK_TYPE_MAP(K_u_op);
-        //SET_TK_TYPE_MAP(K_proc);
         SET_TK_TYPE_MAP(K_for);
         SET_TK_TYPE_MAP(K_while);
         SET_TK_TYPE_MAP(K_return);
         SET_TK_TYPE_MAP(K_if);
         SET_TK_TYPE_MAP(K_else);
         SET_TK_TYPE_MAP(K_fn);
-        SET_TK_TYPE_MAP(K_class);
         SET_TK_TYPE_MAP(K_match);
         SET_TK_TYPE_MAP(K_true);
         SET_TK_TYPE_MAP(K_false);
         SET_TK_TYPE_MAP(K_extend);
+        SET_TK_TYPE_MAP(K_type);
+        SET_TK_TYPE_MAP(K_alias);
+        SET_TK_TYPE_MAP(K_break);
+        SET_TK_TYPE_MAP(K_continue);
 #undef SET_TK_TYPE_MAP
         // this is a runtime check that will warn if we forgot any
         for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
@@ -260,22 +260,24 @@ bool Lexer::lex(Source_Code *src)
             src->advance(sizeof(str) - 1); \
             continue; \
         }
-        PUSH_KEY_IDENT("b_op", K_b_op);
-        PUSH_KEY_IDENT("u_op", K_u_op);
-        //PUSH_KEY_IDENT("proc", K_proc);
+        
+        PUSH_KEY_IDENT("alias", K_alias);
+        PUSH_KEY_IDENT("and", Log_And);
+        PUSH_KEY_IDENT("break", K_break);
+        PUSH_KEY_IDENT("continue", K_continue);
+        PUSH_KEY_IDENT("extend", K_extend);
+        PUSH_KEY_IDENT("else", K_else);
+        PUSH_KEY_IDENT("false", K_false);
         PUSH_KEY_IDENT("for", K_for);
-        PUSH_KEY_IDENT("while", K_while);
-        PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
-        PUSH_KEY_IDENT("and", Log_And);
-        PUSH_KEY_IDENT("or", Log_Or);
-        PUSH_KEY_IDENT("else", K_else);
-        PUSH_KEY_IDENT("class", K_class);
         PUSH_KEY_IDENT("match", K_match);
+        PUSH_KEY_IDENT("or", Log_Or);
+        PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("true", K_true);
-        PUSH_KEY_IDENT("false", K_false);
-        PUSH_KEY_IDENT("extend", K_extend);
+        PUSH_KEY_IDENT("type", K_type);
+        PUSH_KEY_IDENT("while", K_while);
+
         if (is_ident_start_char(src->peek()))
         {
             std::stringstream ident;

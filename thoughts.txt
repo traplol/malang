@@ -152,6 +152,27 @@ Type syntax:
     type Name = string
 
     type Greeter = {
+        # .init is implicitly defined and handles setting default values and such
+        .init (self: Greeter) {
+            name = ""
+            greeting = ""
+            has_greeted = false
+            greet = ...
+            PI = 3.14159
+            say_pi = ...
+        }
+        # new (...) is a user defined constructor and will be called after .init
+        # if it exists and one matches the arguments being passed. It is not a
+        # proper method attached to the Greeter type nor an instance of Greeter
+        # and the only way to invoke it would be by calling the type like: Greeter()
+        new (self: Greeter, name: Name, greeting: Greeting) {
+            self.name = name
+            self.greeting = greeting
+        }
+        new (self: Greeter) {
+            self.name = "bob"
+            self.greeing = "hihihi"
+        }
         name : Name,
         greeting : Greeting,
         has_greeted := false,
@@ -165,7 +186,8 @@ Type syntax:
         }
     }
 
-    greeter := Greeter{"Bob", "Salutations!"}
+    g1      := Greeter()
+    greeter := Greeter("Bob, "Salutations")
     greeter.greet("Max")
     greeter.say_pi()
 

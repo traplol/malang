@@ -10,6 +10,7 @@ struct IR_To_Code : IR_Visitor
 {
     virtual void visit(struct IR_Noop &n) override;
     virtual void visit(struct IR_Discard_Result&) override;
+    virtual void visit(struct IR_Duplicate_Result&) override;
     virtual void visit(struct IR_Assign_Top &n) override;
     virtual void visit(struct IR_Block &n) override;
 

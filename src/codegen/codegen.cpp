@@ -589,6 +589,12 @@ void Codegen::push_back_alloc_locals(uint16_t num_to_alloc)
     push_back_raw_16(num_to_alloc);
 }
 
+void Codegen::push_back_alloc_object(Type_Token type)
+{
+    push_back_instruction(Instruction::Alloc_Object);
+    push_back_raw_32(type);
+}
+
 void Codegen::push_back_array_new(Type_Token type, int32_t length)
 {
     push_back_literal_32(length);
