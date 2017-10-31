@@ -45,7 +45,7 @@ static void println_bool(Malang_VM &vm)
 static void println_string(Malang_VM &vm)
 {
     static bool once = true;
-    static size_t length_idx = 0, intern_data_idx = 0;
+    static uint16_t length_idx = 0, intern_data_idx = 0;
     if (once)
     {
         auto str_ty = vm.gc->types()->get_string();

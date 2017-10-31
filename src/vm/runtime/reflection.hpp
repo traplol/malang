@@ -13,6 +13,7 @@ using Type_Token = Fixnum;
 using Methods = std::vector<struct Method_Info*>;
 using Fields = std::vector<struct Field_Info*>;
 using Types = std::vector<struct Type_Info*>;
+using Num_Fields_Limit = uint16_t;
 
 struct Function_Parameters
 {
@@ -130,17 +131,24 @@ private:
 
 struct Field_Info
 {
-    Field_Info(const std::string &name, Type_Info *type)
-        : m_name(name)
+    Field_Info(const std::string &name, Type_Info *type, bool is_readonly = true)
+        : m_index(-1)
+        , m_name(name)
         , m_type(type)
+        , m_is_readonly(is_readonly)
         {}
 
     Type_Info *type() const;
     const std::string &name() const;
-
+    bool is_readonly() const;
+    Num_Fields_Limit index() const;
+    
 private:
+    friend struct Type_Info;
+    Num_Fields_Limit m_index;
     std::string m_name;
     Type_Info *m_type;
+    bool m_is_readonly;
 };
 
 
@@ -180,7 +188,7 @@ struct Type_Info
     Method_Info *get_method(const std::string &name, const Function_Parameters &param_types) const;
     Methods get_methods(const std::string &name) const;
     Field_Info *get_field(const std::string &name) const;
-    bool get_field_index(const std::string &name, size_t &index) const;
+    bool get_field_index(const std::string &name, Num_Fields_Limit &index) const;
 
 private:
     friend struct Type_Map;
@@ -188,8 +196,8 @@ private:
     void fill_fields(Fields &v) const;
     bool has_method(Method_Info *method) const;
     bool has_field(const std::string &name) const;
-    Method_Info *find_method(const std::string &name, const Function_Parameters &param_types, size_t &index) const;
-    Field_Info *find_field(const std::string &name, size_t &index) const;
+    Method_Info *find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const;
+    Field_Info *find_field(const std::string &name, Num_Fields_Limit &index) const;
     Type_Info *m_parent;
     bool m_is_gc_managed;
     Type_Token m_type_token;

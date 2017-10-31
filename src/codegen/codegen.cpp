@@ -356,6 +356,18 @@ void Codegen::push_back_return(bool fast)
     }
 }
 
+void Codegen::push_back_store_field(uint16_t n)
+{
+    push_back_instruction(Instruction::Store_Field);
+    push_back_raw_16(n);
+}
+
+void Codegen::push_back_load_field(uint16_t n)
+{
+    push_back_instruction(Instruction::Load_Field);
+    push_back_raw_16(n);
+}
+
 void Codegen::push_back_store_local(uint16_t n)
 {
     switch (n)

@@ -71,6 +71,16 @@ const std::string &Field_Info::name() const
     return m_name;
 }
 
+bool Field_Info::is_readonly() const
+{
+    return m_is_readonly;
+}
+
+Num_Fields_Limit Field_Info::index() const
+{
+    return m_index;
+}
+
 Type_Info::~Type_Info()
 {
     for (auto &&f : m_fields)
@@ -109,6 +119,7 @@ const std::string &Type_Info::name() const
 
 bool Type_Info::add_field(Field_Info *field)
 {
+    // @FixMe: Look at parent types, still unsure about supporting polymorphism?
     assert(field);
 
     for (auto &&f : m_fields)
@@ -118,6 +129,12 @@ bool Type_Info::add_field(Field_Info *field)
             return false;
         }
     }
+    if (static_cast<Num_Fields_Limit>(m_fields.size()) != m_fields.size())
+    {
+        printf("Too many fields in type `%s'", name().c_str());
+        abort();
+    }
+    field->m_index = m_fields.size();
     m_fields.push_back(field);
     return true;
 }
@@ -128,7 +145,7 @@ const Fields &Type_Info::fields() const
 }
 
 static
-Method_Info *find_method_impl(const Methods &methods, const std::string &name, const Function_Parameters &param_types, size_t &index)
+Method_Info *find_method_impl(const Methods &methods, const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index)
 {
     for (auto &&m : methods)
     {
@@ -144,7 +161,7 @@ Method_Info *find_method_impl(const Methods &methods, const std::string &name, c
 
 Method_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
 {
-    size_t _ = 0;
+    Num_Fields_Limit _ = 0;
     return find_method_impl(m_constructors, ".ctor", param_types, _);
 }
 
@@ -159,7 +176,7 @@ bool Type_Info::add_constructor(Method_Info *ctor)
     return true;
 }
 
-Method_Info *Type_Info::find_method(const std::string &name, const Function_Parameters &param_types, size_t &index) const
+Method_Info *Type_Info::find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
     if (m_parent)
@@ -173,11 +190,11 @@ Method_Info *Type_Info::find_method(const std::string &name, const Function_Para
 bool Type_Info::has_method(Method_Info *method) const
 {
     assert(method);
-    size_t _;
+    Num_Fields_Limit _;
     return find_method(method->name(), method->parameter_types(), _);
 }
 
-Field_Info *Type_Info::find_field(const std::string &name, size_t &index) const
+Field_Info *Type_Info::find_field(const std::string &name, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
     if (m_parent)
@@ -198,7 +215,7 @@ Field_Info *Type_Info::find_field(const std::string &name, size_t &index) const
 
 bool Type_Info::has_field(const std::string &name) const
 {
-    size_t _;
+    Num_Fields_Limit _;
     return find_field(name, _);
 }
 
@@ -268,7 +285,7 @@ bool Type_Info::is_assignable_to(Type_Info *other) const
 
 Method_Info *Type_Info::get_method(const std::string &name, const Function_Parameters &param_types) const
 {
-    size_t _;
+    Num_Fields_Limit _;
     return find_method(name, param_types, _);
 }
 
@@ -287,13 +304,13 @@ Methods Type_Info::get_methods(const std::string &name) const
 
 Field_Info *Type_Info::get_field(const std::string &name) const
 {
-    size_t _;
+    Num_Fields_Limit _;
     return find_field(name, _);
 }
 
-bool Type_Info::get_field_index(const std::string &name, size_t &index) const
+bool Type_Info::get_field_index(const std::string &name, Num_Fields_Limit &index) const
 {
-    size_t i = 0;
+    Num_Fields_Limit i = 0;
     if (find_field(name, i))
     {
         index = i;

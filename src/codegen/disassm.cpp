@@ -69,6 +69,8 @@ std::string Disassembler::dis(std::vector<byte> code)
             case Instruction::Load_Local:
             case Instruction::Store_Local:
             case Instruction::Alloc_Locals:
+            case Instruction::Load_Field:
+            case Instruction::Store_Field:
             case Instruction::Drop_N:
             {
                 ss << get_n_bytes(p, 3);

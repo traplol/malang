@@ -134,6 +134,11 @@ void Ast_To_IR::visit(Assign_Node &n)
         auto assign = ir->alloc<IR_Assignment>(n.src_loc, idx, value, Symbol_Scope::None);
         _return(assign);
     }
+    else if (auto mem = dynamic_cast<IR_Member_Access*>(lval))
+    {
+        auto assign = ir->alloc<IR_Assignment>(n.src_loc, mem, value, Symbol_Scope::Field);
+        _return(assign);
+    }
     else
     {
         NOT_IMPL;

@@ -71,8 +71,10 @@ struct Codegen
     void push_back_call_code_dyn();
     void push_back_return(bool fast);
 
+    void push_back_store_field(uint16_t n);
     void push_back_store_local(uint16_t n);
     void push_back_store_global(uint32_t n);
+    void push_back_load_field(uint16_t n);
     void push_back_load_local(uint16_t n);
     void push_back_load_global(uint32_t n);
 

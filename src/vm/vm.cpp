@@ -29,7 +29,7 @@ Malang_VM::Malang_VM(Type_Map *types,
 
     // @FixMe: this should just be a simple call to the native string constructor
     auto str_ty = types->get_string();
-    size_t length_idx, intern_data_idx;
+    uint16_t length_idx, intern_data_idx;
     if (!str_ty->get_field_index("length", length_idx))
     {
         printf("no length field in strings ???\n");
@@ -605,10 +605,22 @@ static void run_code(Malang_VM &vm)
             }
             DISPATCH(Load_Field)
             {
-                NOT_IMPL;
+                ip++;
+                auto idx = fetch16(ip);
+                auto obj = reinterpret_cast<Malang_Object_Body*>(vm.pop_data().as_object());
+                vm.push_data(obj->fields[idx]);
+                ip += sizeof(idx);
+                DISPATCH_NEXT;
             }
             DISPATCH(Store_Field)
             {
+                ip++;
+                auto value = vm.pop_data();
+                auto idx = fetch16(ip);
+                auto obj = reinterpret_cast<Malang_Object_Body*>(vm.pop_data().as_object());
+                obj->fields[idx] = value;
+                ip += sizeof(idx);
+                DISPATCH_NEXT;
                 NOT_IMPL;
             }
             DISPATCH(Load_Local)

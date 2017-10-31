@@ -167,7 +167,14 @@ void IR_To_Code::visit(IR_Member_Access &n)
             return;
         }
     }
-    NOT_IMPL;
+    uint16_t field_idx;
+    if (!thing_ty->get_field_index(n.member_name, field_idx))
+    {
+        n.src_loc.report("error", "type `%s' does not have a field named `%s'",
+                         thing_ty->name().c_str(), n.member_name.c_str());
+        abort();
+    }
+    cg->push_back_load_field(field_idx);
 }
 
 void IR_To_Code::visit(IR_Call &n)
@@ -406,6 +413,27 @@ void IR_To_Code::visit(IR_Assignment &n)
                 abort();
             }
         }
+    }
+    else if (auto mem = dynamic_cast<IR_Member_Access*>(lval))
+    {
+        auto thing_ty = mem->thing->get_type();
+        assert(thing_ty);
+        auto field = thing_ty->get_field(mem->member_name);
+        if (!field)
+        {
+            n.lhs->src_loc.report("error", "`%s' does not have a field named `%s'",
+                                  thing_ty->name().c_str(), mem->member_name.c_str());
+            abort();
+        }
+        if (field->is_readonly())
+        {
+            n.lhs->src_loc.report("error", "`%s.%s' is marked as readonly",
+                                  thing_ty->name().c_str(), mem->member_name.c_str());
+            abort();
+        }
+        convert_one(*mem->thing);
+        convert_one(*n.rhs);
+        cg->push_back_store_field(field->index());
     }
     else
     {
