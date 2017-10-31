@@ -10,7 +10,7 @@
 static void println_int(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
-    printf("%x\n", top);
+    printf("%d\n", top);
 }
 
 static void println_object(Malang_VM &vm)

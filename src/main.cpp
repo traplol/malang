@@ -472,7 +472,7 @@ void parse_to_code(const std::string &filename, const std::string &code)
         vm.load_code(cg->code);
         vm.run();
         printf("code ran successfully.\n");
-        //vm.stack_trace();
+        vm.stack_trace();
         delete ir;
         delete cg;
     }

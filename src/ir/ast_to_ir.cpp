@@ -48,7 +48,15 @@ Ast_To_IR::Ast_To_IR(Bound_Function_Map *bound_functions,
 
 void Ast_To_IR::visit(Variable_Node &n)
 {
-    if (bound_functions->any(n.name))
+
+    if (cur_fn && n.name == "recurse")
+    {
+        assert(cur_fn_ep);
+        auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep,
+                                                cur_fn->fn_type);
+        _return(callable);
+    }
+    else if (bound_functions->any(n.name))
     {
         if (!cur_call_arg_types)
         {
@@ -228,6 +236,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto old_scope = cur_symbol_scope;
     auto old_locals_count = cur_locals_count;
     auto old_fn = cur_fn;
+    auto old_fn_ep = cur_fn_ep;
     auto old_returns = all_returns_this_fn;
     //if (old_fn)
     //{
@@ -257,6 +266,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     locality->push(old_fn == nullptr);
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
+    cur_fn_ep = fn_body;
     // Since code can be free (outside of a function), we opt to define a function wherever we
     // are. We don't want that code to accidently start executing so we just create a branch
     // that jumps over the body of the function.
@@ -356,6 +366,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     cur_symbol_scope = old_scope;
     cur_locals_count = old_locals_count;
     cur_fn = old_fn;
+    cur_fn_ep = old_fn_ep;
     all_returns_this_fn = old_returns;
     auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type, n.is_bound());
     _return(callable)
@@ -584,7 +595,6 @@ void Ast_To_IR::visit(Call_Node &n)
     auto old_cur_call_arg_types = cur_call_arg_types;
     Function_Parameters fp(args_types);
     cur_call_arg_types = &fp;
-
 
     auto callee = get<IR_Value*>(*n.callee);
     assert(callee);
@@ -987,6 +997,7 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
     cur_fn = nullptr;
+    cur_fn_ep = nullptr;
     is_extending = nullptr;
     cur_true_label = cur_false_label = nullptr;
     ir = new Malang_IR{types};

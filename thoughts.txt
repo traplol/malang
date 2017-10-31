@@ -376,3 +376,5 @@ Oct 30, 2017:
     + Implemented Load/Store_Fields in the codgen
     + Implemented Load/Store_Fields in the VM
     + Implemented println(string)
+    + Implemented readonly/constness for variables
+    + Implemented readonly/constness for `self' instance

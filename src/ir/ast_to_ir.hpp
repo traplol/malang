@@ -78,6 +78,7 @@ private:
     Type_Map *types;
     Type_Info *is_extending;
     struct Fn_Node *cur_fn;
+    IR_Label *cur_fn_ep;
     IR_Label *cur_true_label, *cur_false_label;
     Function_Parameters *cur_call_arg_types;
     Malang_IR *ir;
