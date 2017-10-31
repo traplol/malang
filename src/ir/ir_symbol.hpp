@@ -17,12 +17,14 @@ struct IR_Symbol : IR_LValue
         , type(type)
         , scope(scope)
         , is_initialized(is_initialized)
+        , is_readonly(true)
         {}
     std::string symbol;
     size_t index;
     struct Type_Info *type;
     Symbol_Scope scope;
     bool is_initialized;
+    bool is_readonly;
     virtual struct Type_Info *get_type() const override { return type; }
 
     IR_NODE_OVERRIDES;

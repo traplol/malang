@@ -229,4 +229,6 @@ ITEM(Buffer_Length)               // buf             -> length
 
 ITEM(Load_String_Constant)        //                 -> buffer
 
+//ITEM(Create_Object)
+
 #undef ITEM

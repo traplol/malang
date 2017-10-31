@@ -126,6 +126,12 @@ void Ast_To_IR::visit(Assign_Node &n)
     assert(lval);
     if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {
+        if (sym->is_initialized && sym->is_readonly)
+        {
+            n.src_loc.report("error", "`%s' is an initialized constant which cannot be reassigned",
+                             sym->symbol.c_str());
+            abort();
+        }
         auto assign = ir->alloc<IR_Assignment>(n.src_loc, sym, value, sym->scope);
         _return(assign);
     }
@@ -155,6 +161,8 @@ void Ast_To_IR::visit(Decl_Node &n)
         abort();
     }
     auto symbol = locality->current().symbols().make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
+    assert(symbol);
+    symbol->is_readonly = false;
     if (cur_symbol_scope == Symbol_Scope::Local)
     {
         ++cur_locals_count;
@@ -178,6 +186,7 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     }
     auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
+    variable->is_readonly = false;
     variable->is_initialized = true;
     auto assign = ir->alloc<IR_Assignment>(n.src_loc, variable, value, variable->scope);
     _return(assign);
@@ -185,10 +194,10 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
 
 void Ast_To_IR::visit(Decl_Constant_Node &n)
 {
-    // @TODO: Decl_Constant_Node needs to generate an IR_Set_Constant
     auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
     variable->is_initialized = true;
+    variable->is_readonly = true;
     auto value = get<IR_Value*>(*n.value);
     assert(value);
     auto val_ty = value->get_type();
