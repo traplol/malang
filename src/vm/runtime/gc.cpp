@@ -8,10 +8,15 @@
 
 struct GC_Node
 {
-    GC_Node(struct GC_List *magic_number)
-        : magic(magic_number)
+    GC_Node()
+        : magic(nullptr)
         , lookup_index(magic_index) {}
-    struct GC_List *magic;
+    // This magic number represents the list holding it and is verified when moving
+    // between the allocated and free list. The LSB of this magic number represents:
+    //     1 = managed or 0 = unmanaged.
+    // This is necessary to allocate both managed and unmanaged objects while keeping
+    // the deallocation API singular.
+    void *magic;
     size_t lookup_index;
     union _ {
         Malang_Object_Body object;
@@ -19,6 +24,24 @@ struct GC_Node
         Malang_Buffer buffer;
     } u;
     static constexpr decltype(lookup_index) magic_index = static_cast<decltype(lookup_index)>(-1);
+
+    inline GC_List *get_magic() const
+    {
+        auto without_managed_flag = reinterpret_cast<uintptr_t>(magic) & ~1;
+        return reinterpret_cast<GC_List*>(without_managed_flag);
+    }
+
+    inline void set_magic(GC_List *m, bool is_managed)
+    {
+        auto i = reinterpret_cast<uintptr_t>(m);
+        i |= is_managed;
+        magic = reinterpret_cast<GC_List*>(i);
+    }
+
+    inline bool is_managed() const
+    {
+        return reinterpret_cast<uintptr_t>(magic) & 1;
+    }
 };
 
 static_assert(offsetof(GC_Node, u.object.header) == offsetof(GC_Node, u.array.header),
@@ -28,7 +51,7 @@ GC_List::~GC_List()
 {
     for (auto &&node : nodes)
     {
-        assert(node->magic == this);
+        assert(node->get_magic() == this);
         delete node;
     }
     nodes.clear();
@@ -194,15 +217,45 @@ GC_Node *Malang_GC::alloc_intern()
     auto gc_node = m_free.pop();
     if (!gc_node)
     {
-        gc_node = new GC_Node{&m_allocated};
+        gc_node = new GC_Node;
     }
     m_total_allocated++;
     return gc_node;
 }
 
+Malang_Object *Malang_GC::allocate_unmanaged_object(Type_Token type_token)
+{
+    // @TODO: factor duplicated allocation code
+    auto gc_node = alloc_intern();
+    gc_node->set_magic(nullptr, false);
+    auto type = m_types->get_type(type_token);
+    construct_object(gc_node->u.object, type);
+    return &(gc_node->u.object.header);
+}
+
+Malang_Object *Malang_GC::allocate_unmanaged_array(Type_Token of_type_token, Fixnum size)
+{
+    // @TODO: factor duplicated allocation code
+    auto gc_node = alloc_intern();
+    gc_node->set_magic(nullptr, false);
+    auto type = m_types->get_type(of_type_token);
+    construct_array(gc_node->u.array, type, size);
+    return &(gc_node->u.array.header);
+}
+
+Malang_Object *Malang_GC::allocate_unmanaged_buffer(Fixnum size)
+{
+    // @TODO: factor duplicated allocation code
+    auto gc_node = alloc_intern();
+    gc_node->set_magic(nullptr, false);
+    construct_buffer(gc_node->u.buffer, size);
+    return &(gc_node->u.array.header);
+}
 Malang_Object *Malang_GC::allocate_object(Type_Token type_token)
 {
+    // @TODO: factor duplicated allocation code
     auto gc_node = alloc_intern();
+    gc_node->set_magic(&m_allocated, true);
     auto type = m_types->get_type(type_token);
     construct_object(gc_node->u.object, type);
     m_allocated.append(gc_node);
@@ -211,7 +264,9 @@ Malang_Object *Malang_GC::allocate_object(Type_Token type_token)
 
 Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum size)
 {
+    // @TODO: factor duplicated allocation code
     auto gc_node = alloc_intern();
+    gc_node->set_magic(&m_allocated, true);
     auto type = m_types->get_type(of_type_token);
     construct_array(gc_node->u.array, type, size);
     m_allocated.append(gc_node);
@@ -220,7 +275,9 @@ Malang_Object *Malang_GC::allocate_array(Type_Token of_type_token, Fixnum size)
 
 Malang_Object *Malang_GC::allocate_buffer(Fixnum size)
 {
+    // @TODO: factor duplicated allocation code
     auto gc_node = alloc_intern();
+    gc_node->set_magic(&m_allocated, true);
     construct_buffer(gc_node->u.buffer, size);
     m_allocated.append(gc_node);
     return &(gc_node->u.array.header);
@@ -296,7 +353,11 @@ void Malang_GC::free_object(Malang_Object *obj)
     auto ptr = reinterpret_cast<uintptr_t>(obj);
     ptr -= offsetof(GC_Node, u);
     ++m_total_freed;
-    free_node(reinterpret_cast<GC_Node*>(ptr));
+    auto gc_node = reinterpret_cast<GC_Node*>(ptr);
+    if (gc_node->is_managed())
+    {
+        free_node(gc_node);
+    }
 }
 
 void Malang_GC::deallocate(Malang_Object *obj)
@@ -311,7 +372,11 @@ void GC_List::append(GC_Node *node)
     {
         panic("GC append: tried to append with invalid index!\n");
     }
-    node->magic = this;
+    if (!node->is_managed())
+    {
+        panic("GC append: tried to append unmanaged object!\n");
+    }
+    node->set_magic(this, true);
     node->lookup_index = nodes.size();
     nodes.push_back(node);
 }
@@ -319,19 +384,25 @@ void GC_List::append(GC_Node *node)
 void GC_List::remove(GC_Node *node)
 {
     assert(node);
-    if (node->magic != this)
+    if (node->get_magic() != this)
     {
-        panic("GC remove: magic number corrupted! %p %ld\n", node->magic, node->lookup_index);
+        panic("GC remove: magic number corrupted! %p %ld\n",
+              node->magic, node->lookup_index);
     }
     if (nodes.empty())
     {
         panic("GC remove: nodes empty!\n");
     }
+    if (!node->is_managed())
+    {
+        panic("GC remove: tried to remove unmanaged object! %p %ld\n",
+              node->magic, node->lookup_index);
+    }
     nodes[node->lookup_index] = std::move(nodes.back());
     nodes[node->lookup_index]->lookup_index = node->lookup_index;
     nodes.pop_back();
     node->lookup_index = GC_Node::magic_index;
-    node->magic = nullptr;
+    node->set_magic(nullptr, true);
 }
 
 GC_Node *GC_List::pop()
@@ -343,6 +414,6 @@ GC_Node *GC_List::pop()
     auto node = nodes.back();
     nodes.pop_back();
     node->lookup_index = GC_Node::magic_index;
-    node->magic = nullptr;
+    node->set_magic(nullptr, true);
     return node;
 }

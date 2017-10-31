@@ -7,10 +7,11 @@ struct GC_Node;
 struct GC_List
 {
     ~GC_List();
-    std::vector<GC_Node*> nodes;
     void append(GC_Node *node);
     void remove(GC_Node *node);
     GC_Node *pop();
+    uint32_t magic_number;
+    std::vector<GC_Node*> nodes;
 };
 
 struct Malang_GC
@@ -34,6 +35,9 @@ struct Malang_GC
     Malang_Object *allocate_object(Type_Token type_token);
     Malang_Object *allocate_array(Type_Token of_type_token, Fixnum size);
     Malang_Object *allocate_buffer(Fixnum size);
+    Malang_Object *allocate_unmanaged_object(Type_Token type_token);
+    Malang_Object *allocate_unmanaged_array(Type_Token of_type_token, Fixnum size);
+    Malang_Object *allocate_unmanaged_buffer(Fixnum size);
 private:
     GC_Node *alloc_intern();
 
