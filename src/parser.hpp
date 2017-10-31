@@ -14,6 +14,7 @@ struct Parser
     Ast parse(Source_Code *src_code);
     Token_Id peek_id(size_t n=0) const;
     const Token *peek(size_t n=0) const;
+    void skip(size_t n=1);
     bool accept(Token &out, const std::vector<Token_Id> &ids);
     bool accept(const std::vector<Token_Id> &ids);
     bool expect(Token &out, Token_Id id);

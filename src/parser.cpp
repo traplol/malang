@@ -37,6 +37,11 @@ Token_Id Parser::peek_id(size_t n) const
     return tk ? tk->id() : Token_Id::Invalid;
 }
 
+void Parser::skip(size_t n)
+{
+    lex_idx += n;
+}
+
 bool Parser::accept(Token &out, const std::vector<Token_Id> &ids)
 {
     if (lex_idx >= lexer.tokens.size())
@@ -162,14 +167,96 @@ static uptr<Assign_Node> parse_assignment(Parser &parser)
     SAVE;
     auto lhs = parse_expression(parser);
     CHECK_OR_FAIL(lhs);
-    Token eq_tk;
-    ACCEPT_OR_FAIL(eq_tk, { Token_Id::Equals });
-    CHECK_OR_ERROR(lhs->can_lvalue(), eq_tk, "LHS of assignment is not an lvalue.");
-    auto rhs = parse_expression(parser);
-    CHECK_OR_FAIL(rhs);
-    return uptr<Assign_Node>(new Assign_Node(eq_tk.src_loc(),
-                                             static_cast<Ast_LValue*>(lhs.release()),
-                                             rhs.release()));
+    Token ass_tk;
+    ACCEPT_OR_FAIL(ass_tk, {
+            Token_Id::Equals,                 // =
+                Token_Id::Plus_Equals,        // +=
+                Token_Id::Minus_Equals,       // -=
+                Token_Id::Star_Equals,        // *=
+                Token_Id::Slash_Equals,       // /=
+                Token_Id::Mod_Equals,         // %=
+                Token_Id::L_Shift_Equals,     // <<=
+                Token_Id::R_Shift_Equals,     // >>=
+                Token_Id::Bit_And_Equals,     // &=
+                Token_Id::Bit_Xor_Equals,     // ^=
+                Token_Id::Bit_Or_Equals,      // |=
+                });
+    CHECK_OR_ERROR(lhs->can_lvalue(), ass_tk, "LHS of assignment is not an lvalue.");
+    if (ass_tk.id() == Token_Id::Equals)
+    {   // trivial case
+        auto rhs = parse_expression(parser);
+        CHECK_OR_FAIL(rhs);
+        return uptr<Assign_Node>(new Assign_Node(ass_tk.src_loc(),
+                                                static_cast<Ast_LValue*>(lhs.release()),
+                                                rhs.release()));
+    }
+    else
+    {
+        // This looks very odd, but it must be done until Ast_Node mandates some sort of
+        // .deep_copy() method.
+        // The mistaken approach to this is to create the operation expression and use the
+        // LHS of the assignment also as the LHS of the binary operation. This is a bug
+        // because every AST node owns any nodes it can directly reach which upon freeing
+        // the AST would cause the LHS of this expression to be freed twice.
+        RESTORE;
+        auto lhs_copy = parse_expression(parser);
+        parser.skip(); // skip the assignment operator we already parsed
+        auto rhs = parse_expression(parser);
+        CHECK_OR_FAIL(rhs);
+
+        Binary_Holder *rhs_of_assignment = nullptr;
+        switch (ass_tk.id())
+        {
+            default:
+                parser.report_error(ass_tk, "impossible assignment operator %s (%s)",
+                             to_string(ass_tk.id()).c_str(), ass_tk.to_string().c_str());
+                abort();
+                case Token_Id::Plus_Equals:
+                    rhs_of_assignment = new Add_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Minus_Equals:
+                    rhs_of_assignment = new Subtract_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Star_Equals:
+                    rhs_of_assignment = new Multiply_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Slash_Equals:
+                    rhs_of_assignment = new Divide_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Mod_Equals:
+                    rhs_of_assignment = new Modulo_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::L_Shift_Equals:
+                    rhs_of_assignment = new Left_Shift_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::R_Shift_Equals:
+                    rhs_of_assignment = new Right_Shift_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Bit_And_Equals:
+                    rhs_of_assignment = new And_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Bit_Xor_Equals:
+                    rhs_of_assignment = new Exclusive_Or_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+                case Token_Id::Bit_Or_Equals:
+                    rhs_of_assignment = new Inclusive_Or_Node{
+                        ass_tk.src_loc(), lhs_copy.release(), rhs.release()};
+                    break;
+        }
+        CHECK_OR_FAIL(rhs_of_assignment);
+        return uptr<Assign_Node>(new Assign_Node(ass_tk.src_loc(),
+                                                static_cast<Ast_LValue*>(lhs.release()),
+                                                rhs_of_assignment));
+    }
 }
 static uptr<Return_Node> parse_return(Parser &parser)
 {   // return :=

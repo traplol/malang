@@ -70,6 +70,16 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Dot);
         SET_TK_TYPE_MAP(Mod);
         SET_TK_TYPE_MAP(Right_Arrow);
+        SET_TK_TYPE_MAP(Plus_Equals);
+        SET_TK_TYPE_MAP(Minus_Equals);
+        SET_TK_TYPE_MAP(Star_Equals);
+        SET_TK_TYPE_MAP(Slash_Equals);
+        SET_TK_TYPE_MAP(Mod_Equals);
+        SET_TK_TYPE_MAP(L_Shift_Equals);
+        SET_TK_TYPE_MAP(R_Shift_Equals);
+        SET_TK_TYPE_MAP(Bit_And_Equals);
+        SET_TK_TYPE_MAP(Bit_Xor_Equals);
+        SET_TK_TYPE_MAP(Bit_Or_Equals);
         SET_TK_TYPE_MAP(L_Shift);
         SET_TK_TYPE_MAP(R_Shift);
         SET_TK_TYPE_MAP(Compare);
@@ -289,9 +299,21 @@ continue; \
 #define PUSH_TOKEN_2C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1]) PUSH_TOKEN_BODY(str, id)
 #define PUSH_TOKEN_3C(str, id) if (src->peek() == (str)[0] && src->peek(1) == (str)[1] && src->peek(2) == (str[2])) PUSH_TOKEN_BODY(str, id)
 
+        PUSH_TOKEN_3C("<<=", L_Shift_Equals);
+        PUSH_TOKEN_3C(">>=", R_Shift_Equals);
         PUSH_TOKEN_3C("<=>", Compare);
         PUSH_TOKEN_3C("[]=", Op_Index_Set);
         PUSH_TOKEN_2C("[]", Op_Index_Get);
+
+
+        PUSH_TOKEN_2C("+=", Plus_Equals);
+        PUSH_TOKEN_2C("-=", Minus_Equals);
+        PUSH_TOKEN_2C("*=", Star_Equals);
+        PUSH_TOKEN_2C("/=", Slash_Equals);
+        PUSH_TOKEN_2C("%=", Mod_Equals);
+        PUSH_TOKEN_2C("&=", Bit_And_Equals);
+        PUSH_TOKEN_2C("^=", Bit_Xor_Equals);
+        PUSH_TOKEN_2C("|=", Bit_Or_Equals);
 
         PUSH_TOKEN_2C("-@", Minus_At);
         PUSH_TOKEN_2C("+@", Plus_At);

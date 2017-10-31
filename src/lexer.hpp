@@ -47,6 +47,17 @@ enum class Token_Id : size_t
     Not,                // !
     Right_Arrow,        // ->
 
+    Plus_Equals,        // +=
+    Minus_Equals,       // -=
+    Star_Equals,        // *=
+    Slash_Equals,       // /=
+    Mod_Equals,         // %=
+    L_Shift_Equals,     // <<=
+    R_Shift_Equals,     // >>=
+    Bit_And_Equals,     // &=
+    Bit_Xor_Equals,     // ^=
+    Bit_Or_Equals,      // |=
+
     Plus_At,            // +@
     Minus_At,           // -@
     Op_Index_Get,       // []

@@ -337,6 +337,17 @@ void parse_tests()
          "        return self\n"
          "    }\n"
          "}"},
+
+        {"x += 1", "x = (x + 1)"},
+        {"x -= 1", "x = (x - 1)"},
+        {"x *= 1", "x = (x * 1)"},
+        {"x /= 1", "x = (x / 1)"},
+        {"x %= 1", "x = (x % 1)"},
+        {"x <<= 1", "x = (x << 1)"},
+        {"x >>= 1", "x = (x >> 1)"},
+        {"x &= 1", "x = (x & 1)"},
+        {"x |= 1", "x = (x | 1)"},
+        {"x ^= 1", "x = (x ^ 1)"},
          
     };
     size_t total_run = 0;
@@ -346,7 +357,7 @@ void parse_tests()
         if (actual.size() != it.expected.size())
         {
             //printf("!(a:%i,e:%i)", (int)actual.size(), (int)it.expected.size());
-            printf("x");
+            //printf("x");
         }
         auto n = std::min(actual.size(), it.expected.size());
         for (size_t i = 0; i < n; ++i, ++total_run)
