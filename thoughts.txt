@@ -370,3 +370,9 @@ Oct 29, 2017:
     }
     123.rets42().print() # prints 42
 
+Oct 30, 2017:
+    + Enabled the GC to alloc unmanaged objects
+    + Implemented strings as immutable objects
+    + Implemented Load/Store_Fields in the codgen
+    + Implemented Load/Store_Fields in the VM
+    + Implemented println(string)
