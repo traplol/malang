@@ -257,16 +257,21 @@ static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
     Token colon;
     ACCEPT_OR_FAIL(colon, { Token_Id::Colon });
     auto type = parse_type(parser);
+    // Normally I would opt to default this to true, however function parameters are parsed
+    // with this and don't want to be readonly.
+    constexpr bool is_readonly = false;
     if (type)
     {
-        return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), type.release()));
+        return uptr<Decl_Node>(
+            new Decl_Node(ident.src_loc(), ident.to_string(), type.release(), is_readonly));
     }
     if (type_required)
     {
         parser.report_error(colon, "Type specifier required here");
         return nullptr;
     }
-    return uptr<Decl_Node>(new Decl_Node(ident.src_loc(), ident.to_string(), nullptr));
+    return uptr<Decl_Node>(
+        new Decl_Node(ident.src_loc(), ident.to_string(), nullptr, is_readonly));
 }
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
 {   // decl_assign :=
@@ -274,6 +279,7 @@ static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
     SAVE;
     auto decl = parse_declaration(parser, false);
     CHECK_OR_FAIL(decl);
+    decl->is_readonly = false;
     Token tk_equals;
     ACCEPT_OR_FAIL(tk_equals, {Token_Id::Equals});
     auto value = parse_expression(parser);
@@ -290,9 +296,8 @@ static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
             decl->type = new Type_Node(decl->src_loc, val_ty);
         }
     }
-    return uptr<Decl_Assign_Node>(new Decl_Assign_Node(decl->src_loc,
-                                                       decl.release(),
-                                                       value.release()));
+    return uptr<Decl_Assign_Node>(
+        new Decl_Assign_Node(decl->src_loc, decl.release(), value.release()));
 }
 static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
 {   // decl_constant :=
@@ -300,6 +305,7 @@ static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
     SAVE;
     auto decl = parse_declaration(parser, false);
     CHECK_OR_FAIL(decl);
+    decl->is_readonly = true;
     Token tk_colon;
     ACCEPT_OR_FAIL(tk_colon, {Token_Id::Colon});
     auto value = parse_expression(parser);

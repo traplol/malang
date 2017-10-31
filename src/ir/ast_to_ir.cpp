@@ -128,7 +128,7 @@ void Ast_To_IR::visit(Assign_Node &n)
     {
         if (sym->is_initialized && sym->is_readonly)
         {
-            n.src_loc.report("error", "`%s' is an initialized constant which cannot be reassigned",
+            n.src_loc.report("error", "`%s' is constant and cannot be reassigned",
                              sym->symbol.c_str());
             abort();
         }
@@ -162,7 +162,7 @@ void Ast_To_IR::visit(Decl_Node &n)
     }
     auto symbol = locality->current().symbols().make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
     assert(symbol);
-    symbol->is_readonly = false;
+    symbol->is_readonly = n.is_readonly;
     if (cur_symbol_scope == Symbol_Scope::Local)
     {
         ++cur_locals_count;
@@ -277,7 +277,7 @@ void Ast_To_IR::visit(Fn_Node &n)
             delete method;
             abort();
         }
-        self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}};
+        self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
         assert(self_decl);
         params_copy.insert(params_copy.begin(), self_decl);
     }
