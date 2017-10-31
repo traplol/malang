@@ -17,7 +17,7 @@ fn bound_func(a: double) {
     println(a)
 }
 
-fn bound_func(a: double, b: buffer) {
+fn bound_func(a: double, b: string) {
     println(a)
     println(b)
 }

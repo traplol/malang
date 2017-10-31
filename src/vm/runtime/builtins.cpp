@@ -42,6 +42,33 @@ static void println_bool(Malang_VM &vm)
         printf("true\n");
 }
 
+static void println_string(Malang_VM &vm)
+{
+    static bool once = true;
+    static size_t length_idx = 0, intern_data_idx = 0;
+    if (once)
+    {
+        auto str_ty = vm.gc->types()->get_string();
+        if (!str_ty->get_field_index("length", length_idx))
+        {
+            printf("no length field in strings ???\n");
+            abort();
+        }
+        if (!str_ty->get_field_index(".intern_data", intern_data_idx))
+        {
+            printf("no .intern_data field in strings ???\n");
+            abort();
+        }
+        once = false;
+    }
+
+    auto top = vm.pop_data().as_object();
+    auto string = reinterpret_cast<Malang_Object_Body*>(top);
+    auto len = string->fields[length_idx].as_fixnum();
+    auto data = string->fields[intern_data_idx].as_pointer();
+    printf("%.*s\n", len, static_cast<char*>(data));
+}
+
 static void stack_trace(Malang_VM &vm)
 {
     vm.stack_trace();
@@ -76,6 +103,7 @@ void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
     make_builtin(b, t, "println", println_object, {t.get_object()}, t.get_void());
     make_builtin(b, t, "println", println_double, {t.get_double()}, t.get_void());
     make_builtin(b, t, "println", println_buffer, {t.get_buffer()}, t.get_void());
+    make_builtin(b, t, "println", println_string, {t.get_string()}, t.get_void());
 
     make_builtin(b, t, "stack_trace", stack_trace, {}, t.get_void());
     make_builtin(b, t, "gc_pause",    gc_pause,    {}, t.get_void());

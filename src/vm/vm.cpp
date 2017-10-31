@@ -22,10 +22,37 @@ Malang_VM::Malang_VM(Type_Map *types,
                      const std::vector<Native_Code> &natives,
                      const std::vector<String_Constant> &string_constants,
                      size_t gc_run_interval, size_t max_num_objects)
-    : natives(std::move(natives))
-    , string_constants(std::move(string_constants))
+    : natives(natives)
+    , string_constants(string_constants)
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
+
+    // @FixMe: this should just be a simple call to the native string constructor
+    auto str_ty = types->get_string();
+    size_t length_idx, intern_data_idx;
+    if (!str_ty->get_field_index("length", length_idx))
+    {
+        printf("no length field in strings ???\n");
+        abort();
+    }
+    if (!str_ty->get_field_index(".intern_data", intern_data_idx))
+    {
+        printf("no .intern_data field in strings ???\n");
+        abort();
+    }
+    for (auto &&sc : string_constants)
+    {
+        auto obj = gc->allocate_unmanaged_object(str_ty->type_token());
+        if (!obj)
+        {
+            printf("GC couldn't allocate unmanaged string constant.\n");
+            abort();
+        }
+        auto str = reinterpret_cast<Malang_Object_Body*>(obj);
+        str->fields[length_idx] = sc.size();
+        str->fields[intern_data_idx] = (void*)sc.data();
+        string_constants_objects.push_back(obj);
+    }
 }
 
 void Malang_VM::load_code(const std::vector<byte> &code)
@@ -1041,10 +1068,7 @@ static void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto idx = fetch32(ip);
-                auto &string_const = vm.string_constants[idx];
-                auto obj = vm.gc->allocate_buffer(string_const.size());
-                auto buff = reinterpret_cast<Malang_Buffer*>(obj);
-                memcpy(buff->data, string_const.data(), buff->size);
+                auto obj = vm.string_constants_objects[idx];
                 vm.push_data(obj);
                 ip += sizeof(idx);
                 DISPATCH_NEXT;

@@ -366,7 +366,7 @@ void Ast_To_IR::visit(Real_Node &n)
 
 void Ast_To_IR::visit(String_Node &n)
 {
-    auto string = ir->alloc<IR_String>(n.src_loc, types->get_buffer(), strings->size());
+    auto string = ir->alloc<IR_String>(n.src_loc, types->get_string(), strings->size());
     strings->push_back(n.value);
     _return(string);
 }

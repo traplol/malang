@@ -14,10 +14,12 @@ struct GC_List
     std::vector<GC_Node*> nodes;
 };
 
+struct Type_Map;
+struct Malang_VM;
 struct Malang_GC
 {
     ~Malang_GC();
-    Malang_GC(struct Malang_VM *vm, struct Type_Map *types, size_t run_interval, size_t max_objects)
+    Malang_GC(Malang_VM *vm, Type_Map *types, size_t run_interval, size_t max_objects)
         : m_is_paused(false)
         , m_vm(vm)
         , m_types(types)
@@ -28,6 +30,7 @@ struct Malang_GC
         , m_max_objects(max_objects)
         {}
 
+    Type_Map *types();
     void disable_automatic();
     void enable_automatic();
     void manual_run();
@@ -55,8 +58,8 @@ private:
     void sweep();
     void mark_and_sweep();
     bool m_is_paused;
-    struct Malang_VM *m_vm;
-    struct Type_Map *m_types;
+    Malang_VM *m_vm;
+    Type_Map *m_types;
     size_t m_total_allocated;
     size_t m_total_freed;
     size_t m_next_run;

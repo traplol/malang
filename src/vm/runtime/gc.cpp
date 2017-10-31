@@ -64,6 +64,11 @@ Malang_GC::~Malang_GC()
     sweep();
 }
 
+Type_Map *Malang_GC::types()
+{
+    return m_types;
+}
+
 void Malang_GC::disable_automatic()
 {
     printf("GC: pausing\n");

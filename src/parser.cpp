@@ -734,7 +734,7 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     if (parser.accept(token, { Token_Id::String }))
     {
         return uptr<Ast_Value>(
-            new String_Node(token.src_loc(), token.to_string(), parser.types->get_buffer()));
+            new String_Node(token.src_loc(), token.to_string(), parser.types->get_string()));
     }
     if (parser.accept(token, { Token_Id::Real }))
     {

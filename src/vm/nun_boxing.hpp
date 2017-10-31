@@ -13,9 +13,10 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
 template<typename ObjectType>
 struct Value
 {
-    static constexpr uint64_t max_double = 0xfff8000000000000;
-    static constexpr uint64_t fixnum_tag = 0xfff9000000000000;
-    static constexpr uint64_t object_tag = 0xfffa000000000000;
+    static constexpr uint64_t max_double  = 0xfff8000000000000;
+    static constexpr uint64_t fixnum_tag  = 0xfff9000000000000;
+    static constexpr uint64_t object_tag  = 0xfffa000000000000;
+    static constexpr uint64_t pointer_tag = 0xfffb000000000000;
 
     inline Value()
     {
@@ -42,6 +43,11 @@ struct Value
     inline Value(ObjectType *object)
     {
         set<ObjectType*, object_tag>(object);
+    }
+
+    inline Value(void *pointer)
+    {
+        set<void*, pointer_tag>(pointer);
     }
 
     template<uint64_t tag>
@@ -72,6 +78,11 @@ struct Value
         return is<object_tag>();
     }
 
+    inline bool is_pointer() const
+    {
+        return is<pointer_tag>();
+    }
+
     inline double as_double() const
     {
         assert(is_double());
@@ -88,6 +99,12 @@ struct Value
     {
         assert(is_object());
         return as<ObjectType*, object_tag>();
+    }
+
+    inline void *as_pointer() const
+    {
+        assert(is_object());
+        return as<void*, pointer_tag>();
     }
 
     template<typename T, uint64_t tag>
@@ -118,6 +135,11 @@ struct Value
     inline void set(ObjectType *object)
     {
         set<ObjectType*, object_tag>(object);
+    }
+
+    inline void set(void *pointer)
+    {
+        set<void*, pointer_tag>(pointer);
     }
 
     inline uint64_t bits() const
