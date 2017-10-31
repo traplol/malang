@@ -41,6 +41,7 @@ struct Malang_GC
     Malang_Object *allocate_unmanaged_object(Type_Token type_token);
     Malang_Object *allocate_unmanaged_array(Type_Token of_type_token, Fixnum size);
     Malang_Object *allocate_unmanaged_buffer(Fixnum size);
+    void manage(Malang_Object *unmanaged_object);
 private:
     GC_Node *alloc_intern();
 

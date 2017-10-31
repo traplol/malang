@@ -7,6 +7,7 @@
 #include "vm.hpp"
 #include "instruction.hpp"
 #include "runtime/gc.hpp"
+#include "runtime.hpp"
 
 Malang_VM::~Malang_VM()
 {
@@ -27,19 +28,7 @@ Malang_VM::Malang_VM(Type_Map *types,
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
 
-    // @FixMe: this should just be a simple call to the native string constructor
     auto str_ty = types->get_string();
-    uint16_t length_idx, intern_data_idx;
-    if (!str_ty->get_field_index("length", length_idx))
-    {
-        printf("no length field in strings ???\n");
-        abort();
-    }
-    if (!str_ty->get_field_index(".intern_data", intern_data_idx))
-    {
-        printf("no .intern_data field in strings ???\n");
-        abort();
-    }
     for (auto &&sc : string_constants)
     {
         auto obj = gc->allocate_unmanaged_object(str_ty->type_token());
@@ -48,9 +37,7 @@ Malang_VM::Malang_VM(Type_Map *types,
             printf("GC couldn't allocate unmanaged string constant.\n");
             abort();
         }
-        auto str = reinterpret_cast<Malang_Object_Body*>(obj);
-        str->fields[length_idx] = sc.size();
-        str->fields[intern_data_idx] = (void*)sc.data();
+        Malang_Runtime::string_construct_intern(obj, sc);
         string_constants_objects.push_back(obj);
     }
 }

@@ -46,6 +46,32 @@ struct GC_Node
 
 static_assert(offsetof(GC_Node, u.object.header) == offsetof(GC_Node, u.array.header),
               "object and array headers are not at the same offset!");
+static_assert(offsetof(GC_Node, u.object.header) == offsetof(GC_Node, u.buffer.header),
+              "object and buffer headers are not at the same offset!");
+
+static inline
+GC_Node *to_gc_node(Malang_Object *obj)
+{
+    auto ptr = reinterpret_cast<uintptr_t>(obj);
+    ptr -= offsetof(GC_Node, u);
+    return reinterpret_cast<GC_Node*>(ptr);
+}
+static inline
+GC_Node *to_gc_node(Malang_Object_Body *body)
+{
+    return to_gc_node(reinterpret_cast<Malang_Object*>(body));
+}
+static inline
+GC_Node *to_gc_node(Malang_Array *arr)
+{
+    return to_gc_node(reinterpret_cast<Malang_Object*>(arr));
+}
+static inline
+GC_Node *to_gc_node(Malang_Buffer *buff)
+{
+    return to_gc_node(reinterpret_cast<Malang_Object*>(buff));
+}
+
 
 GC_List::~GC_List()
 {
@@ -288,6 +314,17 @@ Malang_Object *Malang_GC::allocate_buffer(Fixnum size)
     return &(gc_node->u.array.header);
 }
 
+void Malang_GC::manage(Malang_Object *unmanaged_object)
+{
+    auto gc_node = to_gc_node(unmanaged_object);
+    if (gc_node->is_managed())
+    {
+        panic("GC: attempted to manage an already managed object!");
+    }
+    gc_node->set_magic(gc_node->get_magic(), true);
+    m_allocated.append(gc_node);
+}
+
 void Malang_GC::free_object_body(Malang_Object_Body *obj)
 {
     if (obj->header.free)
@@ -355,10 +392,8 @@ void Malang_GC::free_object(Malang_Object *obj)
             break;
     }
     obj->free = true;
-    auto ptr = reinterpret_cast<uintptr_t>(obj);
-    ptr -= offsetof(GC_Node, u);
     ++m_total_freed;
-    auto gc_node = reinterpret_cast<GC_Node*>(ptr);
+    auto gc_node = to_gc_node(obj);
     if (gc_node->is_managed())
     {
         free_node(gc_node);

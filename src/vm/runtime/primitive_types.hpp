@@ -99,6 +99,15 @@ struct String_Constant
     Fixnum size() const { return m_length; }
     Fixnum length() const { return m_length; }
     const Char *data() const { return m_data; }
+    Char *data_copy() const
+    {
+        auto copy = new Char[m_length];
+        for (Fixnum i = 0; i < m_length; ++i)
+        {
+            copy[i] = m_data[i];
+        }
+        return copy;
+    }
 
 private:
     friend std::ostream &operator<<(std::ostream &os, const String_Constant &string)
