@@ -135,3 +135,14 @@ bool Bound_Function_Map::any(const std::string &name) const
 {
     return m_free_functions.find(name) != m_free_functions.end();
 }
+
+void Bound_Function_Map::dump() const
+{
+    for (auto &&kvp : m_free_functions)
+    {
+        for (auto &&kvp2 : kvp.second)
+        {
+            printf("fn %s %s\n", kvp.first.c_str(), kvp2.first.to_string().c_str());
+        }
+    }
+}

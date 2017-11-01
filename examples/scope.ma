@@ -12,7 +12,7 @@ fn foo(a: bool) {
         println(b)
     }
     println(b)
-#    println(x)
+#    println(x) # not in scope.
 }
 
 fn local_test() {

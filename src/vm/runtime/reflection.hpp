@@ -64,6 +64,7 @@ struct Function_Parameters
     auto size()   const { return m_parameter_types.size(); }
     auto empty()  const { return m_parameter_types.empty(); }
 
+    std::string to_string() const;
 private:
     Types m_parameter_types;
 };

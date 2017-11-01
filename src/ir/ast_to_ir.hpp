@@ -10,22 +10,8 @@
 #include "../vm/runtime/primitive_types.hpp"
 #include "scope_lookup.hpp"
 
-//struct Locality
-//{
-//    Locality(struct Malang_IR *);
-//    ~Locality();
-//    Symbol_Map *symbols;
-//    Bound_Function_Map *bound_functions;
-//    bool any(const std::string &name) const;
-//};
-
 struct Ast_To_IR : Ast_Visitor
 {
-    ~Ast_To_IR();
-    Ast_To_IR(Bound_Function_Map *bound_functions,
-              std::vector<String_Constant> *strings,
-              Type_Map *types);
-
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
     virtual void visit(struct Decl_Node&n) override;
@@ -72,36 +58,33 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Array_Literal_Node&n) override;
     virtual void visit(struct New_Array_Node&n) override;
 
-    Malang_IR *convert(Ast &ast);
+    void convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vector<String_Constant> *strings);
 
 private:
-    Bound_Function_Map *bound_functions;
-    Type_Map *types;
     Type_Info *is_extending;
     struct Fn_Node *cur_fn;
     IR_Label *cur_fn_ep;
     IR_Label *cur_true_label, *cur_false_label;
     Function_Parameters *cur_call_arg_types;
     Malang_IR *ir;
-    IR_Node *tree;
     std::vector<String_Constant> *strings;
     std::vector<IR_Return*> *all_returns_this_fn;
-    //Locality *locality;
     Scope_Lookup *locality;
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
-    //std::vector<Locality*> scopes;
 
     IR_Symbol *find_symbol(const std::string &name);
     void convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, struct IR_Value **last_node_as_value = nullptr);
     bool symbol_already_declared_here(const std::string &name);
 
+
+    IR_Node *__tree;
     template<typename T = IR_Node*>
     T get(Ast_Node &n)
     {
-        tree = nullptr;
+        __tree = nullptr;
         n.accept(*this);
-        return dynamic_cast<T>(tree);
+        return dynamic_cast<T>(__tree);
     }
 };
 

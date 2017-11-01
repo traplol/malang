@@ -6,7 +6,7 @@
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
-#define _return(x) { tree = (x); return; }
+#define _return(x) { this->__tree = (x); return; }
 
 static inline
 bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &values, const Function_Parameters &types)
@@ -32,20 +32,6 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
-Ast_To_IR::~Ast_To_IR()
-{
-    delete locality;
-}
-Ast_To_IR::Ast_To_IR(Bound_Function_Map *bound_functions,
-                     std::vector<String_Constant> *strings,
-                     Type_Map *types)
-    : bound_functions(bound_functions)
-    , types(types)
-    , ir(nullptr)
-    , strings(strings)
-    , locality(nullptr)
-{}
-
 void Ast_To_IR::visit(Variable_Node &n)
 {
 
@@ -61,65 +47,25 @@ void Ast_To_IR::visit(Variable_Node &n)
                                                 cur_fn->fn_type);
         _return(callable);
     }
-    else if (bound_functions->any(n.name))
+    auto bound_fn = locality->current().find_bound_function(n.name, *cur_call_arg_types);
+    if (bound_fn.is_valid())
     {
         if (!cur_call_arg_types)
         {
-            n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
+            n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name.c_str());
             abort();
         }
-        auto fn = bound_functions->get(n.name, *cur_call_arg_types);
-        if (fn.is_valid())
+        if (bound_fn.is_native())
         {
-            if (fn.is_native())
-            {
-                auto native = fn.native();
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, native->index, fn.fn_type());
-                _return(callable);
-            }
-            else
-            {
-                auto code = fn.code();
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, code, fn.fn_type());
-                _return(callable);
-            }
+            auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
+                                                    bound_fn.fn_type());
+            _return(callable);
         }
         else
         {
-            std::stringstream ss;
-            for (size_t i = 0; i < cur_call_arg_types->size(); ++i)
-            {
-                ss << (*cur_call_arg_types)[i]->name();
-                if (i + 1 < cur_call_arg_types->size())
-                    ss << ", ";
-            }
-            n.src_loc.report("error", "No builtin function `%s' takes arguments with of types `%s'",
-                             n.name.c_str(), ss.str().c_str());
-            abort();
-        }
-    }
-    else if (locality->current().bound_functions().any(n.name))
-    {
-        if (!cur_call_arg_types)
-        {
-            n.src_loc.report("error", "Cannot resolve ambiguous type of `%s'", n.name.c_str());
-            abort();
-        }
-        auto bound_fn = locality->current().bound_functions().get(n.name, *cur_call_arg_types);
-        if (bound_fn.is_valid())
-        {
-            if (bound_fn.is_native())
-            {
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
-                                                       bound_fn.fn_type());
-                _return(callable);
-            }
-            else
-            {
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
-                                                       bound_fn.fn_type());
-                _return(callable);
-            }
+            auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
+                                                    bound_fn.fn_type());
+            _return(callable);
         }
     }
     auto symbol = find_symbol(n.name);
@@ -256,13 +202,14 @@ void Ast_To_IR::visit(Fn_Node &n)
             exists->src_loc.report("here", "");
             abort();
         }
+
     }
 
     // we need some way to store all returns created during this function definition so we can decide
     // whether or not we use the Return_Fast instruction
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
-    const bool is_void_return = n.fn_type->return_type() == types->get_void();
+    const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
     locality->push(old_fn == nullptr);
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
@@ -393,26 +340,26 @@ void Ast_To_IR::visit(List_Node &n)
 
 void Ast_To_IR::visit(Integer_Node &n)
 {
-    auto fixnum = ir->alloc<IR_Fixnum>(n.src_loc, types->get_int(), static_cast<Fixnum>(n.value));
+    auto fixnum = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), static_cast<Fixnum>(n.value));
     _return(fixnum);
 }
 
 void Ast_To_IR::visit(Real_Node &n)
 {
-    auto real = ir->alloc<IR_Double>(n.src_loc, types->get_double(), n.value);
+    auto real = ir->alloc<IR_Double>(n.src_loc, ir->types->get_double(), n.value);
     _return(real);
 }
 
 void Ast_To_IR::visit(String_Node &n)
 {
-    auto string = ir->alloc<IR_String>(n.src_loc, types->get_string(), strings->size());
+    auto string = ir->alloc<IR_String>(n.src_loc, ir->types->get_string(), strings->size());
     strings->push_back(n.value);
     _return(string);
 }
 
 void Ast_To_IR::visit(Boolean_Node &n)
 {
-    auto boolean = ir->alloc<IR_Boolean>(n.src_loc, types->get_bool(), n.value);
+    auto boolean = ir->alloc<IR_Boolean>(n.src_loc, ir->types->get_bool(), n.value);
     _return(boolean);
 }
 
@@ -422,7 +369,7 @@ void Ast_To_IR::visit(Logical_Or_Node &n)
     std::vector<IR_Node*> block;
     auto lhs = get<IR_Value*>(*n.lhs);
     assert(lhs);
-    if (lhs->get_type() != types->get_bool())
+    if (lhs->get_type() != ir->types->get_bool())
     {
         lhs->src_loc.report("error", "Expected type `bool' got `%s'",
                             lhs->get_type()->name().c_str());
@@ -430,7 +377,7 @@ void Ast_To_IR::visit(Logical_Or_Node &n)
     }
     auto rhs = get<IR_Value*>(*n.rhs);
     assert(rhs);
-    if (rhs->get_type() != types->get_bool())
+    if (rhs->get_type() != ir->types->get_bool())
     {
         rhs->src_loc.report("error", "Expected type `bool' got `%s'",
                             rhs->get_type()->name().c_str());
@@ -451,7 +398,7 @@ void Ast_To_IR::visit(Logical_Or_Node &n)
         block.push_back(true_label);
     }
 
-    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, types->get_bool());
+    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_bool());
     _return(r_block);
 }
 
@@ -463,7 +410,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     std::vector<IR_Node*> block;
     auto lhs = get<IR_Value*>(*n.lhs);
     assert(lhs);
-    if (lhs->get_type() != types->get_bool())
+    if (lhs->get_type() != ir->types->get_bool())
     {
         lhs->src_loc.report("error", "Expected type `bool' got `%s'",
                             lhs->get_type()->name().c_str());
@@ -472,7 +419,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
     cur_true_label = old_true_label;
     auto rhs = get<IR_Value*>(*n.rhs);
     assert(rhs);
-    if (rhs->get_type() != types->get_bool())
+    if (rhs->get_type() != ir->types->get_bool())
     {
         rhs->src_loc.report("error", "Expected type `bool' got `%s'",
                             rhs->get_type()->name().c_str());
@@ -495,7 +442,7 @@ void Ast_To_IR::visit(Logical_And_Node &n)
         block.push_back(false_label);
     }
 
-    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, types->get_bool());
+    auto r_block = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_bool());
     _return(r_block);
 }
 
@@ -617,8 +564,8 @@ void Ast_To_IR::visit(Call_Node &n)
         auto ctor = alloc->for_type->get_constructor(fp);
         if (!ctor)
         {
-            n.src_loc.report("error", "No constructor for `%s' matches arguments TODO: print arg types",
-                             alloc->for_type->name().c_str());
+            n.src_loc.report("error", "No constructor for `%s' matches arguments `%s'",
+                             alloc->for_type->name().c_str(), fp.to_string().c_str());
             abort();
         }
         alloc->args = args;
@@ -642,7 +589,7 @@ void Ast_To_IR::visit(Call_Node &n)
         }
         else
         {
-            n.src_loc.report("error", "method `%s' not implemented for type `%s'",
+            n.src_loc.report("error", "Method `%s' not implemented for type `%s'",
                              member->member_name.c_str(), 
                              thing_ty->name().c_str());
             abort();
@@ -777,7 +724,7 @@ void Ast_To_IR::visit(Constructor_Node &n)
     // decide whether or not we use the Return_Fast instruction
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
-    const bool is_void_return = n.fn_type->return_type() == types->get_void();
+    const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
     assert(is_void_return); // constructor must be void return.
     assert(is_extending);
 
@@ -1034,7 +981,7 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     locality->pop();
     is_extending = old_type;
     cur_symbol_scope = old_scope;
-    auto ret = ir->alloc<IR_Block>(n.src_loc, type_definition, types->get_void());
+    auto ret = ir->alloc<IR_Block>(n.src_loc, type_definition, ir->types->get_void());
     _return(ret);
 }
 
@@ -1053,7 +1000,7 @@ void Ast_To_IR::visit(struct Extend_Node&n)
         assert(converted);
         block.push_back(converted);
     }
-    auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
     is_extending = old_is_extending;
     _return(ret);
 }
@@ -1135,7 +1082,7 @@ void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_N
         {
             if (!is_last_iter || !collecting_last_node)
             {
-                if (val->get_type() != types->get_void())
+                if (val->get_type() != ir->types->get_void())
                 {
                     auto discard = ir->alloc<IR_Discard_Result>(ast_node->src_loc, 1);
                     dst.push_back(discard);
@@ -1165,7 +1112,7 @@ void Ast_To_IR::visit(While_Node &n)
     assert(n.condition);
     auto cond = get<IR_Value*>(*n.condition);
     assert(cond);
-    if (cond->get_type() != types->get_bool())
+    if (cond->get_type() != ir->types->get_bool())
     {
         n.condition->src_loc.report("error", "Conditional for a while statement must be type `bool', got `%s' instead",
                                     cond->get_type()->name().c_str());
@@ -1187,7 +1134,7 @@ void Ast_To_IR::visit(While_Node &n)
     locality->pop();
 
     block.push_back(loop_block);
-    auto ret = ir->alloc<IR_Block>(n.src_loc, block, types->get_void());
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
     _return(ret);
@@ -1227,7 +1174,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
     assert(n.condition);
     auto cond = get<IR_Value*>(*n.condition);
     assert(cond);
-    if (cond->get_type() != types->get_bool())
+    if (cond->get_type() != ir->types->get_bool())
     {
         n.condition->src_loc.report("error", "Conditional for an if/else must be type `bool', got `%s' instead",
                                     cond->get_type()->name().c_str());
@@ -1259,7 +1206,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
         block.push_back(alt_begin_label);
     }
 
-    auto if_else_type = deduce_type(types->get_void(), last_conseq, last_altern);
+    auto if_else_type = deduce_type(ir->types->get_void(), last_conseq, last_altern);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, if_else_type);
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
@@ -1280,7 +1227,7 @@ void Ast_To_IR::visit(struct New_Array_Node &n)
         n.size->src_loc.report("error", "Could not deduce type of array size");
         abort();
     }
-    if (!size_ty->is_assignable_to(types->get_int()))
+    if (!size_ty->is_assignable_to(ir->types->get_int()))
     {
         size->src_loc.report("error", "Array size must be an integer type, got `%s'",
                              size_ty->name().c_str());
@@ -1293,7 +1240,7 @@ void Ast_To_IR::visit(struct New_Array_Node &n)
     _return(new_array);
 }
 
-Malang_IR *Ast_To_IR::convert(Ast &ast)
+void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vector<String_Constant> *strings)
 {
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
@@ -1301,10 +1248,10 @@ Malang_IR *Ast_To_IR::convert(Ast &ast)
     cur_fn_ep = nullptr;
     is_extending = nullptr;
     cur_true_label = cur_false_label = nullptr;
-    ir = new Malang_IR{types};
-    locality = new Scope_Lookup{ir};
+    this->ir = ir;
+    this->locality = global;
+    this->strings = strings;
     convert_body(ast.roots, ir->roots);
-    return ir;
 }
 
 IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)

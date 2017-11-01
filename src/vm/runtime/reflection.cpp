@@ -1,5 +1,22 @@
 #include <cassert>
+#include <sstream>
 #include "reflection.hpp"
+
+std::string Function_Parameters::to_string() const
+{
+    std::stringstream ss;
+    ss << "(";
+    for (size_t i = 0; i < m_parameter_types.size(); ++i)
+    {
+        ss << m_parameter_types[i]->name();
+        if (i + 1 < m_parameter_types.size())
+        {
+            ss << ", ";
+        }
+    }
+    ss << ")";
+    return ss.str();
+}
 
 Constructor_Info::~Constructor_Info()
 {

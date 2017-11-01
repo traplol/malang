@@ -1138,6 +1138,8 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
     Token type_name_tk;
     CHECK_OR_FAIL(parser.expect(type_name_tk, Token_Id::Identifier));
     auto type = parser.types->declare_type(type_name_tk.to_string(), nullptr);
+    auto old_extending = parser.is_extending;
+    parser.is_extending = type;
     CHECK_OR_FAIL(parser.expect(Token_Id::Equals));
     CHECK_OR_FAIL(parser.expect(Token_Id::Open_Curly));
     auto type_def = uptr<Type_Def_Node>(new Type_Def_Node(type_tk.src_loc(), type));
@@ -1174,6 +1176,7 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
         break;
     }
     CHECK_OR_FAIL(parser.expect(Token_Id::Close_Curly));
+    parser.is_extending = old_extending;
     return type_def;
 }
 static uptr<Extend_Node> parse_extend(Parser &parser)

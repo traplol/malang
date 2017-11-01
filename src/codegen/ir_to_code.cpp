@@ -89,7 +89,6 @@ void IR_To_Code::visit(IR_Symbol &n)
 
 void IR_To_Code::visit(IR_Callable &n)
 {
-    printf("%s\n", n.fn_type->name().c_str());
     if (n.fn_type->is_native())
     {
         cg->push_back_literal_32(n.u.index);
@@ -450,7 +449,6 @@ void IR_To_Code::visit(IR_Assign_Top &n)
     Symbol_Scope scope;
     if (auto fixnum = dynamic_cast<IR_Fixnum*>(n.lhs))
     {
-        printf("dsjkafhlafjkal: %d %d\n", fixnum->value, n.scope);
         index = fixnum->value;
         scope = n.scope;
         good = true;

@@ -70,6 +70,7 @@ struct Bound_Function_Map
     Bound_Functions get(const std::string &name) const;
 
     bool any(const std::string &name) const;
+    void dump() const;
 
     std::vector<Native_Code> natives() const;
 private:

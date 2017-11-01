@@ -50,8 +50,10 @@ Variables can be declared with their type, or the type may be entirely omitted i
 ```
 x : int
 x = 42
-
 y : double = 123.45
+
+PI :: 3.14159
+PI = 3.0             # compile error because :: signifies it is a constant
 
 z := "hello world"
 
@@ -101,8 +103,38 @@ fib := fn(n: int) -> int {
 ```
 
 
-## @TODO: Plenty more to document.
+### User defiend types
 
+```
+type Vec3 = {
+  x := 0.0
+  y := 0.0
+  z := 0.0
+  new () {}  # default, only necessary because we define another constructor
+  new (x: double, y: double, z: double) {
+    self.x = x
+    self.y = y
+    self.z = z
+  }
 
+  fn * (scalar: double) -> Vec3 {
+    # note the implicit resolution of x,y,z 
+    return Vec3(x*scalar, y*scalar, z*scalar)
+  }
 
+  fn + (other: Vec3) -> Vec3 {
+    x := self.x + other.x
+    y := self.y + other.y
+    z := self.z + other.z
+    return Vec3(x, y, z)
+  }
 
+  fn - (other: Vec3) -> Vec3 {
+    x := self.x - other.x
+    y := self.y - other.y
+    z := self.z - other.z
+    return Vec3(x, y, z)
+  }
+  
+}
+```

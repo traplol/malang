@@ -1,51 +1,49 @@
 type Vec3 = {
-    x := 1.0
-    y := 2.0
-    z := 3.0
-    arr := [100]Vec3
-    new (x: double, y: double, z: double) {
-        self.x = x;
-        self.y = y;
-        self.z = z;
-    }
+  x := 0.0
+  y := 0.0
+  z := 0.0
+  new () {}  # default, only necessary because we define another constructor
+  new (x: double, y: double, z: double) {
+    self.x = x
+    self.y = y
+    self.z = z
+  }
 
-    new () {
-        i := 0
-        while i < arr.length {
-            arr[i] = Vec3(i * 1.0, i * 2.0, i * 3.0)
-            i += 1
-        }
-    }
+  fn * (scalar: double) -> Vec3 {
+    # note the implicit resolution of x,y,z 
+    return Vec3(x*scalar, y*scalar, z*scalar)
+  }
 
-    fn print() {
-        i := 0
-        while i < arr.length {
-            println("=======")
-            println(arr[i].x)
-            println(arr[i].y)
-            println(arr[i].z)
-            i += 1
-        }
-    }
+  fn + (other: Vec3) -> Vec3 {
+    x := self.x + other.x
+    y := self.y + other.y
+    z := self.z + other.z
+    return Vec3(x, y, z)
+  }
+
+  fn - (other: Vec3) -> Vec3 {
+    x := self.x - other.x
+    y := self.y - other.y
+    z := self.z - other.z
+    return Vec3(x, y, z)
+  }
 }
 
-v3 := Vec3()
-#v3.print()
-
-i := 0
-while i < v3.arr.length {
-    println("=======")
-    println(v3.arr[i].x)
-    println(v3.arr[i].y)
-    println(v3.arr[i].z)
-    i += 1
+fn println(v3: Vec3) {
+  println(v3.x)
+  println(v3.y)
+  println(v3.z)
 }
 
-i = 0
-while i < 123 {
-    v3 = Vec3(1.0, 2.0, 3.0)
-    i += 1
-}
+v3 := Vec3(1.2, 3.0, 4.5)
+println("v3")
+println(v3)
+println("v3*2.5")
+println(v3 * 2.5)
+println("v3+v3")
+println(v3 + v3)
+println("v3-v3")
+println(v3 - v3)
 
 
 type D = {
