@@ -400,3 +400,10 @@ Oct 30, 2017:
     + Implemented println(string)
     + Implemented readonly/constness for variables
     + Implemented readonly/constness for `self' instance
+
+Oct 31, 2017:
+    + Implemented default empty constructor
+    + Fixed various bugs related to scope resolution
+    + Fixed allocating an array of objects
+    + Property chaining now works as expected
+    + Factored some duplicated code in Ast_To_IR
