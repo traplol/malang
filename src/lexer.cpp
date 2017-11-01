@@ -229,7 +229,7 @@ bool Lexer::lex(Source_Code *src)
     {
         if (src->peek() == '#')
         {
-            while (src->peek() != '\n')
+            while (src->peek() != '\n' && src->peek() != src->end_of_file)
                 src->next();
         }
         if (is_wspace(src->peek()))
