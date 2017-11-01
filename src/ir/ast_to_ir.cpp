@@ -224,26 +224,29 @@ void Ast_To_IR::visit(Fn_Node &n)
     Decl_Node *self_decl = nullptr;
     if (is_extending)
     {
-        if (auto method_exists =
-            is_extending->get_method(n.bound_name, n.fn_type->parameter_types()))
+        if (n.is_bound())
         {
-            if (method_exists->is_waiting_for_definition())
+            if (auto method_exists =
+                is_extending->get_method(n.bound_name, n.fn_type->parameter_types()))
             {
-                method_exists->set_function(fn_body);
+                if (method_exists->is_waiting_for_definition())
+                {
+                    method_exists->set_function(fn_body);
+                }
+                else
+                {
+                    n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
+                                     n.bound_name.c_str(),
+                                     n.fn_type->name().c_str(),
+                                     is_extending->name().c_str());
+                    abort();
+                }
             }
             else
             {
-                n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
-                                 n.bound_name.c_str(),
-                                 n.fn_type->name().c_str(),
-                                 is_extending->name().c_str());
-                abort();
+                auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
+                is_extending->add_method(method);
             }
-        }
-        else
-        {
-            auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
-            is_extending->add_method(method);
         }
         self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
         assert(self_decl);

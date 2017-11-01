@@ -1,28 +1,25 @@
 ==============================================================================================
 TODO:
-    + Classes need a cycle check to ensure they aren't a sub/super-class of themselves.
+    + Types need a trivial recursion check 
+    + Type aliasing
+    + Option type (Some(42) | None)
+    + Uninitialized type properties are only allowed to be Option<Thing>
+    + Type properties are allowed to be anonymous functions and currently they attempt to
+    resolve as a method instead of a field.
+    + Write fuzzer for VM instructions
+    + Write fuzzer for parser
+    + Come up with something better than branching over function definitions
+    + Automate execution tests; we need a flag to disable all of the diagnostics the compiler
+    barfs out by default so we can test against execution output.
+    + Generational GC
+    + Since it is all known at compile time, it should be possible to make a table of where
+    every reference is on the stack at any given type which would allow the removal of
+    NaN-boxing and have no overhead from unboxing. This would also allow for full 64-bit
+    integers.
+    
 
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
-    front by a variable/command line argument. Alternatively since these are entirely accessed
-    using indexes they could even be dynamically allocated.
-
-    + Implement Object + Type system
-
-    + Write tests for every VM instruction
-
-    + Write tests for every Codegen function
-
-    + Parse/lex comments
-
-    + AST should begin generating type declarations and the IR should handle actually
-    defining them
-        x: MyObj = new... implicitly declares/references the `MyObj' type
-        x := new Thing    implicitly declares/references the `Thing' type
-        struct MyStruct   will ensure MyStruct hasn't been declared, and then it will declare
-                          MyStruct
-        y :: fn(a:int, b:string) -> void {}   references types: `int', `string' and `void' 
-                          and implicitly declares/references the type: `(int,string) -> void'
-
+    front by a variable/command line argument.
 
 ==============================================================================================
 Vocabulary:
@@ -221,10 +218,9 @@ Block as values:
     need to drop unused expression values:
     x := 0
     while x < 100000 {
-        1
+        1 # <--- this will just fill the data stack with 1s in some cases
         x = x + 1
     }
-    this will just fill the data stack with 1s
 
     if (for m.params {
         if it.type == params[it_idx].type
@@ -407,3 +403,13 @@ Oct 31, 2017:
     + Fixed allocating an array of objects
     + Property chaining now works as expected
     + Factored some duplicated code in Ast_To_IR
+
+Nov 1, 2017:
+    + Improved lexing/parsing by contextually inserting semicolons into the token list.
+    Expressions should end on line break and a `\' before a line break should allow the
+    expression to continue on to the next line.
+    + Implemented a very basic interactive debugger for the `switch' dispatch variant of
+    the VM. It provides some useful tools like disassembling instructions, stepping through
+    code, continuing until return, continuing until the next breakpoint, and inspecting the
+    stack
+    + Hooked up a builtin `pfn breakpoint() -> void' to trigger breakpoints in code.
