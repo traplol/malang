@@ -13,10 +13,16 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
 template<typename ObjectType>
 struct Value
 {
+    static constexpr uint64_t max_double  = 0x0000000000000000;
+    static constexpr uint64_t fixnum_tag  = 0x0000000000000000;
+    static constexpr uint64_t object_tag  = 0x0000000000000000;
+    static constexpr uint64_t pointer_tag = 0x0000000000000000;
+    /*
     static constexpr uint64_t max_double  = 0xfff8000000000000;
     static constexpr uint64_t fixnum_tag  = 0xfff9000000000000;
     static constexpr uint64_t object_tag  = 0xfffa000000000000;
     static constexpr uint64_t pointer_tag = 0xfffb000000000000;
+    */
 
     inline Value()
     {
@@ -53,19 +59,22 @@ struct Value
     template<uint64_t tag>
     inline bool is() const
     {
-        return (v.as_bits & tag) == tag;
+        return true;
+        //return (v.as_bits & tag) == tag;
     }
 
     template<typename T, uint64_t tag>
     inline T as() const
     {
-        assert(is<tag>());
-        return reinterpret_cast<T>(v.as_bits & ~tag);
+        //assert(is<tag>());
+        //return reinterpret_cast<T>(v.as_bits & ~tag);
+        return reinterpret_cast<T>(v.as_bits);
     }
 
     inline bool is_double() const
     {
-        return v.as_bits < max_double;
+        return true;
+        //return v.as_bits < max_double;
     }
 
     inline bool is_fixnum() const
@@ -91,16 +100,20 @@ struct Value
 
     inline int32_t as_fixnum() const
     {
-        return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
+        return static_cast<int32_t>(v.as_bits);
+        //assert(is_fixnum());
+        //return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
     }
 
     inline ObjectType *as_object() const
     {
+        assert(is_object());
         return as<ObjectType*, object_tag>();
     }
 
     inline void *as_pointer() const
     {
+        assert(is_object());
         return as<void*, pointer_tag>();
     }
 

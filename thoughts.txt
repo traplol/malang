@@ -13,9 +13,10 @@ TODO:
     barfs out by default so we can test against execution output.
     + Generational GC
     + Since it is all known at compile time, it should be possible to make a table of where
-    every reference is on the stack at any given type which would allow the removal of
-    NaN-boxing and have no overhead from unboxing. This would also allow for full 64-bit
-    integers.
+    every reference will be on the stack at any given time which would allow the removal of
+    NaN-boxing and the small overhead from unboxing. This would also allow for full 64-bit
+    integers. Cursory testing(no object allocation) shows this as being roughly a 2-10%
+    speed increase
     
 
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up

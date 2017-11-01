@@ -13,8 +13,7 @@ prime :: fn (n: int) -> bool {
 
 i := 0
 while i < 1000000 {
-    if prime(i)
-        println(i)
-    i = i + 1
+    prime(i)
+    i += 1
 }
 
