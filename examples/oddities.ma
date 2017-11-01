@@ -8,8 +8,8 @@ extend int {
 # currently the parser sees the following as one expression instead of two:
 #    println(1 + 2)(3 * 2).print()
 # as if println is returning a function that could be called
-println(1 + 2)
 
+println(1 + 2)
 (3 * 2).print()
 
 # If you say line endings terminate expressions then you encounter this other
