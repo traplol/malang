@@ -7,19 +7,22 @@
 
 #include <stdio.h>
 
-static void println_int(Malang_VM &vm)
+static
+void println_int(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
     printf("%d\n", top);
 }
 
-static void println_object(Malang_VM &vm)
+static
+void println_object(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_object();
     printf("%s\n", top->type->name().c_str());
 }
 
-static void println_buffer(Malang_VM &vm)
+static
+void println_buffer(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_object();
     assert(top->object_tag == Buffer);
@@ -27,13 +30,15 @@ static void println_buffer(Malang_VM &vm)
     printf("%.*s\n", buffer->size, buffer->data);
 }
 
-static void println_double(Malang_VM &vm)
+static
+void println_double(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_double();
     printf("%lf\n", top);
 }
 
-static void println_bool(Malang_VM &vm)
+static
+void println_bool(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
     if (top == 0)
@@ -42,7 +47,8 @@ static void println_bool(Malang_VM &vm)
         printf("true\n");
 }
 
-static void println_string(Malang_VM &vm)
+static
+void println_string(Malang_VM &vm)
 {
     static bool once = true;
     static uint16_t length_idx = 0, intern_data_idx = 0;
@@ -69,23 +75,34 @@ static void println_string(Malang_VM &vm)
     printf("%.*s\n", len, static_cast<char*>(data));
 }
 
-static void stack_trace(Malang_VM &vm)
+static
+void stack_trace(Malang_VM &vm)
 {
     vm.stack_trace();
 }
 
-static void gc_pause(Malang_VM &vm)
+static
+void gc_pause(Malang_VM &vm)
 {
     vm.gc->disable_automatic();
 }
-static void gc_resume(Malang_VM &vm)
+static
+void gc_resume(Malang_VM &vm)
 {
     vm.gc->enable_automatic();
 }
-static void gc_run(Malang_VM &vm)
+static
+void gc_run(Malang_VM &vm)
 {
     vm.gc->manual_run();
 }
+
+static
+void breakpoint(Malang_VM &vm)
+{
+    vm.breaking = true;
+}
+
 
 void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, Native_Code native_code, const std::vector<Type_Info*> &param_types, Type_Info *return_type)
 {
@@ -109,4 +126,5 @@ void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
     make_builtin(b, t, "gc_pause",    gc_pause,    {}, t.get_void());
     make_builtin(b, t, "gc_resume",   gc_resume,   {}, t.get_void());
     make_builtin(b, t, "gc_run",      gc_run,      {}, t.get_void());
+    make_builtin(b, t, "breakpoint",  breakpoint,      {}, t.get_void());
 }

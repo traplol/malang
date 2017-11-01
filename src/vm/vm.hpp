@@ -26,6 +26,7 @@ struct Malang_VM
     std::vector<Native_Code> natives;
     std::vector<String_Constant> string_constants;
     std::vector<Malang_Object*> string_constants_objects;
+    bool breaking;
 
     uintptr_t locals_frames_top;
     uintptr_t call_frames_top;

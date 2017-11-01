@@ -4,10 +4,12 @@
 #include <algorithm>
 #include <string.h>
 #include <sstream>
+#include <iostream>
 #include "vm.hpp"
 #include "instruction.hpp"
 #include "runtime/gc.hpp"
 #include "runtime.hpp"
+#include "../codegen/disassm.hpp"
 
 Malang_VM::~Malang_VM()
 {
@@ -25,9 +27,9 @@ Malang_VM::Malang_VM(Type_Map *types,
                      size_t gc_run_interval, size_t max_num_objects)
     : natives(natives)
     , string_constants(string_constants)
+    , breaking(false)
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
-
     auto str_ty = types->get_string();
     for (auto &&sc : string_constants)
     {
@@ -231,11 +233,92 @@ Malang_Value fetch_value(byte *p)
     return *reinterpret_cast<Malang_Value*>(p);
 }
 
+static
+void dbg_dis(Malang_VM &vm, byte *ip, int n)
+{
+    std::string str;
+    for (int i = 0; i < n; ++i)
+    {
+        auto offset = ip - vm.code.data();
+        ip = Disassembler::dis1(ip, offset, str);
+        printf("%s\n", str.c_str());
+    }
+}
 
-static void run_code(Malang_VM &vm)
+static
+void debugger(Malang_VM &vm, byte *ip)
+{
+    static std::string last_cmd;
+    static int step_n;
+    static bool done = false;
+    if (done) { return; }
+    if (step_n > 0)
+    {
+        dbg_dis(vm, ip, 1);
+        --step_n;
+        return;
+    }
+    std::string line, cmd;
+    while (true)
+    {
+        printf(">>> ");
+        if (!std::getline(std::cin, line))
+        {
+            done = true;
+            break;
+        }
+        int arg0 = 0, arg1 = 0, arg2 = 0;
+        if (std::all_of(line.begin(), line.end(), isspace))
+        {
+            cmd = last_cmd;
+        }
+        else
+        {
+            cmd = line;
+        }
+        last_cmd = cmd;
+        if (!cmd.empty())
+        {
+            char cmd_buf[128]{0};
+            sscanf(cmd.data(), "%s %d %d %d", cmd_buf, &arg0, &arg1, &arg2);
+            std::string cmd_str(cmd_buf);
+            if (cmd_str == "s" || cmd_str == "step")
+            {
+                step_n = arg0-1;
+                dbg_dis(vm, ip, 1);
+                return;
+            }
+            else if (cmd_str == "run")
+            {
+                vm.breaking = false;
+                return;
+            }
+            else if (cmd_str == "strace")
+            {
+                vm.stack_trace();
+            }
+            else if (cmd_str == "dis")
+            {
+                auto n = arg0 > 0 ? arg0 : 1;
+                dbg_dis(vm, ip, n);
+            }
+            else if (cmd_str == "local")
+            {
+                printf("local: %d, %d, %d\n", arg0, arg1, arg2);
+            }
+            else if (cmd_str == "stack")
+            {
+                printf("stack: %d, %d, %d\n", arg0, arg1, arg2);
+            }
+        }
+    }
+}
+
+static
+void run_code(Malang_VM &vm)
 {
 #ifndef USE_COMPUTED_GOTO
-#define USE_COMPUTED_GOTO 1
+#define USE_COMPUTED_GOTO 0
 #endif
 
 #if USE_COMPUTED_GOTO
@@ -269,6 +352,7 @@ static void run_code(Malang_VM &vm)
 
 #define EXEC                                       \
     auto ins = static_cast<Instruction>(fetch8(ip));    \
+    if (vm.breaking) { debugger(vm, ip); }                \
     switch (ins)
   
 #define HALT                                            \
