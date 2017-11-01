@@ -110,6 +110,20 @@ void IR_To_Code::visit(IR_Method &n)
     NOT_IMPL;
 }
 
+static
+void backfill_label(Codegen *cg, IR_Label *label)
+{
+    if (label->is_resolved())
+    {
+        cg->push_back_call_code(label->address());
+    }
+    else
+    {
+        auto idx = cg->push_back_call_code();
+        label->please_backfill_on_resolve(cg, idx);
+    }
+}
+
 void IR_To_Code::visit(IR_Indexable &n)
 {
     convert_one(*n.thing);
@@ -134,16 +148,7 @@ void IR_To_Code::visit(IR_Indexable &n)
             }
             else
             {
-                auto label = method->code_function();
-                if (label->is_resolved())
-                {
-                    cg->push_back_call_code(label->address());
-                }
-                else
-                {
-                    auto idx = cg->push_back_call_code();
-                    label->please_backfill_on_resolve(cg, idx);
-                }
+                backfill_label(cg, method->code_function());
             }
         }
         else
@@ -400,16 +405,7 @@ void IR_To_Code::visit(IR_Assignment &n)
                 }
                 else
                 {
-                    auto label = method->code_function();
-                    if (label->is_resolved())
-                    {
-                        cg->push_back_call_code(label->address());
-                    }
-                    else
-                    {
-                        auto idx = cg->push_back_call_code();
-                        label->please_backfill_on_resolve(cg, idx);
-                    }
+                    backfill_label(cg, method->code_function());
                 }
             }
             else
@@ -492,16 +488,7 @@ void IR_To_Code::binary_op_helper(IR_Binary_Operation &bop)
         {
             convert_one(*bop.lhs);
             convert_one(*bop.rhs);
-            auto label = m->code_function();
-            if (label->is_resolved())
-            {
-                cg->push_back_call_code(label->address());
-            }
-            else
-            {
-                auto idx = cg->push_back_call_code();
-                label->please_backfill_on_resolve(cg, idx);
-            }
+            backfill_label(cg, m->code_function());
         }
     }
 }
@@ -761,16 +748,7 @@ void IR_To_Code::unary_op_helper(IR_Unary_Operation &uop)
         else
         {
             convert_one(*uop.operand);
-            auto label = m->code_function();
-            if (label->is_resolved())
-            {
-                cg->push_back_call_code(label->address());
-            }
-            else
-            {
-                auto idx = cg->push_back_call_code();
-                label->please_backfill_on_resolve(cg, idx);
-            }
+            backfill_label(cg, m->code_function());
         }
     }
 }
@@ -839,10 +817,7 @@ void IR_To_Code::visit(IR_Allocate_Object &n)
     }
     else
     {
-        // @FixMe: make this backfill, this is a common occurence and can be factored.
-        auto init_code = init->code_function();
-        assert(init_code->is_resolved());
-        cg->push_back_call_code(init_code->address());
+        backfill_label(cg, init->code_function());
     }
     // however the constructor does not return the object back so we much duplicate the
     // reference to it
@@ -857,10 +832,7 @@ void IR_To_Code::visit(IR_Allocate_Object &n)
     }
     else
     {
-        // @FixMe: make this backfill, this is a common occurence and can be factored.
-        auto ctor_code = n.which_ctor->code_function();
-        assert(ctor_code->is_resolved());
-        cg->push_back_call_code(ctor_code->address());
+        backfill_label(cg, n.which_ctor->code_function());
     }
     // and now we are left with 1 object reference on the stack
 }
