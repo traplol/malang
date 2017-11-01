@@ -23,3 +23,9 @@ x :=   1
 # x := 1 <END>
 # positive 2 <END>
 # positive 3 <END>
+
+
+# So the question becomes how do you parse this? Allow line endings to terminate
+# expression and sometimes have weird bugs, or have a sigil (like a semicolon)
+# terminate expressions and allow them to run on forever until a semicolon is
+# encountered. Personally I don't want semicolons
