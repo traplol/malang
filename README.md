@@ -9,11 +9,11 @@ in development but already it features:
 + block expressions
 + bound/named functions that support parameter overloading
 + extend any type with operators and methods
++ user-defined structures
 
 Planned features:
 
 + strong type aliasing
-+ user-defined structures
 + multiple return values
 + a module system
 + string interpolation
