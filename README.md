@@ -67,10 +67,14 @@ c := if true "yep" else "nope"
 ### Flow control
 An if/else block may be used as a value if the last expression for both legs is not ```void```
 ```
-if true or false
+if one
   println("hello world")
-else
+else if two or three
   println("wat")
+else if four or five
+  println("woo!")
+else
+  println("hmm")
 
 x := if get_condition() "yes!" else "nope"
 
