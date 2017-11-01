@@ -142,9 +142,9 @@ struct Malang_VM
         return data;
     }
     inline
-    Malang_Value peek_data()
+    Malang_Value peek_data(int n = 0)
     {
-        auto data = data_stack[data_top-1];
+        auto data = data_stack[data_top-1-n];
         return data;
     }
 };

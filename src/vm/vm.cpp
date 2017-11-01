@@ -250,8 +250,21 @@ void debugger(Malang_VM &vm, byte *ip)
 {
     static std::string last_cmd;
     static int step_n;
-    static bool done = false;
+    static bool done = false, waiting_for_return = false;
     if (done) { return; }
+    if (waiting_for_return)
+    {
+        dbg_dis(vm, ip, 1);
+        auto ins = static_cast<Instruction>(fetch8(ip));
+        if (ins == Instruction::Return || ins == Instruction::Return_Fast)
+        {
+            waiting_for_return = false;
+        }
+        else
+        {
+            return;
+        }
+    }
     if (step_n > 0)
     {
         dbg_dis(vm, ip, 1);
@@ -280,9 +293,25 @@ void debugger(Malang_VM &vm, byte *ip)
         if (!cmd.empty())
         {
             char cmd_buf[128]{0};
-            sscanf(cmd.data(), "%s %d %d %d", cmd_buf, &arg0, &arg1, &arg2);
+            sscanf(cmd.data(), "%s %x %x %x", cmd_buf, &arg0, &arg1, &arg2);
             std::string cmd_str(cmd_buf);
-            if (cmd_str == "s" || cmd_str == "step")
+            if (cmd_str == "help")
+            {
+                printf("Command arguments are in hex\n");
+                printf("help               display this message\n");
+                printf("s(tep) n=1         step through n instructions\n");
+                printf("run                runs until next breakpoint\n");
+                printf("ret(urn)           runs until next return\n");
+                printf("st(race)           prints a stack trace\n");
+                printf("dis n=1 a=HERE     disassembles n instructions at a(ddress)\n");
+                printf("local n=0          prints local variable n\n");
+                printf("stack n=0          prints stack variable n\n");
+                printf("to(p)              prints top of stack\n");
+                printf("se(cond)           prints second of stack\n");
+                printf("th(ird)            prints third of stack\n");
+                printf("fo(urth)           prints fourth of stack\n");
+            }
+            else if (cmd_str == "s" || cmd_str == "step")
             {
                 step_n = arg0-1;
                 dbg_dis(vm, ip, 1);
@@ -293,22 +322,50 @@ void debugger(Malang_VM &vm, byte *ip)
                 vm.breaking = false;
                 return;
             }
-            else if (cmd_str == "strace")
+            else if (cmd_str == "ret" || cmd_str == "return")
+            {
+                waiting_for_return = true;
+                return;
+            }
+            else if (cmd_str == "st" || cmd_str == "strace")
             {
                 vm.stack_trace();
             }
             else if (cmd_str == "dis")
             {
                 auto n = arg0 > 0 ? arg0 : 1;
-                dbg_dis(vm, ip, n);
+                if (arg1)
+                {
+                    dbg_dis(vm, vm.code.data() + arg1, n);
+                }
+                else
+                {
+                    dbg_dis(vm, ip, n);
+                }
             }
             else if (cmd_str == "local")
             {
-                printf("local: %d, %d, %d\n", arg0, arg1, arg2);
+                printf("LOCAL %x: %s\n", arg0, to_string(vm.get_local(arg0)).c_str());
             }
             else if (cmd_str == "stack")
             {
-                printf("stack: %d, %d, %d\n", arg0, arg1, arg2);
+                printf("STACK %x: %s\n", arg0, to_string(vm.peek_data(arg0)).c_str());
+            }
+            else if (cmd_str == "to" || cmd_str == "top")
+            {
+                printf("STACK 0: %s\n", to_string(vm.peek_data(0)).c_str());
+            }
+            else if (cmd_str == "se" || cmd_str == "second")
+            {
+                printf("STACK 1: %s\n", to_string(vm.peek_data(1)).c_str());
+            }
+            else if (cmd_str == "th" || cmd_str == "third")
+            {
+                printf("STACK 2: %s\n", to_string(vm.peek_data(2)).c_str());
+            }
+            else if (cmd_str == "fo" || cmd_str == "fourth")
+            {
+                printf("STACK 3: %s\n", to_string(vm.peek_data(3)).c_str());
             }
         }
     }
