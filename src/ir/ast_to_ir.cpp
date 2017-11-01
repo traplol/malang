@@ -210,7 +210,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
     const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
-    locality->push(old_fn == nullptr);
+    locality->push();
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
     cur_fn_ep = fn_body;
