@@ -64,6 +64,29 @@ b := returns_int()
 c := if true "yep" else "nope"
 ```
 
+### Flow control
+An if/else block may be used as a value if both legs' last expression is not ```void```
+```
+if true or false
+  println("hello world")
+else
+  println("wat")
+
+x := if get_condition() "yes!" else "nope"
+
+
+```
+
+While loops are the only looping construct at the moment
+```
+# poor man's for loop
+i := 0
+while i < n {
+  do_thing(i)
+  i += 1
+}
+```
+
 ### Functions
 Functions can be defined and bound to a name, assigned to a variable, or used as a value in an expression. The 
 main difference between binding to a name and to a variable is a function bound to a name can share that name
@@ -102,6 +125,20 @@ fib := fn(n: int) -> int {
 
 ```
 
+### Arrays and buffers
+Arrays consist of values/references and ```buffer```s are blocks of memory with byte-index ganularity.
+Both are special because their ```length```, ```[]``` and ```[]=``` properties are optimized into their
+own respective malangVM instructions. Both are bounds checked but unchecked instructions do exist for
+when the compiler can be certain an index cannot possibly be out of range.
+```
+n := 123
+nums := [n]int  # dynamically allocate 123 ints
+i := 0
+while i < nums.length {
+    nums[i] = i * i
+    i += 1
+}
+```
 
 ### User defined types
 
