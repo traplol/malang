@@ -61,6 +61,7 @@ using Bound_Functions = std::vector<Bound_Function>;
 
 struct Bound_Function_Map
 {
+    ~Bound_Function_Map();
     bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native);
     bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, IR_Label *code);
     bool add(const std::string &name, Function_Type_Info *fn_type, Native_Code native);
@@ -76,6 +77,7 @@ private:
     using Name_To_Params_To_Bound_Function_Map = std::map<std::string, Params_To_Function_Map>;
     Name_To_Params_To_Bound_Function_Map m_free_functions;
     std::vector<Native_Code> m_all_natives;
+    std::vector<Native_Function*> m_natives_to_free;
 };
 
 #endif /* MALANG_IR_BOUND_FUNCTION_MAP_HPP */

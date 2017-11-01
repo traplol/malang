@@ -1,5 +1,13 @@
 #include "bound_function_map.hpp"
 
+Bound_Function_Map::~Bound_Function_Map()
+{
+    for (auto &&fn : m_natives_to_free)
+    {
+        delete fn;
+    }
+}
+
 bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native)
 {
     assert(to_type);
@@ -12,7 +20,6 @@ bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name,
     if (!to_type->add_method(method))
     {
         printf("Couldn't add method %s to %s\n", name.c_str(), to_type->name().c_str());
-        delete pfn;
         delete method;
         abort();
         //return false;
@@ -55,6 +62,7 @@ bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_typ
         auto pfn = new Native_Function{name, index, native, fn_type};
         m_free_functions[name][fn_type->parameter_types()] = Bound_Function(pfn);
         m_all_natives.push_back(native);
+        m_natives_to_free.push_back(pfn);
     }
     else
     {   // first
@@ -62,6 +70,7 @@ bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_typ
         auto pfn = new Native_Function{name, index, native, fn_type};
         m_free_functions[name] = {{fn_type->parameter_types(), Bound_Function(pfn)}};
         m_all_natives.push_back(native);
+        m_natives_to_free.push_back(pfn);
     }
     return true;
 }
