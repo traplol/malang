@@ -1,4 +1,3 @@
-
 extend int {
     fn print() {
         println(self)

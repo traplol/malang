@@ -21,7 +21,7 @@ struct Parse_Test
 {
     std::string input;
     std::vector<std::string> expected;
-    Parse_Test(const std::string &input, const std::string &expected)
+    Parse_Test(const std::string &input, const char *expected)
         : input(input)
         {
             this->expected.push_back(expected);
@@ -161,7 +161,7 @@ void parse_tests()
          "}"},
 
         {"fn () -> int {\n"
-         "    x := 5;\n"
+         "    x := 5\n"
          "}",
          "fn () -> int {\n"
          "    x : int = 5\n"
@@ -364,6 +364,25 @@ void parse_tests()
          "        self.z = z\n"
          "    }\n"
          "}"},
+
+        {"x := 1\n"
+         "   + 2\n"
+         "   + 3",
+         {"x : int = 1", "(+2)", "(+3)"}},
+
+        {"x := 1 \\ \n"
+         "   + 2 \\ \n"
+         "   + 3",
+         "x : int = ((1 + 2) + 3)"},
+
+        {"println(1+2)\n"
+         "(3*4).print()",
+         {"println((1 + 2))", "(3 * 4).print()"}},
+
+        {"println(1+2) \\ \n"
+         "(3*4).print()",
+         "println((1 + 2))((3 * 4)).print()"},
+
          
     };
     int total_run = 0;
@@ -396,32 +415,6 @@ void parse_tests()
         }
     }
     printf(" %d/%d\n", total_run-errors, total_run);
-}
-
-void parse_one()
-{
-    Parse_Test pt =
-        {"while 1 { }",
-         "while 1 {\n"
-         "}"};
-    auto actual = get_parse_test_output(pt);
-    if (actual.size() != pt.expected.size())
-    {
-        printf("!(a:%i,e:%i)", (int)actual.size(), (int)pt.expected.size());
-    }
-    auto n = std::min(actual.size(), pt.expected.size());
-    for (size_t i = 0; i < n; ++i)
-    {
-        if (actual[i] == pt.expected[i])
-        {
-        printf(".");
-        }
-        else
-        {
-            printf("\nexpected: %s\nactual:   %s\n",
-                    pt.expected[i].c_str(), actual[i].c_str());
-        }
-    }
 }
 
 void codegen_stuff();

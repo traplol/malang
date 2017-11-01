@@ -22,29 +22,33 @@ Ast Parser::parse(Source_Code *src_code)
     return ast;
 }
 
-const Token *Parser::peek(size_t n) const
+const Token *Parser::peek(int n) const
 {
-    if (lex_idx + n >= lexer.tokens.size())
+    if (lex_idx + n >= (int)lexer.tokens.size())
     {
         return nullptr;
+    }
+    if (lex_idx + n < 0)
+    {
+        return 0;
     }
     return &lexer.tokens[lex_idx];
 }
 
-Token_Id Parser::peek_id(size_t n) const
+Token_Id Parser::peek_id(int n) const
 {
     auto tk = peek(n);
     return tk ? tk->id() : Token_Id::Invalid;
 }
 
-void Parser::skip(size_t n)
+void Parser::skip(int n)
 {
     lex_idx += n;
 }
 
 bool Parser::accept(Token &out, const std::vector<Token_Id> &ids)
 {
-    if (lex_idx >= lexer.tokens.size())
+    if (lex_idx >= (int)lexer.tokens.size())
     {
         return false;
     }
@@ -66,7 +70,7 @@ bool Parser::accept(const std::vector<Token_Id> &ids)
 }
 bool Parser::expect(Token &out, Token_Id id)
 {
-    if (lex_idx >= lexer.tokens.size())
+    if (lex_idx >= (int)lexer.tokens.size())
     {
         auto &last_tk = lexer.tokens[lexer.tokens.size()-1];
         report_error(last_tk, "Expected token %s but there are no more tokens.\n", to_string(id).c_str());
@@ -802,6 +806,10 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
 {
     SAVE;
     Token token;
+    if (parser.accept(token, { Token_Id::StmtTerminator }))
+    {
+        PARSE_FAIL;
+    }
     if (parser.accept(token, { Token_Id::Open_Paren }))
     {
         auto expr = parse_expression(parser);
@@ -1145,6 +1153,7 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
     auto type_def = uptr<Type_Def_Node>(new Type_Def_Node(type_tk.src_loc(), type));
     while (true)
     {
+        parser.accept({Token_Id::StmtTerminator});
         if (auto ctor = parse_ctor(parser))
         {
             type_def->constructors.push_back(ctor.release());
@@ -1192,7 +1201,7 @@ static uptr<Extend_Node> parse_extend(Parser &parser)
     Ast_Bound_Functions body;
     while (true)
     {
-        // @FixMe: ensure method signatures are unique
+        parser.accept({Token_Id::StmtTerminator});
         if (auto bound_fn = parse_bound_fn(parser))
         {
             body.push_back(bound_fn.release());
@@ -1212,55 +1221,49 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     //     expression statement
     //     definition statement
 
-    //while (parser.accept({Token_Id::Semicolon}))
-    //{
-    //    // eat stray semicolons
-    //}
     SAVE;
+    while (parser.accept({Token_Id::StmtTerminator}))
+    {
+        // eat stray semicolons
+    }
     if (auto bound = parse_bound_fn(parser))
     {
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return bound;
     }
     if (auto decl_ass = parse_decl_assign(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return decl_ass;
     }
     if (auto decl_con = parse_decl_constant(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return decl_con;
     }
     if (auto decl = parse_declaration(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return decl;
     }
     if (auto assign = parse_assignment(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return assign;
     }
     if (auto retn = parse_return(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return retn;
     }
     if (auto whil = parse_while(parser))
     {
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return whil;
     }
     if (auto expr = parse_expression(parser))
     {
-        //CHECK_OR_FAIL(parser.expect(Token_Id::Semicolon));
-        parser.accept({Token_Id::Semicolon});
+        parser.accept({Token_Id::StmtTerminator});
         return expr;
     }
     PARSE_FAIL;

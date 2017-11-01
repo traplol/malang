@@ -48,7 +48,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(String);
         SET_TK_TYPE_MAP(Equals);
         SET_TK_TYPE_MAP(Colon);
-        SET_TK_TYPE_MAP(Semicolon);
+        SET_TK_TYPE_MAP(StmtTerminator);
         SET_TK_TYPE_MAP(Open_Paren);
         SET_TK_TYPE_MAP(Close_Paren);
         SET_TK_TYPE_MAP(Open_Square);
@@ -108,6 +108,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_alias);
         SET_TK_TYPE_MAP(K_break);
         SET_TK_TYPE_MAP(K_continue);
+        SET_TK_TYPE_MAP(Back_Slash);
 #undef SET_TK_TYPE_MAP
         // this is a runtime check that will warn if we forgot any
         for (size_t i = 0; i < static_cast<size_t>(Token_Id::NUM_TOKEN_TYPES); ++i)
@@ -231,6 +232,31 @@ bool Lexer::lex(Source_Code *src)
         {
             while (src->peek() != '\n' && src->peek() != src->end_of_file)
                 src->next();
+            continue;
+        }
+        if (src->peek() == '\n')
+        {
+            if (!tokens.empty())
+            {
+                auto prev = tokens[tokens.size()-1];
+                if (prev.id() == Token_Id::Back_Slash)
+                {
+                    // no need for the back slash to be in the token stream
+                    tokens.pop_back();
+                }
+                else if (Lexer::is_replace_newline_with_semicolon_prev(prev.id()))
+                {
+                    // look ahead and make sure the next token would be ok with inserting
+                    // a semicolon
+                    if (!Lexer::should_not_insert_semicolon_next(src))
+                    {
+                        tokens.push_back(
+                            Token(Token_Id::StmtTerminator, ";", src->curr_src_loc()));
+                    }
+                }
+            }
+            src->next();
+            continue;
         }
         if (is_wspace(src->peek()))
         {
@@ -254,7 +280,7 @@ bool Lexer::lex(Source_Code *src)
             continue;
         }
 #define PUSH_KEY_IDENT(str, id) \
-        if (match_ident(src, (str))) \
+        if (match_ident(src, (str), 0))           \
         { \
             tokens.push_back(Token(Token_Id::id, (str), src->curr_src_loc())); \
             src->advance(sizeof(str) - 1); \
@@ -339,7 +365,7 @@ continue; \
         PUSH_TOKEN_1C("%", Mod);
         PUSH_TOKEN_1C("=", Equals);
         PUSH_TOKEN_1C(":", Colon);
-        PUSH_TOKEN_1C(";", Semicolon);
+        PUSH_TOKEN_1C(";", StmtTerminator);
         PUSH_TOKEN_1C("(", Open_Paren);
         PUSH_TOKEN_1C(")", Close_Paren);
         PUSH_TOKEN_1C("[", Open_Square);
@@ -352,18 +378,19 @@ continue; \
         PUSH_TOKEN_1C("*", Star);
         PUSH_TOKEN_1C("/", Slash);
         PUSH_TOKEN_1C(".", Dot);
+        PUSH_TOKEN_1C("\\", Back_Slash);
 
-        src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c'\n", src->peek());
+        src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c' (%x)\n", src->peek(), (int)src->peek());
         return false;
     }
     return true;
 }
 
-bool Lexer::match_ident(Source_Code *code, const std::string &ident)
+bool Lexer::match_ident(Source_Code *code, const std::string &ident, int offset)
 {
     for (size_t i = 0; i < ident.size(); ++i)
     {
-        if (code->peek(i) != ident[i])
+        if (code->peek(i+offset) != ident[i])
         {
             return false;
         }
@@ -404,4 +431,41 @@ int Lexer::to_escaped(int c)
         case 'n': return '\n';
         case 'r': return '\r';
     }
+}
+
+bool Lexer::is_replace_newline_with_semicolon_prev(Token_Id tk)
+{
+    switch (tk)
+    {
+        default: return false;
+            // could put K_return in here too
+        case Token_Id::Identifier:
+        case Token_Id::Integer:
+        case Token_Id::Real:
+        case Token_Id::String:
+        case Token_Id::Close_Paren:
+        case Token_Id::Close_Curly:
+        case Token_Id::Close_Square:
+        case Token_Id::K_return:
+            return true;
+    }
+}
+
+
+bool Lexer::should_not_insert_semicolon_next(Source_Code *src)
+{
+    int i = 0;
+    while (src->peek(i) != src->end_of_file
+           && Lexer::is_wspace(src->peek(i)))
+    {
+        ++i;
+    }
+    if (Lexer::match_ident(src, "else", i))
+    {
+        return true;
+    }
+    if (src->peek() == '{') {
+        return true;
+    }
+    return false;
 }

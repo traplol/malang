@@ -12,21 +12,23 @@ struct Parser
     Parser(Type_Map *types) : types(types) {}
     Ast parse(const std::string &filename);
     Ast parse(Source_Code *src_code);
-    Token_Id peek_id(size_t n=0) const;
-    const Token *peek(size_t n=0) const;
-    void skip(size_t n=1);
+    Token_Id peek_id(int n=0) const;
+    const Token *peek(int n=0) const;
+    void skip(int n=1);
     bool accept(Token &out, const std::vector<Token_Id> &ids);
     bool accept(const std::vector<Token_Id> &ids);
     bool expect(Token &out, Token_Id id);
     bool expect(Token_Id id);
+    void handle_newlines();
+    void consume_newlines();
     void report_error(const Token &token, const char *fmt, ...);
     void report_debug(const Token &token, const char *fmt, ...) const;
 
     Type_Map *types;
-    size_t errors;
+    int errors;
     Source_Code *code;
     Lexer lexer;
-    size_t lex_idx;
+    int lex_idx;
     Type_Info *is_extending;
 };
 

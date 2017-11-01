@@ -313,10 +313,4 @@ void Source_Code::vreport_at_src_loc(const char *type, const Source_Location &sr
         printf("-");
     }
     printf("\n\n");
-    //auto char_idx = src_loc.char_no - 1;
-    //while (char_idx-- > 0)
-    //{
-    //    printf("~");
-    //}
-    //printf("^\n\n");
 }

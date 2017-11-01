@@ -14,7 +14,7 @@ enum class Token_Id : size_t
     String,
     Equals,             // =
     Colon,              // :
-    Semicolon,          // ;
+    StmtTerminator,     // ;
     Open_Paren,         // (
     Close_Paren,        // )
     Open_Square,        // [
@@ -78,6 +78,8 @@ enum class Token_Id : size_t
     K_break,            // break
     K_continue,         // continue
 
+    Back_Slash,         // "\\"
+
     NUM_TOKEN_TYPES
 };
 
@@ -116,12 +118,14 @@ struct Lexer
 
     bool lex(Source_Code *code);
     void dump();
-    static bool match_ident(Source_Code *code, const std::string &ident);
+    static bool match_ident(Source_Code *code, const std::string &ident, int offset);
     static bool is_ident_start_char(int c);
     static bool is_ident_char(int c);
     static bool is_digit(int c);
     static bool is_wspace(int c);
     static int to_escaped(int c);
+    static bool is_replace_newline_with_semicolon_prev(Token_Id tk);
+    static bool should_not_insert_semicolon_next(Source_Code *src);
 };
 
 

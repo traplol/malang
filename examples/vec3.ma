@@ -33,12 +33,20 @@ type Vec3 = {
     z := self.z - other.z
     return Vec3(x, y, z)
   }
+
+  fn print() {
+    println(x)
+    println(y)
+    println(z)
+  }
 }
 
-a := Vec3() # creates a Vec3 with the default constructor
-a.x = 999.0 # property access
-b := Vec3(1.5, 2.3, 3.14)
-c := a + b
-println(c.x) # 1000.5
-println(c.y) # 2.3
-println(c.z) # 3.14
+fn println(v3: Vec3) {
+  println(v3.x)
+  println(v3.y)
+  println(v3.z)
+}
+
+a := Vec3(1.2, 3.4, 5.5)
+println(a)
+(a * 2.0).print()
