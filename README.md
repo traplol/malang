@@ -65,7 +65,7 @@ c := if true "yep" else "nope"
 ```
 
 ### Flow control
-An if/else block may be used as a value if both legs' last expression is not ```void```
+An if/else block may be used as a value if the last expression for both legs is not ```void```
 ```
 if true or false
   println("hello world")
