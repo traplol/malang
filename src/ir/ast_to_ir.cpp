@@ -907,19 +907,54 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     locality->push();
     is_extending = n.type;
 
+
+    for (auto &&method : n.methods)
+    {   // Declare methods so their ordering is agnostic
+        assert(method->is_bound()); // parsing messed up if this fails...
+        auto meth_info = new Method_Info{method->bound_name, method->fn_type};
+        if (!is_extending->add_method(meth_info))
+        {
+            method->src_loc.report("error", "Method `%s' already defined for type `%s'",
+                                   method->bound_name.c_str(), is_extending->name().c_str());
+            abort();
+        }
+    }
+    if (n.constructors.empty())
+    {
+        auto empty_void_fn = ir->types->declare_function({}, ir->types->get_void(), false);
+        auto default_ctor = new Constructor_Info{empty_void_fn};
+        is_extending->add_constructor(default_ctor);
+    }
+    else
+    {
+        for (auto &&ctor : n.constructors)
+        {   // Declare constructors so their ordering is agnostic
+            auto ctor_info = new Constructor_Info{ctor->fn_type};
+            if (!is_extending->add_constructor(ctor_info))
+            {
+                ctor->src_loc.report("error", "Constructor `%s' already defined for type `%s'",
+                                     ctor->fn_type->name().c_str(), is_extending->name().c_str());
+                abort();
+            }
+        }
+    }
     std::vector<IR_Node*> type_definition;
 
     cur_symbol_scope = Symbol_Scope::Field;
     auto init = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(init);
     auto branch_over_body = ir->alloc<IR_Branch>(n.src_loc, init->end());
+    auto alloc = ir->alloc<IR_Allocate_Locals>(n.src_loc, 1);
+    init->body().push_back(alloc);
+    auto store_self =
+        ir->alloc<IR_Assign_Top>(
+            n.src_loc,
+            ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), 0),
+            Symbol_Scope::Local);
+    init->body().push_back(store_self);
 
     for (auto &&field : n.fields)
-    {   // These all eventually turn into a Store_Field <n> and the object being constructed
-        // is at the top of the stack when we enter here so we might as well make the
-        // hand-written code a little more optimized
-        auto dup = ir->alloc<IR_Duplicate_Result>(n.src_loc);
-        init->body().push_back(dup);
+    {
 
         if (auto decl_assign = dynamic_cast<Decl_Assign_Node*>(field))
         {
@@ -971,36 +1006,13 @@ void Ast_To_IR::visit(Type_Def_Node &n)
             abort();
         }
     }
-    // no locals so we gotta go fast!
-    auto retn_fast = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), false);
-    init->body().push_back(retn_fast);
+    auto retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), true);
+    init->body().push_back(retn);
     auto init_fn_ty = ir->types->declare_function({is_extending}, is_extending, false);
     auto init_ctor = new Constructor_Info{init_fn_ty, init};
     is_extending->init(init_ctor);
     type_definition.push_back(branch_over_body);
     type_definition.push_back(init);
-
-    for (auto &&method : n.methods)
-    {   // Declare methods so their ordering is agnostic
-        assert(method->is_bound()); // parsing messed up if this fails...
-        auto meth_info = new Method_Info{method->bound_name, method->fn_type};
-        if (!is_extending->add_method(meth_info))
-        {
-            method->src_loc.report("error", "Method `%s' already defined for type `%s'",
-                                   method->bound_name.c_str(), is_extending->name().c_str());
-            abort();
-        }
-    }
-    for (auto &&ctor : n.constructors)
-    {   // Declare constructors so their ordering is agnostic
-        auto ctor_info = new Constructor_Info{ctor->fn_type};
-        if (!is_extending->add_constructor(ctor_info))
-        {
-            ctor->src_loc.report("error", "Constructor `%s' already defined for type `%s'",
-                                 ctor->fn_type->name().c_str(), is_extending->name().c_str());
-            abort();
-        }
-    }
 
     for (auto &&method : n.methods)
     {

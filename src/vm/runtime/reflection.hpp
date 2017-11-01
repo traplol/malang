@@ -62,6 +62,7 @@ struct Function_Parameters
     auto rbegin() const { return m_parameter_types.rbegin(); }
     auto rend()   const { return m_parameter_types.rend(); }
     auto size()   const { return m_parameter_types.size(); }
+    auto empty()  const { return m_parameter_types.empty(); }
 
 private:
     Types m_parameter_types;
@@ -109,6 +110,7 @@ struct Constructor_Info
     Function_Type_Info *type() const;
     const Function_Parameters &parameter_types() const;
 
+    bool is_the_default_ctor() const;
     bool is_waiting_for_definition() const;
     void set_function(Native_Function *prim);
     void set_function(IR_Label *code_ip);

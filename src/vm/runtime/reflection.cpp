@@ -38,6 +38,14 @@ bool Constructor_Info::is_native() const
     return m_is_native;
 }
 
+bool Constructor_Info::is_the_default_ctor() const
+{   // The default constructor is one that has only been declared to exist and
+    // takes no arguments. It ultimately will not be called as it has no body,
+    // and this allows the compiler to only bother with a call to .init
+    return m_fn_type->parameter_types().empty()
+        && is_waiting_for_definition();
+}
+
 bool Constructor_Info::is_waiting_for_definition() const
 {
     return m_fn.code_ip == nullptr;

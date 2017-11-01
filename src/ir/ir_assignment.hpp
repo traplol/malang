@@ -24,12 +24,13 @@ struct IR_Assignment : IR_Node
 struct IR_Assign_Top : IR_Node
 {
     virtual ~IR_Assign_Top();
-    IR_Assign_Top(const Source_Location &src_loc, IR_LValue *lhs, Symbol_Scope scope)
+    IR_Assign_Top(const Source_Location &src_loc, IR_Value *lhs, Symbol_Scope scope)
         : IR_Node(src_loc)
         , lhs(lhs)
         , scope(scope)
         {}
-    IR_LValue *lhs;
+
+    IR_Value *lhs;
     Symbol_Scope scope;
 
     IR_NODE_OVERRIDES;

@@ -81,6 +81,7 @@ void IR_To_Code::visit(IR_Symbol &n)
             cg->push_back_load_local(n.index);
             break;
         case Symbol_Scope::Field:
+            cg->push_back_load_local(0);
             cg->push_back_load_field(n.index);
             break;
     }
@@ -208,10 +209,9 @@ void IR_To_Code::visit(IR_Call &n)
         {
             cg->push_back_call_native(callable->u.index);
         }
-        else // @FixMe: Allow backfilling labels.
+        else
         {
-            assert(callable->u.label->is_resolved());
-            cg->push_back_call_code(callable->u.label->address());
+            backfill_label(cg, callable->u.label);
         }
     }
     else
@@ -377,6 +377,7 @@ void IR_To_Code::visit(IR_Assignment &n)
                 cg->push_back_store_local(var->index);
                 break;
             case Symbol_Scope::Field:
+                cg->push_back_load_local(0);
                 cg->push_back_store_field(var->index);
                 break;
         }
@@ -432,8 +433,8 @@ void IR_To_Code::visit(IR_Assignment &n)
                                   thing_ty->name().c_str(), mem->member_name.c_str());
             abort();
         }
-        convert_one(*mem->thing);
         convert_one(*n.rhs);
+        convert_one(*mem->thing);
         cg->push_back_store_field(field->index());
     }
     else
@@ -444,31 +445,44 @@ void IR_To_Code::visit(IR_Assignment &n)
 
 void IR_To_Code::visit(IR_Assign_Top &n)
 {
-    // @TODO: how will array assignment be handled?
-    auto lval = dynamic_cast<IR_LValue*>(n.lhs);
-    assert(lval);
-    auto lval_ty = lval->get_type();
-    if (!lval_ty)
+    bool good = false;
+    int index;
+    Symbol_Scope scope;
+    if (auto fixnum = dynamic_cast<IR_Fixnum*>(n.lhs))
     {
-        n.lhs->src_loc.report("error", "Could not deduce type.\n");
-        abort();
+        printf("dsjkafhlafjkal: %d %d\n", fixnum->value, n.scope);
+        index = fixnum->value;
+        scope = n.scope;
+        good = true;
     }
-    if (auto var = dynamic_cast<IR_Symbol*>(lval))
+    else if (auto var = dynamic_cast<IR_Symbol*>(n.lhs))
     {
         var->is_initialized = true;
-        switch (var->scope)
+        index = var->index;
+        scope = var->scope;
+        good = true;
+    }
+
+    if (good)
+    {
+        switch (scope)
         {
             default: printf("don't know this scope!\n"); abort();
             case Symbol_Scope::Global:
-                cg->push_back_store_global(var->index);
+                cg->push_back_store_global(index);
                 break;
             case Symbol_Scope::Local:
-                cg->push_back_store_local(var->index);
+                cg->push_back_store_local(index);
                 break;
             case Symbol_Scope::Field:
-                cg->push_back_store_field(var->index);
+                cg->push_back_load_local(0); // abuse self is stored in Local_0
+                cg->push_back_store_field(index);
                 break;
         }
+    }
+    else
+    {
+        NOT_IMPL;
     }
 }
 
@@ -809,7 +823,8 @@ void IR_To_Code::visit(IR_Allocate_Object &n)
     cg->push_back_alloc_object(n.for_type->type_token());
     // TOS is now an uninitialized object with however many fields we need, this being first
     // also puts it in Local_0 when it comes time to call the ctor
-    // .init leaves our object reference on the stack so no need to duplicate it.
+    // Duplicate the reference because .init does not return anything
+    cg->push_back_dup_1();
     auto init = n.for_type->init();
     if (init->is_native())
     {
@@ -819,20 +834,22 @@ void IR_To_Code::visit(IR_Allocate_Object &n)
     {
         backfill_label(cg, init->code_function());
     }
-    // however the constructor does not return the object back so we much duplicate the
-    // reference to it
-    cg->push_back_dup_1();
-    for (auto &&a : n.args)
-    { // args from left to right.
-        convert_one(*a);
-    }
-    if (n.which_ctor->is_native())
+    if (!n.which_ctor->is_the_default_ctor())
     {
-        cg->push_back_call_native(*n.which_ctor->native_function());
-    }
-    else
-    {
-        backfill_label(cg, n.which_ctor->code_function());
+        // Duplicate the reference because the constructor does not return anything either
+        cg->push_back_dup_1();
+        for (auto &&a : n.args)
+        { // args from left to right.
+            convert_one(*a);
+        }
+        if (n.which_ctor->is_native())
+        {
+            cg->push_back_call_native(*n.which_ctor->native_function());
+        }
+        else
+        {
+            backfill_label(cg, n.which_ctor->code_function());
+        }
     }
     // and now we are left with 1 object reference on the stack
 }

@@ -602,9 +602,9 @@ static void run_code(Malang_VM &vm)
             DISPATCH(Store_Field)
             {
                 ip++;
-                auto value = vm.pop_data();
                 auto idx = fetch16(ip);
                 auto obj = reinterpret_cast<Malang_Object_Body*>(vm.pop_data().as_object());
+                auto value = vm.pop_data();
                 obj->fields[idx] = value;
                 ip += sizeof(idx);
                 DISPATCH_NEXT;
