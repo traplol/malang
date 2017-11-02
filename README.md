@@ -136,10 +136,17 @@ own respective malangVM instructions. Both are bounds checked but unchecked inst
 when the compiler can be certain an index cannot possibly be out of range.
 ```
 n := 123
-nums := [n]int  # dynamically allocate 123 ints
+nums := [n]int  # dynamically allocate 123 uninitialized ints
 i := 0
 while i < nums.length {
     nums[i] = i * i
+    i += 1
+}
+
+a_buf := buffer(128) # 128 byte buffer
+i = 0
+while i < a_buf.length {
+    a_buf[i] = i
     i += 1
 }
 ```
@@ -154,7 +161,7 @@ type D = {
     }
 }
 # A, B, and C don't have a constructor that takes parameters so the default constrcutor
-# is implied. In the future, types will be order independent.
+# is implied. In the future, types will also be order independent.
 type C = {
     d := D(42)
 }
@@ -213,4 +220,38 @@ println(c.x) # 1000.5
 println(c.y) # 2.3
 println(c.z) # 3.14
 
+```
+
+### Extensions
+Extensions allow you to implement new methods and operators on any existing type but they do not
+allow you to add more fields to them.
+```
+# string multiplication doesn't yet exist, so let us implement it
+extend string {
+    fn * (n: int) -> string {
+
+        # edge case
+        if n <= 0 {
+            return string(buffer(0))
+        }
+
+        total_len := self.length * n
+        tmp_buf := buffer(total_len)
+
+        i := 0
+        while n > 0 {
+            k := 0
+            while k < self.length {
+                tmp_buf[i] = self[k]
+                i += 1
+                k += 1
+            }
+            n -= 1
+        }
+
+        return string(tmp_buf, total_len)
+    }
+}
+
+println("hello " * 10) # hello hello hello hello hello hello hello hello hello hello 
 ```
