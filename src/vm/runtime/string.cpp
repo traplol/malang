@@ -39,6 +39,55 @@ void Malang_Runtime::string_construct_intern(Malang_Object *place, const String_
     string_construct_intern(place, string_constant.size(), string_constant.data_copy());
 }
 
+// string(buf: buffer)
+static
+void string_buffer_new(Malang_VM &vm)
+{
+    auto arg_1 = vm.pop_data().as_object();
+    assert(arg_1->object_tag == Buffer);
+    auto buffer = reinterpret_cast<Malang_Buffer*>(arg_1);
+    auto arg_0 = vm.pop_data().as_object();
+    auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
+    assert(str_ref->header.type->type_token() == string_type_token);
+
+    Fixnum size = 0;
+    auto copy = new Char[size];
+    for (size = 0; size < buffer->size; ++size)
+    {
+        if (buffer->data[size] == 0)
+        {
+            break;
+        }
+        copy[size] = buffer->data[size];
+    }
+    string_construct_intern(arg_0, size, copy);
+}
+
+// string(buf: buffer, num_chars: int)
+static
+void string_buffer_int_new(Malang_VM &vm)
+{
+    auto num_chars = vm.pop_data().as_fixnum();
+    auto arg_1 = vm.pop_data().as_object();
+    assert(arg_1->object_tag == Buffer);
+    auto buffer = reinterpret_cast<Malang_Buffer*>(arg_1);
+    auto arg_0 = vm.pop_data().as_object();
+    auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
+    assert(str_ref->header.type->type_token() == string_type_token);
+
+    Fixnum size = 0;
+    auto copy = new Char[size];
+    for (size = 0; size < num_chars && buffer->size; ++size)
+    {
+        if (buffer->data[size] == 0)
+        {
+            break;
+        }
+        copy[size] = buffer->data[size];
+    }
+    string_construct_intern(arg_0, size, copy);
+}
+
 static
 void string_index_get(Malang_VM &vm)
 {
@@ -79,11 +128,16 @@ void string_string_add(Malang_VM &vm)
 void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _string = m.get_string();
-    auto _int = m.get_int();
+    auto _int    = m.get_int();
+    auto _buffer = m.get_buffer();
+
     string_type_token = _string->type_token();
 
     length_idx = add_field(_string, "length", _int, true);
     intern_data_idx = add_field(_string, ".intern_data", m.get_void(), true);
+
+    add_constructor(b, m, _string, {_buffer}, string_buffer_new);
+    add_constructor(b, m, _string, {_buffer, _int}, string_buffer_int_new);
 
     add_bin_op_method(b, m, _string, "[]", _int, _int, string_index_get);
     add_bin_op_method(b, m, _string, "+", _string, _string, string_string_add);

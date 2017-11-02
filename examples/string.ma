@@ -20,18 +20,41 @@ while n < z.length {
     n = n + 1
 }
 
-# however string multiplication doesn't yet exist for strings, so let us implement
-# that in a naive manner (it makes a bunch of temporary copies, later we will
-# support converting buffers into proper strings)
+# however string multiplication doesn't yet exist for strings, so let us implement it
 extend string {
-    fn *(n: int) -> string {
-        sum := ""
-        while n > 0 {
-            sum = sum + self
-            n = n - 1
+    # naive version that makes a bunch of copies
+    #fn * (n: int) -> string {
+    #    sum := ""
+    #    while n > 0 {
+    #        sum = sum + self
+    #        n = n - 1
+    #    }
+    #    return sum
+    #}
+
+    fn * (n: int) -> string {
+
+        # edge case
+        if n <= 0 {
+            return string(buffer(0))
         }
-        return sum
+
+        total_len := self.length * n
+        tmp_buf := buffer(total_len)
+
+        i := 0
+        while n > 0 {
+            k := 0
+            while k < self.length {
+                tmp_buf[i] = self[k]
+                i += 1
+                k += 1
+            }
+            n -= 1
+        }
+
+        return string(tmp_buf, total_len)
     }
 }
 
-println("hello " * 10) # hello hello hello hello hello hello hello hello hello hello 
+println("hello " * 15) # hello hello hello hello hello hello hello hello hello hello 

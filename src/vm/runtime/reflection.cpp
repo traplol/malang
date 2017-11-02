@@ -361,6 +361,14 @@ Fields Type_Info::all_fields() const
     return all_fields;
 }
 
+bool Type_Info::has_no_init() const
+{
+    return is_builtin();
+}
+bool Type_Info::is_builtin() const
+{
+    return m_is_builtin;
+}
 bool Type_Info::is_gc_managed() const
 {
     return m_is_gc_managed;

@@ -227,6 +227,8 @@ struct Type_Info
     const Methods &methods() const;
     Methods all_methods() const;
 
+    bool has_no_init() const;
+    bool is_builtin() const;
     bool is_gc_managed() const;
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
@@ -247,6 +249,7 @@ private:
     Field_Info *find_field(const std::string &name, Num_Fields_Limit &index) const;
     Type_Info *m_parent;
     bool m_is_gc_managed;
+    bool m_is_builtin;
     Type_Token m_type_token;
     std::string m_name;
     Constructor_Info *m_init;

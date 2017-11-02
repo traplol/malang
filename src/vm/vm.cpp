@@ -140,6 +140,12 @@ void Malang_VM::stack_trace() const
             print("-%ld: %s\n", locals_top-i, to_string(e).c_str());
         }
     }
+    print("\nGLOBALS:\n");
+    for (size_t i = 0; i < globals_top; ++i)
+    {
+        auto &&e = globals[i];
+        print("-%ld: %s\n", globals_top-i, to_string(e).c_str());
+    }
     print("\n");
 }
 
@@ -1069,7 +1075,7 @@ void run_code(Malang_VM &vm)
                 auto obj_ref = vm.pop_data().as_object();
                 assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
-                if (idx < 0 || idx > array->size)
+                if (idx < 0 || idx >= array->size)
                 {
                     vm.panic("array index out of bounds. index was %d but array size is %d",
                           idx, array->size);
@@ -1085,7 +1091,7 @@ void run_code(Malang_VM &vm)
                 auto obj_ref = vm.pop_data().as_object();
                 assert(obj_ref->object_tag == Array);
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
-                if (idx < 0 || idx > array->size)
+                if (idx < 0 || idx >= array->size)
                 {
                     vm.panic("array index out of bounds. index was %d but array size is %d",
                           idx, array->size);

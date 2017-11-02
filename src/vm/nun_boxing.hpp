@@ -91,16 +91,19 @@ struct Value
 
     inline int32_t as_fixnum() const
     {
+        assert(is_fixnum());
         return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
     }
 
     inline ObjectType *as_object() const
     {
+        assert(is_object());
         return as<ObjectType*, object_tag>();
     }
 
     inline void *as_pointer() const
     {
+        assert(is_pointer());
         return as<void*, pointer_tag>();
     }
 

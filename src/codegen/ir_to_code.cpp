@@ -816,21 +816,35 @@ void IR_To_Code::visit(IR_U_Positive &n)
 void IR_To_Code::visit(IR_Allocate_Object &n)
 {
     assert(n.for_type);
-    assert(n.for_type->init());
+
+    if (n.for_type == ir->types->get_buffer())
+    {
+        if (n.args.size() == 1
+            && n.args[0]->get_type() == ir->types->get_int())
+        {
+            convert_one(*n.args[0]);
+            cg->push_back_buffer_new();
+            return;
+        }
+    }
     assert(n.which_ctor);
     cg->push_back_alloc_object(n.for_type->type_token());
-    // TOS is now an uninitialized object with however many fields we need, this being first
-    // also puts it in Local_0 when it comes time to call the ctor
-    // Duplicate the reference because .init does not return anything
-    cg->push_back_dup_1();
-    auto init = n.for_type->init();
-    if (init->is_native())
+    if (!n.for_type->has_no_init())
     {
-        cg->push_back_call_native(*init->native_function());
-    }
-    else
-    {
-        backfill_label(cg, init->code_function());
+        assert(n.for_type->init());
+        // TOS is now an uninitialized object with however many fields we need, this being first
+        // also puts it in Local_0 when it comes time to call the ctor
+        // Duplicate the reference because .init does not return anything
+        cg->push_back_dup_1();
+        auto init = n.for_type->init();
+        if (init->is_native())
+        {
+            cg->push_back_call_native(*init->native_function());
+        }
+        else
+        {
+            backfill_label(cg, init->code_function());
+        }
     }
     if (!n.which_ctor->is_the_default_ctor())
     {

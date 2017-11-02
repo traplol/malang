@@ -210,7 +210,7 @@ void Ast_To_IR::visit(Fn_Node &n)
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
     const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
-    locality->push();
+    locality->push(true);
     auto fn_body = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(fn_body);
     cur_fn_ep = fn_body;
@@ -564,6 +564,15 @@ void Ast_To_IR::visit(Call_Node &n)
     assert(callee);
     if (auto alloc = dynamic_cast<IR_Allocate_Object*>(callee))
     {   // figure out which ctor to call or error...
+        if (alloc->for_type == ir->types->get_buffer())
+        {
+            if (args_types.size() == 1
+                && args_types[0] == ir->types->get_int())
+            {
+                alloc->args = args;
+                _return(alloc);
+            }
+        }
         auto ctor = alloc->for_type->get_constructor(fp);
         if (!ctor)
         {
@@ -731,7 +740,7 @@ void Ast_To_IR::visit(Constructor_Node &n)
     assert(is_void_return); // constructor must be void return.
     assert(is_extending);
 
-    locality->push();
+    locality->push(true);
     auto ctor_body =
         ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(ctor_body);
@@ -854,7 +863,7 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     auto old_type = is_extending;
     auto old_scope = cur_symbol_scope;
 
-    locality->push();
+    locality->push(true);
     is_extending = n.type;
 
 
@@ -1128,7 +1137,7 @@ void Ast_To_IR::visit(While_Node &n)
     // We push here so variables can be declared inside the loop body but cannot
     // be referenced outside of the loop body while still allowing the loop body
     // to access variables declared outside its own scope.
-    locality->push();
+    locality->push(false);
     {
         convert_body(n.body, loop_block->body());
         // The end of a while loop is always a branch back to the condition check.
@@ -1190,7 +1199,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
     IR_Value *last_conseq = nullptr;
     IR_Value *last_altern = nullptr;
     block.push_back(cons_begin_label);
-    locality->push();
+    locality->push(false);
     convert_body(n.consequence, block, (is_either_empty ? nullptr : &last_conseq));
     locality->pop();
     if (!n.alternative.empty())
@@ -1199,7 +1208,7 @@ void Ast_To_IR::visit(If_Else_Node &n)
         auto branch_to_end = ir->alloc<IR_Branch>(n.src_loc, end_label);
         block.push_back(branch_to_end);
         block.push_back(alt_begin_label);
-        locality->push();
+        locality->push(false);
         convert_body(n.alternative, block, (is_either_empty ? nullptr : &last_altern));
         locality->pop();
         block.push_back(end_label);

@@ -14,21 +14,15 @@ Type_Map::~Type_Map()
 
 Type_Map::Type_Map()
 {
-    m_void   = declare_type("void", nullptr);
+    m_void   = declare_type("void",   nullptr, true, false);
+    m_object = declare_type("object", nullptr, true, true);
+    m_buffer = declare_type("buffer", nullptr, true, true);
+    m_int    = declare_type("int",    nullptr, true, false);
+    m_char   = declare_type("char",   nullptr, true, false);
+    m_double = declare_type("double", nullptr, true, false);
+    m_bool   = declare_type("bool",   nullptr, true, false);
+    m_string = declare_type("string", nullptr, true, true);
 
-    m_object = declare_type("object", nullptr);
-    m_buffer = declare_type("buffer", nullptr);
-    m_int    = declare_type("int", nullptr);
-    m_char   = declare_type("char", nullptr);
-    m_double = declare_type("double", nullptr);
-    m_bool   = declare_type("bool", nullptr);
-    m_string = declare_type("string", nullptr);
-
-    m_void->m_is_gc_managed   = false;
-    m_int->m_is_gc_managed    = false;
-    m_char->m_is_gc_managed   = false;
-    m_double->m_is_gc_managed = false;
-    m_bool->m_is_gc_managed   = false;
 }
 
 Type_Info *Type_Map::get_void() const
@@ -82,16 +76,24 @@ Type_Info *Type_Map::get_or_declare_type(const std::string &name)
     return declare_type(name, nullptr);
 }
 
-Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
+Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent, bool is_builtin, bool is_gc_managed)
 {
     assert(!name.empty());
     assert(get_type(name) == nullptr);
 
     auto type = new Type_Info(parent, m_types_fast.size(), name);
+    type->m_is_builtin = is_builtin;
+    type->m_is_gc_managed = is_gc_managed;
     m_types[type->name()] = type;
     m_types_fast.push_back(type);
     assert(m_types_fast[type->type_token()] == type);
     return type;
+}
+Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
+{
+    constexpr bool is_builtin = false;
+    constexpr bool is_gc_managed = true;
+    return declare_type(name, parent, is_builtin, is_gc_managed);
 }
 
 static
@@ -116,7 +118,7 @@ std::string create_function_typename(Type_Info *return_type, const std::vector<T
     return ss.str();
 }
 
-Function_Type_Info *Type_Map::declare_function(const std::vector<Type_Info*> &parameter_types, Type_Info *return_type, bool is_native)
+Function_Type_Info *Type_Map::declare_function(const Types &parameter_types, Type_Info *return_type, bool is_native)
 {
     assert(return_type);
     auto type_name = create_function_typename(return_type, parameter_types, is_native);

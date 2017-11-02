@@ -6,11 +6,11 @@
 
 struct Scope
 {
-    Scope(Scope *parent, Malang_IR *alloc, bool can_see_parent_scope)
+    Scope(Scope *parent, Malang_IR *alloc, size_t index_start, bool can_see_parent_scope)
         : m_parent(parent)
         , m_alloc(alloc)
         , m_can_see_parent_scope(can_see_parent_scope)
-        , m_symbol_map(alloc)
+        , m_symbol_map(alloc, index_start)
         {}
     void show_parent();
     void hide_parent();
@@ -33,10 +33,11 @@ struct Scope_Lookup
 {
     ~Scope_Lookup();
     Scope_Lookup(Malang_IR *alloc);
-    void push(bool can_see_parent_scope = true);
+    void push(bool entering_new_frame, bool can_see_parent_scope = true);
     void pop();
     Scope &current();
 private:
+    std::vector<bool> m_frame_stack;
     Malang_IR *m_alloc;
     Scope *m_current_scope;
 };

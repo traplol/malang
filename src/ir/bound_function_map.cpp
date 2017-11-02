@@ -8,6 +8,27 @@ Bound_Function_Map::~Bound_Function_Map()
     }
 }
 
+bool Bound_Function_Map::add_constructor(Type_Info *to_type, Function_Type_Info *fn_type, Native_Code native)
+{
+    assert(to_type);
+    assert(fn_type);
+    assert(native);
+    auto index = static_cast<Fixnum>(m_all_natives.size());
+    auto ctor_name = to_type->name() + "..ctor";
+    auto pfn = new Native_Function{ctor_name, index, native, fn_type};
+    auto ctor = new Constructor_Info{fn_type, pfn};
+    printf("%s %s\n", ctor_name.c_str(), ctor->type()->name().c_str());
+    if (!to_type->add_constructor(ctor))
+    {
+        printf("Couldn't add constructor to %s\n", to_type->name().c_str());
+        delete ctor;
+        abort();
+        //return false;
+    }
+    m_all_natives.push_back(native);
+    return true;
+}
+
 bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native)
 {
     assert(to_type);

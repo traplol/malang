@@ -12,13 +12,15 @@ struct Type_Info;
 
 struct Symbol_Map
 {
-    Symbol_Map(Malang_IR *alloc)
+    Symbol_Map(Malang_IR *alloc, size_t index_start)
         : m_alloc(alloc)
-        , m_local_index(0)
+        , m_local_index(index_start)
         {}
     IR_Symbol *make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc, Symbol_Scope scope);
     IR_Symbol *get_symbol(const std::string &name) const;
     bool any(const std::string &name) const;
+    size_t index() const;
+    void index(size_t i);
     
 private:
     Malang_IR *m_alloc;

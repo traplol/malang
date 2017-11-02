@@ -26,3 +26,13 @@ bool Symbol_Map::any(const std::string &name) const
 {
     return get_symbol(name) != nullptr;
 }
+
+size_t Symbol_Map::index() const
+{
+    return m_local_index;
+}
+
+void Symbol_Map::index(size_t i)
+{
+    m_local_index = i;
+}

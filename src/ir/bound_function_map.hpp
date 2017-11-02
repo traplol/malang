@@ -62,6 +62,7 @@ using Bound_Functions = std::vector<Bound_Function>;
 struct Bound_Function_Map
 {
     ~Bound_Function_Map();
+    bool add_constructor(Type_Info *to_type, Function_Type_Info *fn_type, Native_Code native);
     bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native);
     bool add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, IR_Label *code);
     bool add(const std::string &name, Function_Type_Info *fn_type, Native_Code native);
