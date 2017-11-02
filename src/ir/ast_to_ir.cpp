@@ -1207,7 +1207,6 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     std::vector<IR_Node*> block;
     auto condition_check_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     assert(condition_check_label);
-    block.push_back(condition_check_label);
     auto loop_block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
     assert(loop_block);
     auto old_cur_false_label = cur_false_label;
@@ -1215,23 +1214,26 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     cur_false_label = loop_block->end();
     cur_true_label = loop_block;
 
-    auto condition = ir->alloc<IR_Call_Method>(itr->src_loc, itr, move_next, std::vector<IR_Value*>());
+    // This allows us to create the iterator in the first step of the for loop and continue using it
+    locality->push(false);
+    auto itr_sym = locality->current().symbols().make_symbol(".itr", itr_ty, itr->src_loc, cur_symbol_scope);
+    itr_sym->is_readonly = true;
+    auto assign_itr = ir->alloc<IR_Assignment>(itr->src_loc, itr_sym, itr, cur_symbol_scope);
+    block.push_back(assign_itr);
+    auto condition = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, move_next, std::vector<IR_Value*>());
+    block.push_back(condition_check_label);
     block.push_back(condition);
 
     auto branch_if_cond_false = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, loop_block->end());
     block.push_back(branch_if_cond_false);
-    // We push here so variables can be declared inside the loop body but cannot
-    // be referenced outside of the loop body while still allowing the loop body
-    // to access variables declared outside its own scope.
-    locality->push(false);
     {
         auto it_sym = locality->current().symbols().make_symbol("it", current->return_type(), itr->src_loc, cur_symbol_scope);
         it_sym->is_readonly = true;
-        auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr, current, std::vector<IR_Value*>());
+        auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, current, std::vector<IR_Value*>());
         auto assign_it = ir->alloc<IR_Assignment>(itr->src_loc, it_sym, call_current, cur_symbol_scope);
         loop_block->body().push_back(assign_it);
         convert_body(n.body, loop_block->body());
-        // The end of a while loop is always a branch back to the condition check.
+        // The end of a loop is always a branch back to the condition check.
         loop_block->body().push_back(ir->alloc<IR_Branch>(n.src_loc, condition_check_label));
     }
     locality->pop();

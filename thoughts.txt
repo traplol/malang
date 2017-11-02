@@ -420,4 +420,6 @@ Nov 2, 2017:
     + Added a flag to mute most the non-critical diagnostics
     + Implemented a script for running the compiler with source and comparing to expected
     output.
-    
+    + break, continue, and for parsing
+    + implemented basic iterator traits which wants the thing to implement:
+        `fn move_next() -> bool' and fn current() -> T' where T is not void
