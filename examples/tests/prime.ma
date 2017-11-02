@@ -12,8 +12,11 @@ prime :: fn (n: int) -> bool {
 }
 
 i := 0
-while i < 1000000 {
-    prime(i)
+while i < 100 {
+    println("======")
+    println(i)
+    println("is prime?")
+    println(prime(i))
     i += 1
 }
 
