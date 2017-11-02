@@ -35,7 +35,6 @@ fn println(v3: Vec3) {
   println(v3.z)
 }
 
-breakpoint()
 v3 := Vec3(1.2, 3.0, 4.5)
 println("v3")
 println(v3)
