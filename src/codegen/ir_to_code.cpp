@@ -191,7 +191,14 @@ void IR_To_Code::visit(IR_Call &n)
 {
     if (auto method = dynamic_cast<IR_Method*>(n.callee))
     {
-        convert_one(*method->thing);
+        if (method->thing)
+        {
+            convert_one(*method->thing);
+        }
+        else
+        {
+            cg->push_back_load_local(0);
+        }
     }
     for (auto &&a : n.arguments)
     {

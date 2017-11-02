@@ -36,7 +36,7 @@ void Ast_To_IR::visit(Variable_Node &n)
 {
 
     if (auto type = ir->types->get_type(n.name))
-    {
+    {   // Calling constructor
         auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
         _return(alloc);
     }
@@ -55,17 +55,47 @@ void Ast_To_IR::visit(Variable_Node &n)
             n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name.c_str());
             abort();
         }
+        bool method_matches = false;
+        if (is_extending)
+        {
+            if (is_extending->get_method(n.name, bound_fn.fn_type()->parameter_types()))
+            {
+                method_matches = true;
+            }
+        }
         if (bound_fn.is_native())
         {
-            auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
-                                                    bound_fn.fn_type());
-            _return(callable);
+            if (method_matches)
+            {   // this is a method call in the form of:
+                //    some_method(...)
+                // instead of self.method(...) or thing.method(...)
+                // This means self is garaunteed to be in local_0 and the IR_To_Code will
+                // generate the Load_Local_0 when thing is nullptr.
+                auto callable = ir->alloc<IR_Method>(n.src_loc, nullptr, bound_fn.native()->index,
+                                                        bound_fn.fn_type());
+                _return(callable);
+            }
+            else
+            {
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
+                                                        bound_fn.fn_type());
+                _return(callable);
+            }
         }
         else
         {
-            auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
-                                                    bound_fn.fn_type());
-            _return(callable);
+            if (method_matches)
+            {   // see above
+                auto callable = ir->alloc<IR_Method>(n.src_loc, nullptr, bound_fn.code(),
+                                                       bound_fn.fn_type());
+                _return(callable);
+            }
+            else
+            {
+                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
+                                                       bound_fn.fn_type());
+                _return(callable);
+            }
         }
     }
     auto symbol = find_symbol(n.name);
@@ -610,6 +640,12 @@ void Ast_To_IR::visit(Call_Node &n)
                              thing_ty->name().c_str());
             abort();
         }
+    }
+    else if (auto meth = dynamic_cast<IR_Method*>(callee))
+    {
+        //auto call_meth = ir->alloc<IR_Call_Method>(n.src_loc, meth->thing, callee, args);
+        //cur_call_arg_types = old_cur_call_arg_types;
+        //_return(call_meth);
     }
     else
     {

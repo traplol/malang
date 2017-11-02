@@ -26,7 +26,7 @@ type StringBuilder = {
 
     fn append(val : int) {
         if _size + 1 >= _data.length {
-            self._resize()
+            _resize()
         }
         _data[_size] = val
         _size += 1
@@ -36,7 +36,7 @@ type StringBuilder = {
     fn << (val: string) -> StringBuilder {
         n := 0
         while n < val.length {
-            self.append(val[n])
+            append(val[n])
             n += 1
         }
         return self

@@ -1,6 +1,8 @@
 #include <string.h>
 #include "codegen.hpp"
 
+#define SHORT_INSTRUCTIONS_WHEN_POSSIBLE 1
+
 void Codegen::push_back_instruction(Instruction instruction)
 {
     code.push_back(static_cast<byte>(instruction));
@@ -194,6 +196,7 @@ void Codegen::push_back_noop()
 static inline
 bool push_back_fast_constant(Codegen &cg, int32_t n)
 {
+#if SHORT_INSTRUCTIONS_WHEN_POSSIBLE
     switch (n)
     {
         case -1:
@@ -218,6 +221,7 @@ bool push_back_fast_constant(Codegen &cg, int32_t n)
             cg.push_back_instruction(Instruction::Literal_Fixnum_5);
             return true;
     }
+#endif
     return false;
 }
 void Codegen::push_back_literal_8(byte n)
@@ -260,6 +264,7 @@ void Codegen::push_back_literal_double(Double n)
     _n.d = n;
 
 
+#if SHORT_INSTRUCTIONS_WHEN_POSSIBLE
     if (_n.i == mone.i)
     {
         push_back_instruction(Instruction::Literal_Double_m1);
@@ -277,6 +282,7 @@ void Codegen::push_back_literal_double(Double n)
         push_back_instruction(Instruction::Literal_Double_2);
     }
     else
+#endif
     {
         push_back_literal_value(n);
     }
@@ -372,36 +378,38 @@ void Codegen::push_back_store_local(uint16_t n)
 {
     switch (n)
     {
-//        case 0:
-//            push_back_instruction(Instruction::Store_Local_0);
-//            break;
-//        case 1:
-//            push_back_instruction(Instruction::Store_Local_1);
-//            break;
-//        case 2:
-//            push_back_instruction(Instruction::Store_Local_2);
-//            break;
-//        case 3:
-//            push_back_instruction(Instruction::Store_Local_3);
-//            break;
-//        case 4:
-//            push_back_instruction(Instruction::Store_Local_4);
-//            break;
-//        case 5:
-//            push_back_instruction(Instruction::Store_Local_5);
-//            break;
-//        case 6:
-//            push_back_instruction(Instruction::Store_Local_6);
-//            break;
-//        case 7:
-//            push_back_instruction(Instruction::Store_Local_7);
-//            break;
-//        case 8:
-//            push_back_instruction(Instruction::Store_Local_8);
-//            break;
-//        case 9:
-//            push_back_instruction(Instruction::Store_Local_9);
-//            break;
+#if SHORT_INSTRUCTIONS_WHEN_POSSIBLE
+        case 0:
+            push_back_instruction(Instruction::Store_Local_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Store_Local_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Store_Local_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Store_Local_3);
+            break;
+        case 4:
+            push_back_instruction(Instruction::Store_Local_4);
+            break;
+        case 5:
+            push_back_instruction(Instruction::Store_Local_5);
+            break;
+        case 6:
+            push_back_instruction(Instruction::Store_Local_6);
+            break;
+        case 7:
+            push_back_instruction(Instruction::Store_Local_7);
+            break;
+        case 8:
+            push_back_instruction(Instruction::Store_Local_8);
+            break;
+        case 9:
+            push_back_instruction(Instruction::Store_Local_9);
+            break;
+#endif
         default:
             push_back_instruction(Instruction::Store_Local);
             push_back_raw_16(n);
@@ -412,36 +420,38 @@ void Codegen::push_back_load_local(uint16_t n)
 {
     switch (n)
     {
-//        case 0:
-//            push_back_instruction(Instruction::Load_Local_0);
-//            break;
-//        case 1:
-//            push_back_instruction(Instruction::Load_Local_1);
-//            break;
-//        case 2:
-//            push_back_instruction(Instruction::Load_Local_2);
-//            break;
-//        case 3:
-//            push_back_instruction(Instruction::Load_Local_3);
-//            break;
-//        case 4:
-//            push_back_instruction(Instruction::Load_Local_4);
-//            break;
-//        case 5:
-//            push_back_instruction(Instruction::Load_Local_5);
-//            break;
-//        case 6:
-//            push_back_instruction(Instruction::Load_Local_6);
-//            break;
-//        case 7:
-//            push_back_instruction(Instruction::Load_Local_7);
-//            break;
-//        case 8:
-//            push_back_instruction(Instruction::Load_Local_8);
-//            break;
-//        case 9:
-//            push_back_instruction(Instruction::Load_Local_9);
-//            break;
+#if SHORT_INSTRUCTIONS_WHEN_POSSIBLE
+        case 0:
+            push_back_instruction(Instruction::Load_Local_0);
+            break;
+        case 1:
+            push_back_instruction(Instruction::Load_Local_1);
+            break;
+        case 2:
+            push_back_instruction(Instruction::Load_Local_2);
+            break;
+        case 3:
+            push_back_instruction(Instruction::Load_Local_3);
+            break;
+        case 4:
+            push_back_instruction(Instruction::Load_Local_4);
+            break;
+        case 5:
+            push_back_instruction(Instruction::Load_Local_5);
+            break;
+        case 6:
+            push_back_instruction(Instruction::Load_Local_6);
+            break;
+        case 7:
+            push_back_instruction(Instruction::Load_Local_7);
+            break;
+        case 8:
+            push_back_instruction(Instruction::Load_Local_8);
+            break;
+        case 9:
+            push_back_instruction(Instruction::Load_Local_9);
+            break;
+#endif
         default:
             push_back_instruction(Instruction::Load_Local);
             push_back_raw_16(n);
@@ -481,6 +491,7 @@ void Codegen::push_back_drop(uint16_t n)
     if (n == 0) return;
     switch (n)
     {
+#if SHORT_INSTRUCTIONS_WHEN_POSSIBLE
         case 1:
             push_back_instruction(Instruction::Drop_1);
             break;
@@ -493,6 +504,7 @@ void Codegen::push_back_drop(uint16_t n)
         case 4:
             push_back_instruction(Instruction::Drop_4);
             break;
+#endif
         default:
             push_back_instruction(Instruction::Drop_N);
             push_back_raw_16(n);
