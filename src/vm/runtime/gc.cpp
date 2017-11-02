@@ -85,8 +85,11 @@ GC_List::~GC_List()
 
 Malang_GC::~Malang_GC()
 {
-    printf("available: %ld\n", m_free.nodes.size());
-    printf("allocated: %ld\n", m_allocated.nodes.size());
+    if (m_args->noisy)
+    {
+        printf("available: %ld\n", m_free.nodes.size());
+        printf("allocated: %ld\n", m_allocated.nodes.size());
+    }
     sweep();
 }
 
@@ -97,19 +100,28 @@ Type_Map *Malang_GC::types()
 
 void Malang_GC::disable_automatic()
 {
-    printf("GC: pausing\n");
+    if (m_args->noisy)
+    {
+        printf("GC: pausing\n");
+    }
     m_is_paused = true;
 }
 
 void Malang_GC::enable_automatic()
 {
-    printf("GC: resuming\n");
+    if (m_args->noisy)
+    {
+        printf("GC: resuming\n");
+    }
     m_is_paused = false;
 }
 
 void Malang_GC::manual_run()
 {
-    printf("GC: manual run\n");
+    if (m_args->noisy)
+    {
+        printf("GC: manual run\n");
+    }
     mark_and_sweep();
 }
 
@@ -122,8 +134,11 @@ void Malang_GC::mark_and_sweep()
 void Malang_GC::mark()
 {
     assert(m_vm);
-    printf("GC: magic free     : %p\n", &m_free);
-    printf("GC: magic allocated: %p\n", &m_allocated);
+    if (m_args->noisy)
+    {
+        printf("GC: magic free     : %p\n", &m_free);
+        printf("GC: magic allocated: %p\n", &m_allocated);
+    }
     size_t visited = 0, reachable = 0;
 #define _mark(n, a)                             \
     for (uintptr_t i = 0; i < (n); ++i) {       \
@@ -132,12 +147,18 @@ void Malang_GC::mark()
             reachable++;                           \
             (a)[i].as_object()->gc_mark();}}
 
-    printf("GC: in use: %ld available: %ld\n", m_allocated.nodes.size(), m_free.nodes.size());
-    printf("GC: total allocated: %ld freed:%ld\n", m_total_allocated, m_total_freed);
+    if (m_args->noisy)
+    {
+        printf("GC: in use: %ld available: %ld\n", m_allocated.nodes.size(), m_free.nodes.size());
+        printf("GC: total allocated: %ld freed:%ld\n", m_total_allocated, m_total_freed);
+    }
     _mark(m_vm->globals_top, m_vm->globals);
     _mark(m_vm->locals_top, m_vm->locals);
     _mark(m_vm->data_top, m_vm->data_stack);
-    printf("GC mark: visited: %ld reachable: %ld\n", visited, reachable);
+    if (m_args->noisy)
+    {
+        printf("GC mark: visited: %ld reachable: %ld\n", visited, reachable);
+    }
 #undef _mark
 
 }
@@ -159,7 +180,10 @@ void Malang_GC::sweep()
         }
         ++visited;
     }
-    printf("GC sweep: visited: %ld freed: %ld\n", visited, freed);
+    if (m_args->noisy)
+    {
+        printf("GC sweep: visited: %ld freed: %ld\n", visited, freed);
+    }
 }
 
 void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
@@ -238,7 +262,10 @@ GC_Node *Malang_GC::alloc_intern()
     {
         m_next_run += m_run_interval;
         m_next_run = std::min(m_next_run, m_max_objects);
-        printf("GC: automatic run triggered\n");
+        if (m_args->noisy)
+        {
+            printf("GC: automatic run triggered\n");
+        }
         mark_and_sweep();
     }
     if (m_allocated.nodes.size() >= m_max_objects)

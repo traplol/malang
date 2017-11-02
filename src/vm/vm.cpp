@@ -35,7 +35,8 @@ Malang_VM::~Malang_VM()
     delete gc;
 }
 
-Malang_VM::Malang_VM(Type_Map *types,
+Malang_VM::Malang_VM(Args *args,
+                     Type_Map *types,
                      const std::vector<Native_Code> &natives,
                      const std::vector<String_Constant> &string_constants,
                      size_t gc_run_interval, size_t max_num_objects)
@@ -44,15 +45,14 @@ Malang_VM::Malang_VM(Type_Map *types,
     , types(types)
     , breaking(false)
 {
-    gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
+    gc = new Malang_GC{args, this, types, gc_run_interval, max_num_objects};
     auto str_ty = types->get_string();
     for (auto &&sc : string_constants)
     {
         auto obj = gc->allocate_unmanaged_object(str_ty->type_token());
         if (!obj)
         {
-            print("GC couldn't allocate unmanaged string constant.\n");
-            abort();
+            panic("GC couldn't allocate unmanaged string constant.\n");
         }
         Malang_Runtime::string_construct_intern(obj, sc);
         string_constants_objects.push_back(obj);

@@ -6,13 +6,15 @@
 #include "runtime/primitive_types.hpp"
 #include "runtime/reflection.hpp"
 #include "../type_map.hpp"
+#include "../system_args.hpp"
 
 using byte = unsigned char;
 
 struct Malang_VM
 {
     ~Malang_VM();
-    Malang_VM(Type_Map *types,
+    Malang_VM(Args *args,
+              Type_Map *types,
               const std::vector<Native_Code> &natives,
               const std::vector<String_Constant> &string_constants,
               size_t gc_run_interval = 50, size_t max_num_objects = 1000);

@@ -77,7 +77,6 @@ enum class Token_Id : size_t
     K_alias,            // alias
     K_break,            // break
     K_continue,         // continue
-    K_BREAKPOINT,       // BREAKPOINT
 
     Back_Slash,         // "\\"
 

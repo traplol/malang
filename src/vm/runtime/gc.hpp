@@ -16,11 +16,14 @@ struct GC_List
 
 struct Type_Map;
 struct Malang_VM;
+struct Args;
 struct Malang_GC
 {
     ~Malang_GC();
-    Malang_GC(Malang_VM *vm, Type_Map *types, size_t run_interval, size_t max_objects)
+    Malang_GC(Args *args,
+        Malang_VM *vm, Type_Map *types, size_t run_interval, size_t max_objects)
         : m_is_paused(false)
+        , m_args(args)
         , m_vm(vm)
         , m_types(types)
         , m_total_allocated(0)
@@ -59,6 +62,7 @@ private:
     void sweep();
     void mark_and_sweep();
     bool m_is_paused;
+    Args *m_args;
     Malang_VM *m_vm;
     Type_Map *m_types;
     size_t m_total_allocated;
