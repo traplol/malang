@@ -122,6 +122,8 @@ template<typename... T>
 using uptr = std::unique_ptr<T...>;
 static uptr<Assign_Node> parse_assignment(Parser &parser);
 static uptr<Return_Node> parse_return(Parser &parser);
+static uptr<Break_Node> parse_break(Parser &parser);
+static uptr<Continue_Node> parse_continue(Parser &parser);
 static uptr<While_Node> parse_while(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required = true);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
@@ -141,7 +143,7 @@ static uptr<Ast_Value> parse_multiplicative_exp(Parser &parser);
 static uptr<Ast_Value> parse_unary_exp(Parser &parser);
 static uptr<Ast_Value> parse_postfix_exp(Parser &parser);
 static uptr<Ast_Value> parse_primary(Parser &parser);
-static uptr<List_Node> parse_expression_list(Parser &parser);
+static uptr<List_Node> parse_expression_list(Parser &parser, const Source_Location &src_loc);
 static uptr<Ast_Value> parse_expression(Parser &parser);
 static uptr<Type_Node> parse_type(Parser &parser);
 static uptr<Ast_Node> parse_statement(Parser &parser);
@@ -270,8 +272,28 @@ static uptr<Return_Node> parse_return(Parser &parser)
     SAVE;
     Token retn_tk;
     ACCEPT_OR_FAIL(retn_tk, { Token_Id::K_return });
-    auto values = parse_expression_list(parser);
+    auto values = parse_expression_list(parser, retn_tk.src_loc());
     return uptr<Return_Node>(new Return_Node{retn_tk.src_loc(), values.release()});
+}
+static uptr<Break_Node> parse_break(Parser &parser)
+{   // break :=
+    //     break
+    //     break expression_list
+    SAVE;
+    Token break_tk;
+    ACCEPT_OR_FAIL(break_tk, { Token_Id::K_break });
+    auto values = parse_expression_list(parser, break_tk.src_loc());
+    return uptr<Break_Node>(new Break_Node{break_tk.src_loc(), values.release()});
+}
+static uptr<Continue_Node> parse_continue(Parser &parser)
+{   // continue :=
+    //     continue
+    //     continue expression_list
+    SAVE;
+    Token continue_tk;
+    ACCEPT_OR_FAIL(continue_tk, { Token_Id::K_continue });
+    auto values = parse_expression_list(parser, continue_tk.src_loc());
+    return uptr<Continue_Node>(new Continue_Node{continue_tk.src_loc(), values.release()});
 }
 static uptr<If_Else_Node> parse_if_else(Parser &parser)
 {
@@ -338,6 +360,26 @@ static uptr<While_Node> parse_while(Parser &parser)
         body.push_back(single.release());
     }
     return uptr<While_Node>(new While_Node{while_tk.src_loc(), condition.release(), body});
+}
+static uptr<For_Node> parse_for(Parser &parser)
+{   // for :=
+    //     for expression { body }
+    SAVE;
+    Token for_tk;
+    ACCEPT_OR_FAIL(for_tk, { Token_Id::K_for});
+    auto iterable = parse_expression(parser);
+    std::vector<Ast_Node*> body;
+    if (parser.peek_id() == Token_Id::Open_Curly)
+    {
+        CHECK_OR_FAIL(parse_body(parser, body));
+    }
+    else
+    {
+        auto single = parse_statement(parser);
+        CHECK_OR_FAIL(single);
+        body.push_back(single.release());
+    }
+    return uptr<For_Node>(new For_Node{for_tk.src_loc(), iterable.release(), body});
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
 {   // decl :=
@@ -424,7 +466,7 @@ static uptr<Array_Literal_Node> parse_array_literal(Parser &parser)
     SAVE;
     Token open_bracket_tk;
     ACCEPT_OR_FAIL(open_bracket_tk, {Token_Id::Open_Square});
-    auto values = parse_expression_list(parser);
+    auto values = parse_expression_list(parser, open_bracket_tk.src_loc());
     CHECK_OR_FAIL(values);
     Token close_bracket_tk;
     parser.expect(close_bracket_tk, Token_Id::Close_Square);
@@ -777,7 +819,7 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
 
             case Token_Id::Open_Paren:
             {
-                auto args = parse_expression_list(parser);
+                auto args = parse_expression_list(parser, tok.src_loc());
                 CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Paren));
                 expr = uptr<Ast_Value>(new Call_Node(tok.src_loc(), expr.release(), args.release()));
             } break;
@@ -856,21 +898,22 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
     }
     PARSE_FAIL;
 }
-static uptr<List_Node> parse_expression_list(Parser &parser)
+static uptr<List_Node> parse_expression_list(Parser &parser, const Source_Location &src_loc)
 {   // expression_list :=
     //     expression
     //     expression_list , expression
     std::vector<Ast_Value*> contents;
-    auto first_tk = parser.peek();
     while (true)
     {
         auto x = parse_expression(parser);
         if (!x)
         {
-            if (contents.size() > 0)
+            if (!contents.empty())
             {
+                printf(">>>%d\n", parser.lex_idx-1);
                 auto &prev_tk = parser.lexer.tokens[parser.lex_idx-1];
-                parser.report_error(prev_tk, "Unexpected token %s in expression list", prev_tk.debug().c_str());
+                parser.report_error(prev_tk, "Unexpected token %s in expression list",
+                                    prev_tk.debug().c_str());
             }
             break; // an empty list is a valid list
         }
@@ -880,7 +923,7 @@ static uptr<List_Node> parse_expression_list(Parser &parser)
             break; // implicitly breaks on close braces: ) ] > }
         }
     }
-    return uptr<List_Node>(new List_Node(first_tk->src_loc(), contents));
+    return uptr<List_Node>(new List_Node(src_loc, contents));
 }
 static uptr<Ast_Value> parse_expression(Parser &parser)
 {   // expression :=
@@ -1230,6 +1273,10 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
         {
             return bound;
         }
+        if (auto _for = parse_for(parser))
+        {
+            return _for;
+        }
         if (auto decl_ass = parse_decl_assign(parser))
         {
             return decl_ass;
@@ -1249,6 +1296,14 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
         if (auto retn = parse_return(parser))
         {
             return retn;
+        }
+        if (auto brek = parse_break(parser))
+        {
+            return brek;
+        }
+        if (auto continu = parse_continue(parser))
+        {
+            return continu;
         }
         if (auto whil = parse_while(parser))
         {

@@ -116,16 +116,23 @@ std::string to_string(const Malang_Value &value)
 void Malang_VM::stack_trace() const
 {
     print("\nDATA STACK:\n");
-    for (auto i = data_top; i != 0; --i)
+    if ((int)data_top < 0)
     {
-        auto &&e = data_stack[i-1];
-        if (i == data_top)
+        print("data top underflowed! (%x)\n", data_top);
+    }
+    else
+    {
+        for (auto i = data_top; i != 0; --i)
         {
-            print("%ld: %s <-- TOP\n", data_top-i, to_string(e).c_str());
-        }
-        else
-        {
-            print("-%ld: %s\n", data_top-i, to_string(e).c_str());
+            auto &&e = data_stack[i-1];
+            if (i == data_top)
+            {
+                print("%ld: %s <-- TOP\n", data_top-i, to_string(e).c_str());
+            }
+            else
+            {
+                print("-%ld: %s\n", data_top-i, to_string(e).c_str());
+            }
         }
     }
     print("\nLOCALS:\n");

@@ -273,10 +273,11 @@ void Ast_To_IR::visit(Fn_Node &n)
                 auto method = new Method_Info(n.bound_name, n.fn_type, fn_body);
                 is_extending->add_method(method);
             }
+            // don't insert self reference to non-bound methods.
+            self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
+            assert(self_decl);
+            params_copy.insert(params_copy.begin(), self_decl);
         }
-        self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
-        assert(self_decl);
-        params_copy.insert(params_copy.begin(), self_decl);
     }
 
     std::vector<IR_Symbol*> arg_symbols;
@@ -364,6 +365,7 @@ void Ast_To_IR::visit(Fn_Node &n)
 
 void Ast_To_IR::visit(List_Node &n)
 {
+    // never executed.
     NOT_IMPL;
 }
 
@@ -619,7 +621,7 @@ void Ast_To_IR::visit(Call_Node &n)
             auto call_meth = ir->alloc<IR_Call_Method>(n.src_loc, member->thing, method, args); 
             _return(call_meth);
         }
-        else
+        else if (!thing_ty->get_field(member->member_name))
         {
             n.src_loc.report("error", "Method `fn %s%s' not implemented for type `%s'",
                              member->member_name.c_str(), 
@@ -794,8 +796,7 @@ void Ast_To_IR::visit(Constructor_Node &n)
         auto ctor = new Constructor_Info(n.fn_type, ctor_body);
         is_extending->add_constructor(ctor);
     }
-    auto self_decl =
-        new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
+    auto self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
 
     auto params_copy = n.params;
     params_copy.insert(params_copy.begin(), self_decl);
@@ -822,7 +823,7 @@ void Ast_To_IR::visit(Constructor_Node &n)
     {
         auto empty_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
         all_returns_this_fn->push_back(empty_retn);
-        ctor_body->body().push_back(empty_retn); // @FixMe: src_loc should be close curly of function def
+        ctor_body->body().push_back(empty_retn); 
     }
     else if (auto last = ctor_body->body().back())
     {
@@ -830,7 +831,7 @@ void Ast_To_IR::visit(Constructor_Node &n)
         {
             auto last_retn = ir->alloc<IR_Return>(n.src_loc, std::vector<IR_Value*>(), cur_locals_count != 0);
             all_returns_this_fn->push_back(last_retn);
-            ctor_body->body().push_back(last_retn); // @FixMe: src_loc should be close curly of function def
+            ctor_body->body().push_back(last_retn); 
         }
     }
     if (cur_locals_count > 0)
@@ -1091,6 +1092,16 @@ void Ast_To_IR::visit(Return_Node &n)
     _return(retn);
 }
 
+void Ast_To_IR::visit(Break_Node &n)
+{
+    NOT_IMPL;
+}
+                      
+void Ast_To_IR::visit(Continue_Node &n)
+{
+    NOT_IMPL;
+}
+
 void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, IR_Value **last_node_as_value)
 {
     IR_Node *last_node = nullptr;
@@ -1162,6 +1173,101 @@ void Ast_To_IR::visit(While_Node &n)
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
     _return(ret);
+}
+
+void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_next, Method_Info *current)
+{
+    auto itr_ty = itr->get_type();
+    if (!move_next)
+    {
+        itr->src_loc.report("error", "type `%s' does no implement `fn move_next() -> bool'",
+                            itr_ty->name().c_str());
+        abort();
+    }
+    if (move_next->return_type() != ir->types->get_bool())
+    {
+        itr->src_loc.report("error", "`move_next' must return `bool' to qualify as an iterator",
+                            itr_ty->name().c_str());
+        abort();
+    }
+    if (!current)
+    {
+        itr->src_loc.report("error", "type `%s' does no implement `fn current() -> T'",
+                            itr_ty->name().c_str());
+        abort();
+    }
+    if (current->return_type() == ir->types->get_void())
+    {
+        itr->src_loc.report("error", "`current' must not return `void' to qualify as an iterator"); 
+        abort();
+    }
+    // Create while loop that calls move_next() as the condition, then executes the body, then
+    // declare an implicit variable called "it" that is assigned by a call to current() at
+    // the start of each loop iteration.
+    std::vector<IR_Node*> block;
+    auto condition_check_label = ir->labels->make_label(label_name_gen(), n.src_loc);
+    assert(condition_check_label);
+    block.push_back(condition_check_label);
+    auto loop_block = ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
+    assert(loop_block);
+    auto old_cur_false_label = cur_false_label;
+    auto old_cur_true_label = cur_true_label;
+    cur_false_label = loop_block->end();
+    cur_true_label = loop_block;
+
+    auto condition = ir->alloc<IR_Call_Method>(itr->src_loc, itr, move_next, std::vector<IR_Value*>());
+    block.push_back(condition);
+
+    auto branch_if_cond_false = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, loop_block->end());
+    block.push_back(branch_if_cond_false);
+    // We push here so variables can be declared inside the loop body but cannot
+    // be referenced outside of the loop body while still allowing the loop body
+    // to access variables declared outside its own scope.
+    locality->push(false);
+    {
+        auto it_sym = locality->current().symbols().make_symbol("it", current->return_type(), itr->src_loc, cur_symbol_scope);
+        it_sym->is_readonly = true;
+        auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr, current, std::vector<IR_Value*>());
+        auto assign_it = ir->alloc<IR_Assignment>(itr->src_loc, it_sym, call_current, cur_symbol_scope);
+        loop_block->body().push_back(assign_it);
+        convert_body(n.body, loop_block->body());
+        // The end of a while loop is always a branch back to the condition check.
+        loop_block->body().push_back(ir->alloc<IR_Branch>(n.src_loc, condition_check_label));
+    }
+    locality->pop();
+
+    block.push_back(loop_block);
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
+    cur_false_label = old_cur_false_label;
+    cur_true_label = old_cur_true_label;
+    _return(ret);
+}
+
+void Ast_To_IR::visit(For_Node &n)
+{
+    assert(n.iterable);
+    auto itr = get<IR_Value*>(*n.iterable);
+    assert(itr);
+    auto itr_ty = itr->get_type();
+    assert(itr_ty);
+
+    // Something "iterable" is an array, a buffer, or has both of:
+    //    fn move_next() -> bool
+    //    fn current() -> T
+    if (itr_ty == ir->types->get_buffer())
+    {
+        itr->src_loc.report("NYI", "iterators not yet implemented for buffers");
+    }
+    else if (dynamic_cast<Array_Type_Info*>(itr_ty))
+    {
+        itr->src_loc.report("NYI", "iterators not yet implemented for arrays");
+    }
+    else
+    {
+        auto move_next = itr_ty->get_method("move_next", {});
+        auto current = itr_ty->get_method("current", {});
+        gen_for_iterator(n, itr, move_next, current);
+    }
 }
 
 static inline

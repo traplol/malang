@@ -384,6 +384,35 @@ void parse_tests()
          "(3*4).print()",
          "println((1 + 2))((3 * 4)).print()"},
 
+        {"continue break continue",
+         {"continue", "break", "continue"}},
+
+        {"break", "break"},
+        {"break aa", "break aa"},
+        {"break 1,2,3", "break 1, 2, 3"},
+
+        {"continue", "continue"},
+        {"continue aa", "continue aa"},
+        {"continue 1,2,3", "continue 1, 2, 3"},
+
+        {"return", "return"},
+        {"return aa", "return aa"},
+        {"return 1,2,3", "return 1, 2, 3"},
+
+        {"for thing { }",
+         "for thing {\n"
+         "}"},
+
+        {"for thing { println(it) }",
+         "for thing {\n"
+         "    println(it)\n"
+         "}"},
+
+        {"for thing { println(it) break }",
+         "for thing {\n"
+         "    println(it)\n"
+         "    break\n"
+         "}"}
          
     };
     int total_run = 0;

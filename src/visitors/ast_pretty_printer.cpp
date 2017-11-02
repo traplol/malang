@@ -359,10 +359,33 @@ void Ast_Pretty_Printer::visit(struct Return_Node &n)
         to_string(*n.values);
     }
 }
+void Ast_Pretty_Printer::visit(struct Break_Node &n)
+{
+    str << "break";
+    if (!n.values->contents.empty())
+    {
+        str << " ";
+        to_string(*n.values);
+    }
+}
+void Ast_Pretty_Printer::visit(struct Continue_Node &n)
+{
+    str << "continue";
+    if (!n.values->contents.empty())
+    {
+        str << " ";
+        to_string(*n.values);
+    }
+}
 void Ast_Pretty_Printer::visit(struct While_Node &n)
 {
     assert(n.condition);
     str << "while "; to_string(*n.condition); do_body(n.body);
+}
+void Ast_Pretty_Printer::visit(struct For_Node &n)
+{
+    assert(n.iterable);
+    str << "for "; to_string(*n.iterable); do_body(n.body);
 }
 void Ast_Pretty_Printer::visit(struct If_Else_Node &n)
 {
