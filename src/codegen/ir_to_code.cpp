@@ -140,21 +140,15 @@ void IR_To_Code::visit(IR_Indexable &n)
     }
     else
     {
-        if (auto method = thing_ty->get_method("[]", {n.index->get_type()}))
+        auto method = thing_ty->get_method("[]", {n.index->get_type()});
+        assert(method);
+        if (method->is_native())
         {
-            if (method->is_native())
-            {
-                cg->push_back_call_native(method->native_function()->index);
-            }
-            else
-            {
-                backfill_label(cg, method->code_function());
-            }
+            cg->push_back_call_native(method->native_function()->index);
         }
         else
         {
-            n.src_loc.report("error", "[] operator not implemented for type `%s'", thing_ty->name().c_str());
-            abort();
+            backfill_label(cg, method->code_function());
         }
     }
 }
@@ -237,7 +231,26 @@ void IR_To_Code::visit(IR_Call &n)
 
 void IR_To_Code::visit(IR_Call_Method &n)
 {
-    NOT_IMPL;
+    if (n.thing)
+    {
+        convert_one(*n.thing);
+    }
+    else
+    {
+        cg->push_back_load_local(0);
+    }
+    for (auto &&a : n.arguments)
+    {
+        convert_one(*a);
+    }
+    if (n.method->is_native())
+    {
+        cg->push_back_call_native(n.method->native_function()->index);
+    }
+    else
+    {
+        backfill_label(cg, n.method->code_function());
+    }
 }
 
 void IR_To_Code::visit(IR_Call_Virtual_Method &n)
@@ -346,30 +359,10 @@ void IR_To_Code::visit(IR_Branch_If_False_Or_Pop &n)
 
 void IR_To_Code::visit(IR_Assignment &n)
 {
-    // @TODO: how will array assignment be handled?
-    auto lval = dynamic_cast<IR_LValue*>(n.lhs);
-    assert(lval);
-    auto lval_ty = lval->get_type();
-    if (!lval_ty)
-    {
-        n.lhs->src_loc.report("error", "Could not deduce type.\n");
-        abort();
-    }
-    auto rval_ty = n.rhs->get_type();
-    if (!rval_ty)
-    {
-        n.rhs->src_loc.report("error", "Could not deduce type.\n");
-        abort();
-    }
+    assert(n.lhs);
+    assert(n.rhs);
 
-    if (!rval_ty->is_assignable_to(lval_ty))
-    {
-        n.src_loc.report("error", "Cannot assign from type `%s' to `%s'\n",
-                         rval_ty->name().c_str(), lval_ty->name().c_str());
-        abort();
-    }
-
-    if (auto var = dynamic_cast<IR_Symbol*>(lval))
+    if (auto var = dynamic_cast<IR_Symbol*>(n.lhs))
     {
         var->is_initialized = true;
         convert_one(*n.rhs);
@@ -388,7 +381,7 @@ void IR_To_Code::visit(IR_Assignment &n)
                 break;
         }
     }
-    else if (auto idx = dynamic_cast<IR_Indexable*>(lval))
+    else if (auto idx = dynamic_cast<IR_Indexable*>(n.lhs))
     {
         convert_one(*idx->thing);
         convert_one(*idx->index);
@@ -404,7 +397,8 @@ void IR_To_Code::visit(IR_Assignment &n)
         }
         else
         {
-            if (auto method = thing_ty->get_method("[]=", {idx->index->get_type(), rval_ty}))
+            if (auto method =
+                thing_ty->get_method("[]=", {idx->index->get_type(), n.rhs->get_type()}))
             {
                 if (method->is_native())
                 {
@@ -422,7 +416,7 @@ void IR_To_Code::visit(IR_Assignment &n)
             }
         }
     }
-    else if (auto mem = dynamic_cast<IR_Member_Access*>(lval))
+    else if (auto mem = dynamic_cast<IR_Member_Access*>(n.lhs))
     {
         auto thing_ty = mem->thing->get_type();
         assert(thing_ty);

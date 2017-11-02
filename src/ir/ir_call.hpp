@@ -7,7 +7,7 @@
 
 struct IR_Call : IR_RValue
 {
-    virtual ~IR_Call();
+    virtual ~IR_Call() = default;
     IR_Call(const Source_Location &src_loc, IR_Value *callee, const std::vector<IR_Value*> &arguments)
         : IR_RValue(src_loc)
         , callee(callee)
@@ -24,16 +24,25 @@ struct IR_Call : IR_RValue
 
 };
 
-struct IR_Call_Method : IR_Call
+struct IR_Call_Method : IR_RValue
 {
     virtual ~IR_Call_Method() = default;
-    IR_Call_Method(const Source_Location &src_loc, IR_Value *thing, IR_Value *callee, const std::vector<IR_Value*> &arguments)
-        : IR_Call(src_loc, callee, arguments)
+    // If `thing' is nullptr, a Load_Local_0 will be generated instead.
+    IR_Call_Method(const Source_Location &src_loc, IR_Value *thing, Method_Info *method, const std::vector<IR_Value*> &arguments)
+        : IR_RValue(src_loc)
         , thing(thing)
+        , method(method)
+        , arguments(arguments)
         {}
+
     IR_NODE_OVERRIDES;
 
     IR_Value *thing;
+    Method_Info *method;
+    std::vector<IR_Value*> arguments;
+
+    virtual struct Type_Info *get_type() const override;
+    struct Function_Type_Info *get_fn_type() const;
 };
 
 struct IR_Call_Virtual_Method : IR_Call
@@ -60,7 +69,7 @@ struct IR_Allocate_Locals : IR_Node
 
 struct IR_Callable : IR_RValue
 {
-    virtual ~IR_Callable();
+    virtual ~IR_Callable() = default;
     IR_Callable(const Source_Location &src_loc, IR_Label *label, Function_Type_Info *fn_type, bool is_special_bound = false)
         : IR_RValue(src_loc)
         , fn_type(fn_type)
@@ -87,9 +96,9 @@ struct IR_Callable : IR_RValue
 };
 
 
-struct IR_Method: IR_Callable
+struct IR_Method : IR_Callable
 {
-    virtual ~IR_Method();
+    virtual ~IR_Method() = default;
     IR_Method(const Source_Location &src_loc, IR_Value *thing, IR_Label *label, struct Function_Type_Info *fn_type, bool is_special_bound = false)
         : IR_Callable(src_loc, label, fn_type, is_special_bound)
         , thing(thing)
@@ -107,7 +116,7 @@ struct IR_Method: IR_Callable
 
 struct IR_Indexable : IR_LValue
 {
-    virtual ~IR_Indexable();
+    virtual ~IR_Indexable() = default;
     IR_Indexable(const Source_Location &src_loc, IR_Value *thing, IR_Value *index, Type_Info *value_type)
         : IR_LValue(src_loc)
         , thing(thing)

@@ -40,11 +40,10 @@ void Ast_To_IR::visit(Variable_Node &n)
         auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
         _return(alloc);
     }
-    else if (cur_fn && n.name == "recurse")
+    if (cur_fn && n.name == "recurse")
     {
         assert(cur_fn_ep);
-        auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep,
-                                                cur_fn->fn_type);
+        auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep, cur_fn->fn_type);
         _return(callable);
     }
     auto bound_fn = locality->current().find_bound_function(n.name, *cur_call_arg_types);
@@ -55,47 +54,26 @@ void Ast_To_IR::visit(Variable_Node &n)
             n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name.c_str());
             abort();
         }
-        bool method_matches = false;
         if (is_extending)
         {
-            if (is_extending->get_method(n.name, bound_fn.fn_type()->parameter_types()))
+            if (auto method = is_extending->get_method(n.name, bound_fn.fn_type()->parameter_types()))
             {
-                method_matches = true;
+                auto meth_call =
+                    ir->alloc<IR_Call_Method>(n.src_loc, nullptr, method, std::vector<IR_Value*>());
+                _return(meth_call);
             }
         }
         if (bound_fn.is_native())
         {
-            if (method_matches)
-            {   // this is a method call in the form of:
-                //    some_method(...)
-                // instead of self.method(...) or thing.method(...)
-                // This means self is garaunteed to be in local_0 and the IR_To_Code will
-                // generate the Load_Local_0 when thing is nullptr.
-                auto callable = ir->alloc<IR_Method>(n.src_loc, nullptr, bound_fn.native()->index,
-                                                        bound_fn.fn_type());
-                _return(callable);
-            }
-            else
-            {
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index,
-                                                        bound_fn.fn_type());
-                _return(callable);
-            }
+            auto callable =
+                ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index, bound_fn.fn_type());
+            _return(callable);
         }
         else
         {
-            if (method_matches)
-            {   // see above
-                auto callable = ir->alloc<IR_Method>(n.src_loc, nullptr, bound_fn.code(),
-                                                       bound_fn.fn_type());
-                _return(callable);
-            }
-            else
-            {
-                auto callable = ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(),
-                                                       bound_fn.fn_type());
-                _return(callable);
-            }
+            auto callable =
+                ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(), bound_fn.fn_type());
+            _return(callable);
         }
     }
     auto symbol = find_symbol(n.name);
@@ -112,11 +90,25 @@ void Ast_To_IR::visit(Assign_Node &n)
     auto value = get<IR_Value*>(*n.rhs);
     assert(value);
     auto lval = get<IR_LValue*>(*n.lhs);
+    if (!lval)
+    {
+        n.src_loc.report("error", "LHS of assign is not an lvalue");
+        abort();
+    }
+
+    if (!value->get_type()->is_assignable_to(lval->get_type()))
+    {
+        n.src_loc.report("error", "Cannot assign from type `%s' to `%s'",
+                         value->get_type()->name().c_str(),
+                         lval->get_type()->name().c_str());
+        abort();
+    }
+        
     if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {
         sym->is_initialized = true;
     }
-    assert(lval);
+
     if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {
         if (sym->is_initialized && sym->is_readonly)
@@ -618,34 +610,28 @@ void Ast_To_IR::visit(Call_Node &n)
         alloc->which_ctor = ctor;
         _return(alloc);
     }
-    else if (auto member = dynamic_cast<IR_Member_Access*>(callee))
+    if (auto member = dynamic_cast<IR_Member_Access*>(callee))
     {
         auto thing_ty = member->thing->get_type();
         assert(thing_ty);
         if (auto method = thing_ty->get_method(member->member_name, args_types))
         {
-            if (method->is_native())
-            {
-                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->native_function()->index, method->type());
-            }
-            else
-            {
-                callee = ir->alloc<IR_Method>(n.src_loc, member->thing, method->code_function(), method->type());
-            }
+            auto call_meth = ir->alloc<IR_Call_Method>(n.src_loc, member->thing, method, args); 
+            _return(call_meth);
         }
         else
         {
-            n.src_loc.report("error", "Method `%s' not implemented for type `%s'",
+            n.src_loc.report("error", "Method `fn %s%s' not implemented for type `%s'",
                              member->member_name.c_str(), 
+                             fp.to_string().c_str(),
                              thing_ty->name().c_str());
             abort();
         }
     }
-    else if (auto meth = dynamic_cast<IR_Method*>(callee))
+    if (auto meth_call = dynamic_cast<IR_Call_Method*>(callee))
     {
-        //auto call_meth = ir->alloc<IR_Call_Method>(n.src_loc, meth->thing, callee, args);
-        //cur_call_arg_types = old_cur_call_arg_types;
-        //_return(call_meth);
+        meth_call->arguments = args;
+        _return(meth_call);
     }
     else
     {
@@ -690,12 +676,15 @@ void Ast_To_IR::visit(Index_Node &n)
         auto index = get<IR_Value*>(*n.subscript);
         if (auto method = thing_ty->get_method("[]", {index->get_type()}))
         {
-            auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, method->return_type());
+            auto index = get<IR_Value*>(*n.subscript);
+            auto indexable = ir->alloc<IR_Indexable>(
+                    n.src_loc, thing, index, method->type()->return_type());
             _return(indexable);
         }
         else
         {
-            n.src_loc.report("error", "[] operator not implemented for type `%s'", thing_ty->name().c_str());
+            n.src_loc.report("error", "[] operator not implemented for type `%s'",
+                             thing_ty->name().c_str());
             abort();
         }
     }
@@ -709,8 +698,6 @@ void Ast_To_IR::visit(Member_Accessor_Node &n)
     _return(member_access);
 }
 
-// @FixMe: The immediate evaluation of Negate_Node, Positive_Node, Not_Node, and Invert_Node
-// should probably be handled in the IR_To_Code converter...
 void Ast_To_IR::visit(Negate_Node &n)
 {
     auto operand = get<IR_Value*>(*n.operand);
@@ -880,10 +867,11 @@ void Ast_To_IR::visit(Type_Def_Node &n)
       constructors
 
       .init:
-      it takes 1 argument with the same type as it is being implemented for and does
-      return back the constructed object.
+      it takes 1 argument with the same type as it is being implemented for and returns
+      back the default-constructed object.
         + convert pure field declarations into default values if they are pimitive 
         types: int = 0, double = 0.0, bool = false
+          ? alternatively uninitialized values could be required to be Optional<T>
         + otherwise alloc + default construct them
           * it is an error to declare a non-trivial type with no default constructor
         + convert decl_assign and decl_const to their respective code + Set_Field <n>
@@ -954,54 +942,38 @@ void Ast_To_IR::visit(Type_Def_Node &n)
 
     for (auto &&field : n.fields)
     {
-
+        Field_Info *field_to_add = nullptr;
         if (auto decl_assign = dynamic_cast<Decl_Assign_Node*>(field))
         {
             auto assign = get<IR_Assignment*>(*decl_assign);
-            auto field_info =
-                new Field_Info{decl_assign->decl->variable_name, assign->rhs->get_type(), false};
-            if (!is_extending->add_field(field_info))
-            {
-                field->src_loc.report("error", "Field `%s' already defined for `%s'",
-                                      decl_assign->decl->variable_name.c_str(),
-                                      is_extending->name().c_str());
-                abort();
-            }
+            field_to_add = new Field_Info{
+                decl_assign->decl->variable_name, assign->rhs->get_type(), false};
             init->body().push_back(assign);
         }
         else if (auto decl_cons = dynamic_cast<Decl_Constant_Node*>(field))
         {
             auto assign = get<IR_Assignment*>(*decl_cons);
-            auto field_info =
-                new Field_Info{decl_cons->decl->variable_name, assign->rhs->get_type(), true};
-            if (!is_extending->add_field(field_info))
-            {
-                field->src_loc.report("error", "Field `%s' already defined for `%s'",
-                                      decl_cons->decl->variable_name.c_str(),
-                                      is_extending->name().c_str());
-                abort();
-            }
+            field_to_add = new Field_Info{
+                decl_cons->decl->variable_name, assign->rhs->get_type(), true};
             init->body().push_back(assign);
         }
-        else if (auto decl = dynamic_cast<Decl_Node*>(field))
+        else if (dynamic_cast<Decl_Node*>(field))
         {
-            auto symbol = get<IR_Symbol*>(*decl);
-            auto field_info =
-                new Field_Info{symbol->symbol, symbol->get_type(), false};
-            if (!is_extending->add_field(field_info))
-            {
-                field->src_loc.report("error", "Field `%s' already defined for `%s'",
-                                      decl->variable_name.c_str(),
-                                      is_extending->name().c_str());
-                abort();
-            }
-            init->body().push_back(symbol);
-            NOT_IMPL; // @TODO: Generate defaults...?
+            n.src_loc.report("NYI", "Uninitialized declarations not implemented for type definitions");
+            abort();
         }
         else
         {
             field->src_loc.report("error", "not sure how a %s ended up in the fields...",
                                  field->type_name().c_str());
+            abort();
+        }
+
+        if (field_to_add && !is_extending->add_field(field_to_add))
+        {
+            field->src_loc.report("error", "Field `%s' already defined for `%s'",
+                                  field_to_add->name().c_str(),
+                                  is_extending->name().c_str());
             abort();
         }
     }
@@ -1073,13 +1045,13 @@ void Ast_To_IR::visit(Return_Node &n)
         abort();
     }
     if (n.values->contents.size() > 1)
-    { // @FixMe: implement sum types or a similar mechanism to type check multiple return values
+    { 
         n.src_loc.report("not implemented", "multiple return types not yet implemented.");
         abort();
     }
 
     std::vector<IR_Value*> values;
-    // None
+    // 0 
     if (n.values->contents.empty()
         && cur_fn->fn_type->return_type() != ir->types->get_void())
     {
@@ -1106,7 +1078,7 @@ void Ast_To_IR::visit(Return_Node &n)
     }
 
     /* 
-    // Multi:
+    // 2+
     for (auto &&v : n.values->contents)
     {
         auto ret_v = get<IR_Value*>(*v);

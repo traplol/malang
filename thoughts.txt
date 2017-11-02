@@ -414,3 +414,10 @@ Nov 1, 2017:
     code, continuing until return, continuing until the next breakpoint, and inspecting the
     stack
     + Hooked up a builtin `pfn breakpoint() -> void' to trigger breakpoints in code.
+
+Nov 2, 2017:
+    + Calling methods without self now correctly resolves and implicitly passes it.
+    + Added a flag to mute most the non-critical diagnostics
+    + Implemented a script for running the compiler with source and comparing to expected
+    output.
+    

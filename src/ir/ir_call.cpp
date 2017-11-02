@@ -5,12 +5,9 @@ IR_NODE_OVERRIDES_IMPL(IR_Call_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Call_Virtual_Method);
 IR_NODE_OVERRIDES_IMPL(IR_Allocate_Locals);
 IR_NODE_OVERRIDES_IMPL(IR_Allocate_Object);
-
-IR_Call::~IR_Call()
-{
-    callee = nullptr;
-    arguments.clear();
-}
+IR_NODE_OVERRIDES_IMPL(IR_Method);
+IR_NODE_OVERRIDES_IMPL(IR_Indexable);
+IR_NODE_OVERRIDES_IMPL(IR_Callable);
 
 struct Type_Info *IR_Call::get_type() const
 {
@@ -32,17 +29,12 @@ struct Function_Type_Info *IR_Call::get_fn_type() const
     return fn_ty;
 }
 
-IR_NODE_OVERRIDES_IMPL(IR_Callable);
-IR_Callable::~IR_Callable()
+struct Type_Info *IR_Call_Method::get_type() const
 {
+    return method->type()->return_type();
 }
-IR_NODE_OVERRIDES_IMPL(IR_Method);
-IR_Method::~IR_Method()
+
+Function_Type_Info *IR_Call_Method::get_fn_type() const
 {
-}
-IR_NODE_OVERRIDES_IMPL(IR_Indexable);
-IR_Indexable::~IR_Indexable()
-{
-    thing = nullptr;
-    index = nullptr;
+    return method->type();
 }
