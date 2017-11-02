@@ -17,7 +17,6 @@ bool Bound_Function_Map::add_constructor(Type_Info *to_type, Function_Type_Info 
     auto ctor_name = to_type->name() + "..ctor";
     auto pfn = new Native_Function{ctor_name, index, native, fn_type};
     auto ctor = new Constructor_Info{fn_type, pfn};
-    printf("%s %s\n", ctor_name.c_str(), ctor->type()->name().c_str());
     if (!to_type->add_constructor(ctor))
     {
         printf("Couldn't add constructor to %s\n", to_type->name().c_str());
