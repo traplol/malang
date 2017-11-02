@@ -7,29 +7,29 @@ type StringBuilder = {
     }
 
     fn _resize() {
-        cpy := buffer(self._data.length * 2)
+        cpy := buffer(_data.length * 2)
         n := 0
         while n < _size {
-            cpy[n] = self._data[n]
+            cpy[n] = _data[n]
             n += 1
         }
         _data = cpy
     }
 
     fn [] (idx: int) -> int {
-        return self._data[idx]
+        return _data[idx]
     }
 
     fn []= (idx: int, val: int) {
-        self._data[idx] = val
+        _data[idx] = val
     }
 
     fn append(val : int) {
-        if self._size + 1 >= self._data.length {
+        if _size + 1 >= _data.length {
             self._resize()
         }
-        self._data[self._size] = val
-        self._size += 1
+        _data[_size] = val
+        _size += 1
     }
 
 
@@ -42,13 +42,12 @@ type StringBuilder = {
         return self
     }
 
-    fn to_str() -> string {
-        return string(self._data, self._size)
+    fn to_s() -> string {
+        return string(_data, _size)
     }
 }
 
 s := StringBuilder()
-x := "hello world"
+s << "does " << "it " << "work now?"
+println(s.to_s())
 
-s << "it can " # << "work like this" << " too!"
-println(s.to_str())

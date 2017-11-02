@@ -89,7 +89,9 @@ void Scope_Lookup::push(bool entering_new_frame, bool can_see_parent_scope)
         {
             m_current_scope,
             m_alloc,
-            m_current_scope->symbols().index(),
+            (entering_new_frame
+             ? 0
+             : m_current_scope->symbols().index()),
             can_see_parent_scope
         };
     m_frame_stack.push_back(entering_new_frame);

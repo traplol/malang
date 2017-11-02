@@ -189,6 +189,10 @@ void IR_To_Code::visit(IR_Member_Access &n)
 
 void IR_To_Code::visit(IR_Call &n)
 {
+    if (auto method = dynamic_cast<IR_Method*>(n.callee))
+    {
+        convert_one(*method->thing);
+    }
     for (auto &&a : n.arguments)
     {
         convert_one(*a);
@@ -200,10 +204,6 @@ void IR_To_Code::visit(IR_Call &n)
     // finally calling it.
     if (auto callable = dynamic_cast<IR_Callable*>(n.callee))
     {
-        if (auto method = dynamic_cast<IR_Method*>(n.callee))
-        {
-            convert_one(*method->thing);
-        }
         if (callable->fn_type->is_native())
         {
             cg->push_back_call_native(callable->u.index);

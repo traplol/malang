@@ -10,6 +10,20 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
  * This implementation also works for 32-bit on x86 because sizeof(void*) == sizeof(int32_t)
  * on 32-bit, the downside is that each Value still requires 8 bytes
  */
+
+#if DEBUG_MODE
+#define STR(t) XSTR(t)
+#define XSTR(t) #t
+#define THROW_IF_NOT(pred)                                              \
+    if (!(pred)) {                                                      \
+        printf("assertion failed: %s %s:%d\n", STR(pred), __FILE__, __LINE__); \
+        throw nullptr;                                                  \
+    }
+#else
+#define THROW_IF_NOT(pred)
+#endif
+    
+
 template<typename ObjectType>
 struct Value
 {
@@ -59,7 +73,7 @@ struct Value
     template<typename T, uint64_t tag>
     inline T as() const
     {
-        assert(is<tag>());
+        THROW_IF_NOT(is<tag>());
         return reinterpret_cast<T>(v.as_bits & ~tag);
     }
 
@@ -85,25 +99,25 @@ struct Value
 
     inline double as_double() const
     {
-        assert(is_double());
+        THROW_IF_NOT(is_double());
         return v.as_double;
     }
 
     inline int32_t as_fixnum() const
     {
-        assert(is_fixnum());
+        THROW_IF_NOT(is_fixnum());
         return static_cast<int32_t>(as<uint64_t, fixnum_tag>());
     }
 
     inline ObjectType *as_object() const
     {
-        assert(is_object());
+        THROW_IF_NOT(is_object());
         return as<ObjectType*, object_tag>();
     }
 
     inline void *as_pointer() const
     {
-        assert(is_pointer());
+        THROW_IF_NOT(is_pointer());
         return as<void*, pointer_tag>();
     }
 

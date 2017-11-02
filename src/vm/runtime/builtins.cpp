@@ -71,8 +71,11 @@ void println_string(Malang_VM &vm)
     auto top = vm.pop_data().as_object();
     auto string = reinterpret_cast<Malang_Object_Body*>(top);
     auto len = string->fields[length_idx].as_fixnum();
-    auto data = string->fields[intern_data_idx].as_pointer();
-    printf("%.*s\n", len, static_cast<char*>(data));
+    if (len)
+    {
+        auto data = string->fields[intern_data_idx].as_pointer();
+        printf("%.*s\n", len, static_cast<char*>(data));
+    }
 }
 
 static

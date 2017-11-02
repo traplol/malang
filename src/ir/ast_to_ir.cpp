@@ -82,6 +82,10 @@ void Ast_To_IR::visit(Assign_Node &n)
     auto value = get<IR_Value*>(*n.rhs);
     assert(value);
     auto lval = get<IR_LValue*>(*n.lhs);
+    if (auto sym = dynamic_cast<IR_Symbol*>(lval))
+    {
+        sym->is_initialized = true;
+    }
     assert(lval);
     if (auto sym = dynamic_cast<IR_Symbol*>(lval))
     {

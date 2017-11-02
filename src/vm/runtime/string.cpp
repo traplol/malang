@@ -27,11 +27,11 @@ Char *data(Malang_Object_Body *str)
     return reinterpret_cast<Char*>(str->fields[intern_data_idx].as_pointer());
 }
 
-void Malang_Runtime::string_construct_intern(Malang_Object *place, Fixnum size, char *buffer)
+void Malang_Runtime::string_construct_intern(Malang_Object *place, Fixnum size, Char *buffer)
 {
     auto str = cast(place);
-    str->fields[length_idx] = size;
-    str->fields[intern_data_idx] = buffer;
+    str->fields[length_idx].set(size);
+    str->fields[intern_data_idx].set(buffer);
 }
 
 void Malang_Runtime::string_construct_intern(Malang_Object *place, const String_Constant &string_constant)
@@ -50,16 +50,20 @@ void string_buffer_new(Malang_VM &vm)
     auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
     assert(str_ref->header.type->type_token() == string_type_token);
 
-    Fixnum size = 0;
-    auto copy = new Char[size];
+    Fixnum size;
     for (size = 0; size < buffer->size; ++size)
     {
         if (buffer->data[size] == 0)
         {
             break;
         }
-        copy[size] = buffer->data[size];
     }
+    auto copy = new Char[size];
+    for (Fixnum i = 0; i < size; ++i)
+    {
+        copy[i] = buffer->data[i];
+    }
+    copy[size] = buffer->data[size];
     string_construct_intern(arg_0, size, copy);
 }
 
@@ -68,15 +72,15 @@ static
 void string_buffer_int_new(Malang_VM &vm)
 {
     auto num_chars = vm.pop_data().as_fixnum();
-    auto arg_1 = vm.pop_data().as_object();
-    assert(arg_1->object_tag == Buffer);
-    auto buffer = reinterpret_cast<Malang_Buffer*>(arg_1);
-    auto arg_0 = vm.pop_data().as_object();
-    auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
-    assert(str_ref->header.type->type_token() == string_type_token);
+    auto _buffer = vm.pop_data().as_object();
+    assert(_buffer->object_tag == Buffer);
+    auto buffer = reinterpret_cast<Malang_Buffer*>(_buffer);
+    auto self = vm.pop_data().as_object();
+    auto self_str = reinterpret_cast<Malang_Object_Body*>(self);
+    assert(self_str->header.type->type_token() == string_type_token);
 
     Fixnum size = 0;
-    auto copy = new Char[size];
+    auto copy = new Char[num_chars];
     for (size = 0; size < num_chars && buffer->size; ++size)
     {
         if (buffer->data[size] == 0)
@@ -85,7 +89,7 @@ void string_buffer_int_new(Malang_VM &vm)
         }
         copy[size] = buffer->data[size];
     }
-    string_construct_intern(arg_0, size, copy);
+    string_construct_intern(self, size, copy);
 }
 
 static

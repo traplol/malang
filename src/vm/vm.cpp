@@ -11,6 +11,20 @@
 #include "runtime.hpp"
 #include "../codegen/disassm.hpp"
 
+
+static void vprint(const char *fmt, va_list vargs)
+{
+    vprintf(fmt, vargs);
+}
+
+static void print(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vprint(fmt, args);
+    va_end(args);
+}
+
 Malang_VM::~Malang_VM()
 {
     locals_frames_top = 0;
@@ -27,6 +41,7 @@ Malang_VM::Malang_VM(Type_Map *types,
                      size_t gc_run_interval, size_t max_num_objects)
     : natives(natives)
     , string_constants(string_constants)
+    , types(types)
     , breaking(false)
 {
     gc = new Malang_GC{this, types, gc_run_interval, max_num_objects};
@@ -36,7 +51,7 @@ Malang_VM::Malang_VM(Type_Map *types,
         auto obj = gc->allocate_unmanaged_object(str_ty->type_token());
         if (!obj)
         {
-            printf("GC couldn't allocate unmanaged string constant.\n");
+            print("GC couldn't allocate unmanaged string constant.\n");
             abort();
         }
         Malang_Runtime::string_construct_intern(obj, sc);
@@ -60,20 +75,6 @@ void Malang_VM::run()
     data_top = 0;
 
     run_code(*this);
-}
-
-
-static void vprint(const char *fmt, va_list vargs)
-{
-    vprintf(fmt, vargs);
-}
-
-static void print(const char *fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    vprint(fmt, args);
-    va_end(args);
 }
 
 void Malang_VM::panic(const char *fmt, ...)
@@ -128,18 +129,26 @@ void Malang_VM::stack_trace() const
         }
     }
     print("\nLOCALS:\n");
-    for (auto i = locals_top; i != 0; --i)
+
+
+    auto tmp_locals_frames_top = locals_frames_top;
+    uintptr_t this_frame_ends_at = 0;
+    for (auto i = locals_top-1; i != static_cast<uintptr_t>(-1); --i)
     {
-        auto &&e = locals[i-1];
-        if (i == locals_top)
+        if (tmp_locals_frames_top > 0)
         {
-            print("%ld: %s <-- TOP\n", locals_top-i, to_string(e).c_str());
+            this_frame_ends_at = locals_frames[tmp_locals_frames_top-1];
         }
-        else
+        auto local = locals[i];
+        print("%d: %s\n", i-this_frame_ends_at, to_string(local).c_str());
+        if (i == this_frame_ends_at)
         {
-            print("-%ld: %s\n", locals_top-i, to_string(e).c_str());
+            tmp_locals_frames_top--;
+            print("~~~~~~~~~\n");
         }
     }
+
+
     print("\nGLOBALS:\n");
     for (size_t i = 0; i < globals_top; ++i)
     {
@@ -188,15 +197,15 @@ void Malang_VM::dump_code(uintptr_t ip, size_t n, int width) const
     {
         if (i % width == 0)
         {
-            printf("%08lx  ", i);
+            print("%08lx  ", i);
         }
-        printf("%02x ", mem[i]);
+        print("%02x ", mem[i]);
         if ((i+1) % width == 0)
         {
-            printf("\n");
+            print("\n");
         }
     }
-    printf("\n");
+    print("\n");
 }
 
 void Malang_VM::add_local(Malang_Value value)
@@ -247,7 +256,7 @@ void dbg_dis(Malang_VM &vm, byte *ip, int n)
     {
         auto offset = ip - vm.code.data();
         ip = Disassembler::dis1(ip, offset, str);
-        printf("%s\n", str.c_str());
+        print("%s\n", str.c_str());
     }
 }
 
@@ -271,16 +280,16 @@ void debugger(Malang_VM &vm, byte *ip)
             return;
         }
     }
+    dbg_dis(vm, ip, 1);
     if (step_n > 0)
     {
-        dbg_dis(vm, ip, 1);
         --step_n;
         return;
     }
     std::string line, cmd;
     while (true)
     {
-        printf(">>> ");
+        print(">>> ");
         if (!std::getline(std::cin, line))
         {
             done = true;
@@ -303,24 +312,23 @@ void debugger(Malang_VM &vm, byte *ip)
             std::string cmd_str(cmd_buf);
             if (cmd_str == "help")
             {
-                printf("Command arguments are in hex\n");
-                printf("help               display this message\n");
-                printf("s(tep) n=1         step through n instructions\n");
-                printf("run                runs until next breakpoint\n");
-                printf("ret(urn)           runs until next return\n");
-                printf("st(race)           prints a stack trace\n");
-                printf("dis n=1 a=HERE     disassembles n instructions at a(ddress)\n");
-                printf("local n=0          prints local variable n\n");
-                printf("stack n=0          prints stack variable n\n");
-                printf("to(p)              prints top of stack\n");
-                printf("se(cond)           prints second of stack\n");
-                printf("th(ird)            prints third of stack\n");
-                printf("fo(urth)           prints fourth of stack\n");
+                print("Command arguments are in hex\n");
+                print("help               display this message\n");
+                print("s(tep) n=1         step through n instructions\n");
+                print("run                runs until next breakpoint\n");
+                print("ret(urn)           runs until next return\n");
+                print("st(race)           prints a stack trace\n");
+                print("dis n=1 a=HERE     disassembles n instructions at a(ddress)\n");
+                print("local n=0          prints local variable n\n");
+                print("stack n=0          prints stack variable n\n");
+                print("to(p)              prints top of stack\n");
+                print("se(cond)           prints second of stack\n");
+                print("th(ird)            prints third of stack\n");
+                print("fo(urth)           prints fourth of stack\n");
             }
             else if (cmd_str == "s" || cmd_str == "step")
             {
                 step_n = arg0-1;
-                dbg_dis(vm, ip, 1);
                 return;
             }
             else if (cmd_str == "run")
@@ -351,27 +359,27 @@ void debugger(Malang_VM &vm, byte *ip)
             }
             else if (cmd_str == "local")
             {
-                printf("LOCAL %x: %s\n", arg0, to_string(vm.get_local(arg0)).c_str());
+                print("LOCAL %x: %s\n", arg0, to_string(vm.get_local(arg0)).c_str());
             }
             else if (cmd_str == "stack")
             {
-                printf("STACK %x: %s\n", arg0, to_string(vm.peek_data(arg0)).c_str());
+                print("STACK %x: %s\n", arg0, to_string(vm.peek_data(arg0)).c_str());
             }
             else if (cmd_str == "to" || cmd_str == "top")
             {
-                printf("STACK 0: %s\n", to_string(vm.peek_data(0)).c_str());
+                print("STACK 0: %s\n", to_string(vm.peek_data(0)).c_str());
             }
             else if (cmd_str == "se" || cmd_str == "second")
             {
-                printf("STACK 1: %s\n", to_string(vm.peek_data(1)).c_str());
+                print("STACK 1: %s\n", to_string(vm.peek_data(1)).c_str());
             }
             else if (cmd_str == "th" || cmd_str == "third")
             {
-                printf("STACK 2: %s\n", to_string(vm.peek_data(2)).c_str());
+                print("STACK 2: %s\n", to_string(vm.peek_data(2)).c_str());
             }
             else if (cmd_str == "fo" || cmd_str == "fourth")
             {
-                printf("STACK 3: %s\n", to_string(vm.peek_data(3)).c_str());
+                print("STACK 3: %s\n", to_string(vm.peek_data(3)).c_str());
             }
         }
     }
@@ -430,8 +438,15 @@ void run_code(Malang_VM &vm)
     auto ip = vm.code.data();
     auto first_ip = ip;
     auto fast_locals = vm.locals;
+    auto prev_ins_ip = ip;
+    #if DEBUG_MODE
+    try
+    {
+    #endif
+
     VM_INIT
     {
+        prev_ins_ip = ip;
         EXEC
         {
             HALT;
@@ -586,32 +601,32 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch8(ip);
-                vm.push_data(n);
                 ip += sizeof(n);
+                vm.push_data(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_16)
             {
                 ip++;
                 auto n = fetch16(ip);
-                vm.push_data(n);
                 ip += sizeof(n);
+                vm.push_data(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_32)
             {
                 ip++;
                 auto n = fetch32(ip);
-                vm.push_data(n);
                 ip += sizeof(n);
+                vm.push_data(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_value)
             {
                 ip++;
                 auto n = fetch_value(ip);
-                vm.push_data(n);
                 ip += sizeof(n);
+                vm.push_data(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Get_Type)
@@ -724,46 +739,46 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch32(ip);
+                ip += sizeof(n);
                 auto v = vm.globals[n];
                 vm.push_data(v);
-                ip += sizeof(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Global)
             {
                 ip++;
                 auto n = fetch32(ip);
-                vm.globals[n] = vm.pop_data();
                 ip += sizeof(n);
+                auto v = vm.pop_data();
+                vm.globals[n] = v;
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Field)
             {
                 ip++;
                 auto idx = fetch16(ip);
+                ip += sizeof(idx);
                 auto obj = reinterpret_cast<Malang_Object_Body*>(vm.pop_data().as_object());
                 vm.push_data(obj->fields[idx]);
-                ip += sizeof(idx);
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Field)
             {
                 ip++;
                 auto idx = fetch16(ip);
+                ip += sizeof(idx);
                 auto obj = reinterpret_cast<Malang_Object_Body*>(vm.pop_data().as_object());
                 auto value = vm.pop_data();
                 obj->fields[idx] = value;
-                ip += sizeof(idx);
                 DISPATCH_NEXT;
-                NOT_IMPL;
             }
             DISPATCH(Load_Local)
             {
                 ip++;
                 auto n = fetch16(ip);
+                ip += sizeof(n);
                 auto v = fast_locals[n];
                 vm.push_data(v);
-                ip += sizeof(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Load_Local_0)
@@ -840,9 +855,9 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch16(ip);
+                ip += sizeof(n);
                 auto v = vm.pop_data();
                 fast_locals[n] = v;
-                ip += sizeof(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Store_Local_0)
@@ -920,9 +935,9 @@ void run_code(Malang_VM &vm)
                 ip++;
                 vm.push_locals_frame(vm.locals_top);
                 auto n = fetch16(ip);
+                ip += sizeof(n);
                 vm.locals_top += n;
                 fast_locals = vm.current_locals();
-                ip += sizeof(n);
                 DISPATCH_NEXT;
             }
             DISPATCH(Dup_1)
@@ -988,8 +1003,8 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch16(ip);
-                vm.data_top -= n;
                 ip += sizeof(n);
+                vm.data_top -= n;
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_Double_m1)
@@ -1062,8 +1077,8 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto type_token = fetch32(ip);
-                auto size = vm.pop_data();
                 ip += sizeof(type_token);
+                auto size = vm.pop_data();
                 auto array_ref = vm.gc->allocate_array(type_token, size.as_fixnum());
                 vm.push_data(array_ref);
                 DISPATCH_NEXT;
@@ -1214,20 +1229,28 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto idx = fetch32(ip);
+                ip += sizeof(idx);
                 auto obj = vm.string_constants_objects[idx];
                 vm.push_data(obj);
-                ip += sizeof(idx);
                 DISPATCH_NEXT;
             }
             DISPATCH(Alloc_Object)
             {
                 ip++;
                 auto type_token = fetch32(ip);
+                ip += sizeof(type_token);
                 auto obj_ref = vm.gc->allocate_object(type_token);
                 vm.push_data(obj_ref);
-                ip += sizeof(type_token);
                 DISPATCH_NEXT;
             }
         }
     }
+
+    #if DEBUG_MODE
+    } // close try
+    catch (...)
+    {
+        debugger(vm, prev_ins_ip);
+    }
+    #endif
 }

@@ -372,36 +372,36 @@ void Codegen::push_back_store_local(uint16_t n)
 {
     switch (n)
     {
-        case 0:
-            push_back_instruction(Instruction::Store_Local_0);
-            break;
-        case 1:
-            push_back_instruction(Instruction::Store_Local_1);
-            break;
-        case 2:
-            push_back_instruction(Instruction::Store_Local_2);
-            break;
-        case 3:
-            push_back_instruction(Instruction::Store_Local_3);
-            break;
-        case 4:
-            push_back_instruction(Instruction::Store_Local_4);
-            break;
-        case 5:
-            push_back_instruction(Instruction::Store_Local_5);
-            break;
-        case 6:
-            push_back_instruction(Instruction::Store_Local_6);
-            break;
-        case 7:
-            push_back_instruction(Instruction::Store_Local_7);
-            break;
-        case 8:
-            push_back_instruction(Instruction::Store_Local_8);
-            break;
-        case 9:
-            push_back_instruction(Instruction::Store_Local_9);
-            break;
+//        case 0:
+//            push_back_instruction(Instruction::Store_Local_0);
+//            break;
+//        case 1:
+//            push_back_instruction(Instruction::Store_Local_1);
+//            break;
+//        case 2:
+//            push_back_instruction(Instruction::Store_Local_2);
+//            break;
+//        case 3:
+//            push_back_instruction(Instruction::Store_Local_3);
+//            break;
+//        case 4:
+//            push_back_instruction(Instruction::Store_Local_4);
+//            break;
+//        case 5:
+//            push_back_instruction(Instruction::Store_Local_5);
+//            break;
+//        case 6:
+//            push_back_instruction(Instruction::Store_Local_6);
+//            break;
+//        case 7:
+//            push_back_instruction(Instruction::Store_Local_7);
+//            break;
+//        case 8:
+//            push_back_instruction(Instruction::Store_Local_8);
+//            break;
+//        case 9:
+//            push_back_instruction(Instruction::Store_Local_9);
+//            break;
         default:
             push_back_instruction(Instruction::Store_Local);
             push_back_raw_16(n);
@@ -412,36 +412,36 @@ void Codegen::push_back_load_local(uint16_t n)
 {
     switch (n)
     {
-        case 0:
-            push_back_instruction(Instruction::Load_Local_0);
-            break;
-        case 1:
-            push_back_instruction(Instruction::Load_Local_1);
-            break;
-        case 2:
-            push_back_instruction(Instruction::Load_Local_2);
-            break;
-        case 3:
-            push_back_instruction(Instruction::Load_Local_3);
-            break;
-        case 4:
-            push_back_instruction(Instruction::Load_Local_4);
-            break;
-        case 5:
-            push_back_instruction(Instruction::Load_Local_5);
-            break;
-        case 6:
-            push_back_instruction(Instruction::Load_Local_6);
-            break;
-        case 7:
-            push_back_instruction(Instruction::Load_Local_7);
-            break;
-        case 8:
-            push_back_instruction(Instruction::Load_Local_8);
-            break;
-        case 9:
-            push_back_instruction(Instruction::Load_Local_9);
-            break;
+//        case 0:
+//            push_back_instruction(Instruction::Load_Local_0);
+//            break;
+//        case 1:
+//            push_back_instruction(Instruction::Load_Local_1);
+//            break;
+//        case 2:
+//            push_back_instruction(Instruction::Load_Local_2);
+//            break;
+//        case 3:
+//            push_back_instruction(Instruction::Load_Local_3);
+//            break;
+//        case 4:
+//            push_back_instruction(Instruction::Load_Local_4);
+//            break;
+//        case 5:
+//            push_back_instruction(Instruction::Load_Local_5);
+//            break;
+//        case 6:
+//            push_back_instruction(Instruction::Load_Local_6);
+//            break;
+//        case 7:
+//            push_back_instruction(Instruction::Load_Local_7);
+//            break;
+//        case 8:
+//            push_back_instruction(Instruction::Load_Local_8);
+//            break;
+//        case 9:
+//            push_back_instruction(Instruction::Load_Local_9);
+//            break;
         default:
             push_back_instruction(Instruction::Load_Local);
             push_back_raw_16(n);
