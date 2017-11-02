@@ -19,8 +19,6 @@ struct Parser
     bool accept(const std::vector<Token_Id> &ids);
     bool expect(Token &out, Token_Id id);
     bool expect(Token_Id id);
-    void handle_newlines();
-    void consume_newlines();
     void report_error(const Token &token, const char *fmt, ...);
     void report_debug(const Token &token, const char *fmt, ...) const;
 

@@ -54,7 +54,7 @@ bool Parser::accept(Token &out, const std::vector<Token_Id> &ids)
     }
     for (auto &&id : ids)
     {
-        if (id == lexer.tokens[lex_idx].id())
+        if (id == peek_id())//lexer.tokens[lex_idx].id())
         {
             out = lexer.tokens[lex_idx];
             ++lex_idx;
@@ -984,16 +984,14 @@ static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
     
     while (true)
     {
-        auto stmt = parse_statement(parser);
-        if (stmt)
+        if (auto stmt = parse_statement(parser))
         {
             body.push_back(stmt.release());
+            continue;
         }
-        if (parser.accept({Token_Id::Close_Curly}))
-        {
-            return true;
-        }
+        break;
     }
+    return parser.expect(Token_Id::Close_Curly);
 }
 static bool parse_decl_list(Parser &parser, std::vector<Decl_Node*> &decls)
 {   // decl_list :=
@@ -1226,45 +1224,46 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     {
         // eat stray semicolons
     }
-    if (auto bound = parse_bound_fn(parser))
+    auto stmt_parser = [](Parser &parser) -> uptr<Ast_Node>
+    {
+        if (auto bound = parse_bound_fn(parser))
+        {
+            return bound;
+        }
+        if (auto decl_ass = parse_decl_assign(parser))
+        {
+            return decl_ass;
+        }
+        if (auto decl_con = parse_decl_constant(parser))
+        {
+            return decl_con;
+        }
+        if (auto decl = parse_declaration(parser))
+        {
+            return decl;
+        }
+        if (auto assign = parse_assignment(parser))
+        {
+            return assign;
+        }
+        if (auto retn = parse_return(parser))
+        {
+            return retn;
+        }
+        if (auto whil = parse_while(parser))
+        {
+            return whil;
+        }
+        if (auto expr = parse_expression(parser))
+        {
+            return expr;
+        }
+        return nullptr;
+    };
+    if (auto stmt = stmt_parser(parser))
     {
         parser.accept({Token_Id::StmtTerminator});
-        return bound;
-    }
-    if (auto decl_ass = parse_decl_assign(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return decl_ass;
-    }
-    if (auto decl_con = parse_decl_constant(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return decl_con;
-    }
-    if (auto decl = parse_declaration(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return decl;
-    }
-    if (auto assign = parse_assignment(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return assign;
-    }
-    if (auto retn = parse_return(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return retn;
-    }
-    if (auto whil = parse_while(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return whil;
-    }
-    if (auto expr = parse_expression(parser))
-    {
-        parser.accept({Token_Id::StmtTerminator});
-        return expr;
+        return stmt;
     }
     PARSE_FAIL;
 }
@@ -1274,6 +1273,10 @@ static Ast_Node *parse_top_level(Parser &parser)
     //     <nothing>
     //     statement top-level
     SAVE;
+    while (parser.accept({Token_Id::StmtTerminator}))
+    {
+        // eat stray semicolons
+    }
     if (auto type_def = parse_type_definition(parser))
     {
         return type_def.release();
