@@ -20,7 +20,6 @@ type Range = {
     }
 }
 
-range := Range(0, 10)
-for range {
+for Range(0, 10) {
     println(it)
 }
