@@ -288,12 +288,10 @@ static uptr<Break_Node> parse_break(Parser &parser)
 static uptr<Continue_Node> parse_continue(Parser &parser)
 {   // continue :=
     //     continue
-    //     continue expression_list
     SAVE;
     Token continue_tk;
     ACCEPT_OR_FAIL(continue_tk, { Token_Id::K_continue });
-    auto values = parse_expression_list(parser, continue_tk.src_loc());
-    return uptr<Continue_Node>(new Continue_Node{continue_tk.src_loc(), values.release()});
+    return uptr<Continue_Node>(new Continue_Node{continue_tk.src_loc()});
 }
 static uptr<If_Else_Node> parse_if_else(Parser &parser)
 {

@@ -18,6 +18,29 @@ std::string Function_Parameters::to_string() const
     return ss.str();
 }
 
+bool Trait::matches(const std::string &name, const Function_Type_Info *fn_type) const
+{
+    assert(!name.empty());
+    if (!fn_type) return false;
+    if (m_name != name) return false;
+    return m_fn_type == fn_type;
+}
+
+bool Trait_Definition::is_implemented_by(const Type_Info *type) const
+{
+    for (auto &&t : m_traits)
+    {
+        if (auto meth = type->get_method(t->name(), t->fn_type()->parameter_types()))
+        {
+            if (!t->matches(meth->name(), meth->type()))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 Constructor_Info::~Constructor_Info()
 {
     if (m_is_native)
@@ -385,6 +408,11 @@ bool Type_Info::is_assignable_to(Type_Info *other) const
         return true;
     }
     return false;
+}
+
+bool Type_Info::implemented_trait(Trait_Definition *trait) const
+{
+    return trait->is_implemented_by(this);
 }
 
 Method_Info *Type_Info::get_method(const std::string &name, const Function_Parameters &param_types) const

@@ -368,14 +368,9 @@ void Ast_Pretty_Printer::visit(struct Break_Node &n)
         to_string(*n.values);
     }
 }
-void Ast_Pretty_Printer::visit(struct Continue_Node &n)
+void Ast_Pretty_Printer::visit(struct Continue_Node &)
 {
     str << "continue";
-    if (!n.values->contents.empty())
-    {
-        str << " ";
-        to_string(*n.values);
-    }
 }
 void Ast_Pretty_Printer::visit(struct While_Node &n)
 {

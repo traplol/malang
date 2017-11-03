@@ -41,7 +41,8 @@ struct Malang_IR
         {}
     Type_Map *types;
     Label_Map *labels;
-    std::vector<IR_Node*> roots;
+    std::vector<IR_Node*> first;
+    std::vector<IR_Node*> second;
 
     // This scheme has been adopted because some IR_Nodes are shared (e.g labels) as the
     // base type IR_Node* which leads to a horrible ownership problem. The simplest solution

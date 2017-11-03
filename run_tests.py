@@ -2,6 +2,12 @@
 
 import subprocess
 import glob
+import os
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+os.chdir(script_dir)
+
+subprocess.run(['tup'])
 
 def run_mal_with(args):
     res = subprocess.run(['./mal'] + args, stdout=subprocess.PIPE)
@@ -14,4 +20,6 @@ for f in files:
     actual = run_mal_with(['--quiet', f])
     with open(f + ".output", "rb") as exp:
         expected = exp.read()
+    #print(actual)
+    #print(expected)
     print("{} : {}".format(expected == actual, f))

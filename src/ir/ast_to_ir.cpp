@@ -338,8 +338,8 @@ void Ast_To_IR::visit(Fn_Node &n)
 
     // @FixMe: find a way for this to just return a block instead of directly inserting
     // like this
-    ir->roots.push_back(branch_over_body);
-    ir->roots.push_back(fn_body);
+    ir->first.push_back(branch_over_body);
+    ir->first.push_back(fn_body);
 
     locality->pop();
 
@@ -1047,7 +1047,7 @@ void Ast_To_IR::visit(Return_Node &n)
     }
     if (n.values->contents.size() > 1)
     { 
-        n.src_loc.report("not implemented", "multiple return types not yet implemented.");
+        n.src_loc.report("NYI", "multiple return values not yet implemented.");
         abort();
     }
 
@@ -1094,12 +1094,27 @@ void Ast_To_IR::visit(Return_Node &n)
 
 void Ast_To_IR::visit(Break_Node &n)
 {
-    NOT_IMPL;
+    if (!n.values->contents.empty())
+    { 
+        n.src_loc.report("NYI", "multiple break values not yet implemented.");
+        abort();
+    }
+    if (!cur_break_label)
+    {
+        n.src_loc.report("error", "Continue outside of a loop does not make sense.");
+    }
+    auto branch = ir->alloc<IR_Branch>(n.src_loc, cur_break_label);
+    _return(branch);
 }
                       
 void Ast_To_IR::visit(Continue_Node &n)
 {
-    NOT_IMPL;
+    if (!cur_continue_label)
+    {
+        n.src_loc.report("error", "Continue outside of a loop does not make sense.");
+    }
+    auto branch = ir->alloc<IR_Branch>(n.src_loc, cur_continue_label);
+    _return(branch);
 }
 
 void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, IR_Value **last_node_as_value)
@@ -1141,8 +1156,12 @@ void Ast_To_IR::visit(While_Node &n)
     assert(loop_block);
     auto old_cur_false_label = cur_false_label;
     auto old_cur_true_label = cur_true_label;
+    auto old_continue_label = cur_continue_label;
+    auto old_break_label = cur_break_label;
     cur_false_label = loop_block->end();
     cur_true_label = loop_block;
+    cur_break_label = loop_block->end();
+    cur_continue_label = condition_check_label;
 
     assert(n.condition);
     auto cond = get<IR_Value*>(*n.condition);
@@ -1172,6 +1191,8 @@ void Ast_To_IR::visit(While_Node &n)
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
+    cur_break_label = old_break_label;
+    cur_continue_label = old_continue_label;
     _return(ret);
 }
 
@@ -1211,8 +1232,12 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     assert(loop_block);
     auto old_cur_false_label = cur_false_label;
     auto old_cur_true_label = cur_true_label;
+    auto old_continue_label = cur_continue_label;
+    auto old_break_label = cur_break_label;
     cur_false_label = loop_block->end();
     cur_true_label = loop_block;
+    cur_break_label = loop_block->end();
+    cur_continue_label = condition_check_label;
 
     // This allows us to create the iterator in the first step of the for loop and continue using it
     locality->push(false);
@@ -1242,6 +1267,8 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
     cur_false_label = old_cur_false_label;
     cur_true_label = old_cur_true_label;
+    cur_continue_label = old_continue_label;
+    cur_break_label = old_break_label;
     _return(ret);
 }
 
@@ -1383,7 +1410,7 @@ void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vect
     this->ir = ir;
     this->locality = global;
     this->strings = strings;
-    convert_body(ast.roots, ir->roots);
+    convert_body(ast.roots, ir->second);
 }
 
 IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)

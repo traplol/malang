@@ -8,7 +8,8 @@ Malang_IR::~Malang_IR()
     types = nullptr;
     delete labels;
     labels = nullptr;
-    roots.clear();
+    first.clear();
+    second.clear();
     for (auto &&n : m_own_allocated_nodes)
     {
         delete n;

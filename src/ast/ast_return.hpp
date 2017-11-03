@@ -33,14 +33,11 @@ struct Break_Node : public Ast_Node
 struct Continue_Node : public Ast_Node
 {
     ~Continue_Node();
-    Continue_Node(const Source_Location &src_loc, struct List_Node *values)
+    Continue_Node(const Source_Location &src_loc)
         : Ast_Node(src_loc)
-        , values(values)
         {}
 
     AST_NODE_OVERRIDES;
-
-    struct List_Node *values;
 };
 
 #endif /* MALANG_AST_AST_RETURN_HPP */

@@ -17,6 +17,5 @@ Break_Node::~Break_Node()
 }
 Continue_Node::~Continue_Node()
 {
-    delete values;
     PRINT_DTOR;
 }

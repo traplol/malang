@@ -1,4 +1,4 @@
-error: const.ma:5:4
+error: examples/tests/const.ma:5:4
 
 	`PI' is constant and cannot be reassigned
 	PI = 42.5  # compile error

@@ -86,6 +86,35 @@ namespace std
     };
 }
 
+struct Trait
+{
+    Trait(const std::string &name, Function_Type_Info *fn_type)
+        : m_name(name)
+        , m_fn_type(fn_type)
+        {}
+
+    const std::string &name() const { return m_name; }
+    Function_Type_Info *fn_type() const { return m_fn_type; }
+    bool matches(const std::string &name, const Function_Type_Info *fn_type) const;
+private:
+    std::string m_name;
+    Function_Type_Info *m_fn_type;
+};
+
+struct Trait_Definition
+{
+    Trait_Definition(const std::string &name, const std::vector<Trait*> traits)
+        : m_name(name)
+        , m_traits(traits)
+        {}
+
+    const std::string &name() const { return m_name; }
+    bool is_implemented_by(const Type_Info *type) const;
+private:
+    std::string m_name;
+    std::vector<Trait*> m_traits;
+};
+
 struct Constructor_Info
 {
     ~Constructor_Info();
@@ -232,6 +261,7 @@ struct Type_Info
     bool is_gc_managed() const;
     bool is_subtype_of(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
+    bool implemented_trait(Trait_Definition *trait) const;
 
     Constructor_Info *get_constructor(const Function_Parameters &param_types) const;
     Method_Info *get_method(const std::string &name, const Function_Parameters &param_types) const;

@@ -438,15 +438,16 @@ bool Lexer::is_replace_newline_with_semicolon_prev(Token_Id tk)
     switch (tk)
     {
         default: return false;
-            // could put K_return in here too
         case Token_Id::Identifier:
+        case Token_Id::K_break:
+        case Token_Id::K_continue:
+        case Token_Id::K_return:
         case Token_Id::Integer:
         case Token_Id::Real:
         case Token_Id::String:
         case Token_Id::Close_Paren:
         case Token_Id::Close_Curly:
         case Token_Id::Close_Square:
-        case Token_Id::K_return:
             return true;
     }
 }

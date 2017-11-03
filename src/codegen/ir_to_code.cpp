@@ -888,7 +888,8 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
     cg = new Codegen;
     this->ir = &ir;
-    convert_many(ir.roots);
+    convert_many(ir.first);
+    convert_many(ir.second);
     cg->push_back_halt();
     return cg;
 }
