@@ -39,6 +39,7 @@ There are plans to support and move towards CMake, but [tup](http://gittup.org/t
   ```sh
   $ git clone https://github.com/traplol/malang
   $ cd malang
+  $ tup init
   $ tup
   $ ./mal examples/hello-world.ma
   ```
