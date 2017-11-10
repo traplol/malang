@@ -15,19 +15,19 @@ z is: "hello world"
 108
 100
 hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello 
-split.length: 15
-split[0]=hello
-split[1]=hello
-split[2]=hello
-split[3]=hello
-split[4]=hello
-split[5]=hello
-split[6]=hello
-split[7]=hello
-split[8]=hello
-split[9]=hello
-split[10]=hello
-split[11]=hello
-split[12]=hello
-split[13]=hello
-split[14]=hello
+spl.length: 15
+spl[0]=hello len=5
+spl[1]=hello len=5
+spl[2]=hello len=5
+spl[3]=hello len=5
+spl[4]=hello len=5
+spl[5]=hello len=5
+spl[6]=hello len=5
+spl[7]=hello len=5
+spl[8]=hello len=5
+spl[9]=hello len=5
+spl[10]=hello len=5
+spl[11]=hello len=5
+spl[12]=hello len=5
+spl[13]=hello len=5
+spl[14]=hello len=5

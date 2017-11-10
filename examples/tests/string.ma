@@ -126,24 +126,20 @@ extend int {
             i += 1
         }
         if negative {
-           tmp[i] = "-"[0]
+           tmp[i] = "-"[0] # no character literals at the moment so this is a hack
            i += 1
         }
-        str := string(tmp, i)
-        return str.reverse()
+        return string(tmp, i).reverse()
     }
 }
 
 println("hello " * 15) # hello hello hello hello hello hello hello hello hello hello 
 
-#zzz := 42
-#println("zzz = " + zzz.to_s())
-hello15 := "hello " * 15
-spl := hello15.split(32)
+spl := ("hello " * 15).split(32)
 
-println("split.length: " + spl.length.to_s())
+println("spl.length: " + spl.length.to_s())
 i := 0
 while i < spl.length {
-    println("split[" + i.to_s() + "]=" + spl[i]) 
+    println("spl[" + i.to_s() + "]=" + spl[i] + " len=" + spl[i].length.to_s()) 
     i += 1
 }
