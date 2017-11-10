@@ -55,6 +55,95 @@ extend string {
 
         return string(tmp_buf, total_len)
     }
+
+    fn substr(s: int, e: int) -> string {
+        tmp := buffer(e-s)
+        i := 0
+        while s < e {
+            tmp[i] = self[s]
+            i += 1
+            s += 1
+        }
+        return string(tmp, i)
+    }
+
+    fn split(c :int) -> []string {
+        tmp := [8]string
+        matches := 0
+        s := 0
+        e := 0
+        while e < self.length {
+            if self[e] == c {
+                if matches >= tmp.length {
+                    # Resize
+                    tmp2 := [tmp.length*2]string
+                    ii := 0
+                    while ii < tmp.length {
+                        tmp2[ii] = tmp[ii]
+                        ii += 1
+                    }
+                    tmp = tmp2
+                }
+                tmp[matches] = self.substr(s, e)
+                matches += 1
+                s = e+1 # skip the delimiter
+            }
+            e += 1
+        }
+        res := [matches]string
+        i := 0
+        while i < matches {
+            res[i] = tmp[i]
+            i += 1
+        }
+        return res
+    }
+
+    fn reverse() -> string {
+        tmp := buffer(self.length)
+        i := 0
+        while i < self.length {
+            tmp[i] = self[self.length-i-1]
+            i += 1
+        }
+        return string(tmp, i)
+    }
+}
+
+extend int {
+    fn to_s() -> string {
+        if self == 0 {
+            return "0"
+        }
+        tmp := buffer(32)
+        negative := if self < 0 true else false
+        n := if negative {-self} else {self}
+        i := 0
+        chars := "0123456789"
+        while n != 0 {
+            tmp[i] = chars[n % 10]
+            n /= 10
+            i += 1
+        }
+        if negative {
+           tmp[i] = "-"[0]
+           i += 1
+        }
+        str := string(tmp, i)
+        return str.reverse()
+    }
 }
 
 println("hello " * 15) # hello hello hello hello hello hello hello hello hello hello 
+
+#zzz := 42
+#println("zzz = " + zzz.to_s())
+hello15 := "hello " * 15
+spl := hello15.split(32)
+
+println("split.length: " + spl.length.to_s())
+i := 0
+while i < spl.length {
+    println("split[" + i.to_s() + "]=" + spl[i]) 
+    i += 1
+}

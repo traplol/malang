@@ -86,7 +86,11 @@ void Malang_VM::panic(const char *fmt, ...)
     va_end(args);
     print("\n");
     stack_trace();
+#if DEBUG_MODE
+    throw "panic";
+#else
     abort();
+#endif
 }
 
 static inline
@@ -104,7 +108,23 @@ std::string to_string(const Malang_Value &value)
     else if (value.is_object())
     {
         auto obj = value.as_object();
-        ss << "Object(" << obj->type->name() << "#" << obj << ")";
+        if (obj->object_tag == Array) {
+            auto arr = reinterpret_cast<Malang_Array*>(obj);
+            ss << "<[" << arr->size << "]" << obj->type->name() << "#" << obj << ">";
+        }
+        else if (obj->object_tag == Buffer) {
+            ss << "<" << obj->type->name() << "#" << obj << ">";
+        }
+        else if (obj->type->name() == "string") {
+            auto str = reinterpret_cast<Malang_Object_Body*>(obj);
+            ss << "<" << obj->type->name() << "#" << obj << "> \"";
+            std::string s((char*)(str->fields[1].as_pointer()), str->fields[0].as_fixnum());
+            ss << s;
+            ss << '"';
+        }
+        else {
+            ss << "<" << obj->type->name() << "#" << obj << ">";
+        }
     }
     else
     {
@@ -157,10 +177,10 @@ void Malang_VM::stack_trace() const
 
 
     print("\nGLOBALS:\n");
-    for (size_t i = 0; i < globals_top; ++i)
+    for (size_t i = 0; i <= globals_top; ++i)
     {
         auto &&e = globals[i];
-        print("-%ld: %s\n", globals_top-i, to_string(e).c_str());
+        print("%ld: %s\n", i, to_string(e).c_str());
     }
     print("\n");
 }
@@ -755,6 +775,10 @@ void run_code(Malang_VM &vm)
             {
                 ip++;
                 auto n = fetch32(ip);
+                if (n > (int)vm.globals_top)
+                {
+                    vm.globals_top = n;
+                }
                 ip += sizeof(n);
                 auto v = vm.pop_data();
                 vm.globals[n] = v;
@@ -1099,7 +1123,7 @@ void run_code(Malang_VM &vm)
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 if (idx < 0 || idx >= array->size)
                 {
-                    vm.panic("array index out of bounds. index was %d but array size is %d",
+                    vm.panic("array load: index out of bounds. index was %d but array size is %d",
                           idx, array->size);
                 }
                 vm.push_data(array->data[idx]);
@@ -1115,7 +1139,7 @@ void run_code(Malang_VM &vm)
                 auto array = reinterpret_cast<Malang_Array*>(obj_ref);
                 if (idx < 0 || idx >= array->size)
                 {
-                    vm.panic("array index out of bounds. index was %d but array size is %d",
+                    vm.panic("array store: index out of bounds. index was %d but array size is %d",
                           idx, array->size);
                 }
                 array->data[idx] = value;
@@ -1180,7 +1204,7 @@ void run_code(Malang_VM &vm)
                 auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
                 if (idx < 0 || idx >= buffer->size)
                 {
-                    vm.panic("buffer index out of bounds. index was %d but buffer size is %d",
+                    vm.panic("buffer load: index out of bounds. index was %d but buffer size is %d",
                           idx, buffer->size);
                 }
                 vm.push_data(buffer->data[idx]);
@@ -1196,7 +1220,7 @@ void run_code(Malang_VM &vm)
                 auto buffer = reinterpret_cast<Malang_Buffer*>(obj_ref);
                 if (idx < 0 || idx >= buffer->size)
                 {
-                    vm.panic("buffer index out of bounds. index was %d but buffer size is %d",
+                    vm.panic("buffer store: index out of bounds. index was %d but buffer size is %d",
                           idx, buffer->size);
                 }
                 buffer->data[idx] = value;

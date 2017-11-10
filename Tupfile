@@ -1,6 +1,6 @@
 .gitignore
 
-CC = g++
+CC = clang++
 #CFLAGS += -Wall -D "DEBUG_MODE=0" -D "NDEBUG" -D "USE_COMPUTED_GOTO=1" -fno-crossjumping -fno-gcse -O3 -std=c++1z
 CFLAGS += -Wall -D "DEBUG_MODE=1" -D "DEBUG" -D "USE_COMPUTED_GOTO=0" -g -O0 -std=c++1z
 LDFLAGS = 

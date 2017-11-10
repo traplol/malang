@@ -34,6 +34,8 @@ struct Malang_GC
         {}
 
     Type_Map *types();
+    bool paused() const { return m_is_paused; }
+    void paused(bool value) { m_is_paused = value; }
     void disable_automatic();
     void enable_automatic();
     void manual_run();
@@ -45,7 +47,12 @@ struct Malang_GC
     Malang_Object *allocate_unmanaged_array(Type_Token of_type_token, Fixnum size);
     Malang_Object *allocate_unmanaged_buffer(Fixnum size);
     void manage(Malang_Object *unmanaged_object);
+    void unmanage(Malang_Object *unmanaged_object);
 private:
+    friend struct Malang_Object;
+    friend struct Malang_Object_Body;
+    friend struct Malang_Array;
+    friend struct Malang_Buffer;
     GC_Node *alloc_intern();
 
     void free_node(struct GC_Node *gc_node);

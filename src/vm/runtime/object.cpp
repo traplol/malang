@@ -1,5 +1,7 @@
 #include <cassert>
 #include "object.hpp"
+#include "gc.hpp"
+#include "../vm.hpp"
 
 void Malang_Object::gc_mark()
 {

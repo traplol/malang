@@ -30,8 +30,8 @@ Char *data(Malang_Object_Body *str)
 void Malang_Runtime::string_construct_intern(Malang_Object *place, Fixnum size, Char *buffer)
 {
     auto str = cast(place);
-    str->fields[length_idx].set(size);
-    str->fields[intern_data_idx].set(buffer);
+    str->fields[length_idx] = size;
+    str->fields[intern_data_idx] = buffer;
 }
 
 void Malang_Runtime::string_construct_intern(Malang_Object *place, const String_Constant &string_constant)
@@ -110,10 +110,15 @@ void string_index_get(Malang_VM &vm)
 static
 void string_string_add(Malang_VM &vm)
 {
+    // Whenever you plan to use arguments and gc::allocate_X anything, you MUST pause the
+    // GC or temporarily unmanage those arguments otherwise the GC may free them out from
+    // under you!
+    auto old_paused = vm.gc->paused();
+    vm.gc->paused(true);
+
     auto b = cast(vm.pop_data().as_object());
     auto a = cast(vm.pop_data().as_object());
-    
-    auto c = vm.gc->allocate_unmanaged_object(string_type_token);
+    auto c = vm.gc->allocate_object(string_type_token);
     auto buff = new Char[length(a) + length(b)];
     Fixnum n = 0;
     for (Fixnum i = 0; i < length(a); ++i, ++n)
@@ -126,7 +131,9 @@ void string_string_add(Malang_VM &vm)
     }
     string_construct_intern(c, length(a) + length(b), buff);
     vm.push_data(c);
-    vm.gc->manage(c);
+
+    // restore the original state
+    vm.gc->paused(old_paused);
 }
 
 void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)

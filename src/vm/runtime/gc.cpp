@@ -143,9 +143,12 @@ void Malang_GC::mark()
 #define _mark(n, a)                             \
     for (uintptr_t i = 0; i < (n); ++i) {       \
         visited++;                              \
-        if ((a)[i].is_object()) {              \
-            reachable++;                           \
-            (a)[i].as_object()->gc_mark();}}
+        if ((a)[i].is_object()) {               \
+            auto obj = (a)[i].as_object();      \
+            auto node = to_gc_node(obj);        \
+            if (node->is_managed()) {           \
+                reachable++;                    \
+                obj->gc_mark();}}}
 
     if (m_args->noisy)
     {
@@ -194,7 +197,6 @@ void Malang_GC::construct_object(Malang_Object_Body &obj, Type_Info *type)
     obj.header.free = false;
     obj.header.object_tag = Object;
     obj.header.color = Malang_Object::white;
-    // @TODO: reserve fields and such 
     auto num_fields = type->fields().size();
     if (num_fields)
     {
@@ -350,6 +352,16 @@ void Malang_GC::manage(Malang_Object *unmanaged_object)
     }
     gc_node->set_magic(gc_node->get_magic(), true);
     m_allocated.append(gc_node);
+}
+void Malang_GC::unmanage(Malang_Object *managed_object)
+{
+    auto gc_node = to_gc_node(managed_object);
+    if (!gc_node->is_managed())
+    {
+        panic("GC: attempted to unmanage an already unmanaged object!");
+    }
+    gc_node->set_magic(gc_node->get_magic(), false);
+    m_allocated.remove(gc_node);
 }
 
 void Malang_GC::free_object_body(Malang_Object_Body *obj)

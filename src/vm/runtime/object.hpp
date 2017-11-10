@@ -13,7 +13,6 @@ struct Malang_Object
     Type_Info *type;
     struct Malang_GC *allocator;
     unsigned char free : 1;
-    unsigned char gc_allocated : 1;
     unsigned char color : 2;
     unsigned char object_tag : 5;
     static constexpr auto white = 0u;

@@ -27,10 +27,10 @@ static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same 
 template<typename ObjectType>
 struct Value
 {
-    static constexpr uint64_t max_double  = 0xfff8000000000000;
-    static constexpr uint64_t fixnum_tag  = 0xfff9000000000000;
-    static constexpr uint64_t object_tag  = 0xfffa000000000000;
-    static constexpr uint64_t pointer_tag = 0xfffb000000000000;
+    static constexpr uint64_t max_double  = UINT64_C(0xfff8000000000000);
+    static constexpr uint64_t fixnum_tag  = UINT64_C(0xfff9000000000000);
+    static constexpr uint64_t object_tag  = UINT64_C(0xfffa000000000000);
+    static constexpr uint64_t pointer_tag = UINT64_C(0xfffc000000000000);
 
     inline Value()
     {
@@ -67,7 +67,8 @@ struct Value
     template<uint64_t tag>
     inline bool is() const
     {
-        return (v.as_bits & tag) == tag;
+        decltype(tag) r = bits() & tag;
+        return r == tag;
     }
 
     template<typename T, uint64_t tag>
@@ -84,17 +85,20 @@ struct Value
 
     inline bool is_fixnum() const
     {
-        return is<fixnum_tag>();
+        //return is<fixnum_tag>();
+        return (v.as_bits & fixnum_tag) == fixnum_tag;
     }
 
     inline bool is_object() const
     {
-        return is<object_tag>();
+        //return is<object_tag>();
+        return (v.as_bits & object_tag) == object_tag;
     }
 
     inline bool is_pointer() const
     {
-        return is<pointer_tag>();
+        return (v.as_bits & pointer_tag) == pointer_tag;
+        //return is<pointer_tag>();
     }
 
     inline double as_double() const
@@ -164,8 +168,8 @@ struct Value
 private:
     union
     {
-        double as_double;
-        uint64_t as_bits;
+        volatile double as_double;
+        volatile uint64_t as_bits;
     } v;
 
     inline bool is_negative_zero(double number)
