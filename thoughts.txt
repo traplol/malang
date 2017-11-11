@@ -9,15 +9,13 @@ TODO:
     + Write fuzzer for VM instructions
     + Write fuzzer for parser
     + Come up with something better than branching over function definitions
-    + Automate execution tests; we need a flag to disable all of the diagnostics the compiler
-    barfs out by default so we can test against execution output.
     + Generational GC
     + Since it is all known at compile time, it should be possible to make a table of where
     every reference will be on the stack at any given time which would allow the removal of
     NaN-boxing and the small overhead from unboxing. This would also allow for full 64-bit
     integers. Cursory testing(no object allocation) shows this as being roughly a 2-10%
     speed increase
-    
+
 
     + VM "stacks" are fixed size with magic numbers, these probably should be allocated up
     front by a variable/command line argument.
@@ -188,10 +186,6 @@ Type syntax:
     greeter := Greeter("Bob, "Salutations")
     greeter.greet("Max")
     greeter.say_pi()
-
-type meters = int
-type meters/10s = int
-cast :: fn(meters: meters) -> meters/10s { return meters/10 }
 
 ==============================================================================================
 Block as values:
@@ -423,3 +417,8 @@ Nov 2, 2017:
     + break, continue, and for parsing
     + implemented basic iterator traits which wants the thing to implement:
         `fn move_next() -> bool' and fn current() -> T' where T is not void
+
+Nov 10, 2017:
+    + Fixed some bugs in the GC and string concat builtin
+    + Added some interesting extensions to `examples/tests/string.ma'
+

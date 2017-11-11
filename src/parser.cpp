@@ -157,9 +157,9 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser);
     auto _save_idx = parser.lex_idx;                \
     auto _save_is_extending = parser.is_extending
     
-#define RESTORE                                 \
-    parser.lex_idx = _save_idx;                 \
-    parser.is_extending = _save_is_extending
+#define RESTORE                                                 \
+    do {parser.lex_idx = _save_idx;                             \
+        parser.is_extending = _save_is_extending;} while (0)
     
 #define PARSE_FAIL {RESTORE; return nullptr;}
 #define ACCEPT_OR_FAIL(...) if (!parser.accept(__VA_ARGS__)) { PARSE_FAIL; }
