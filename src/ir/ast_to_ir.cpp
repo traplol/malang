@@ -1023,6 +1023,7 @@ void Ast_To_IR::visit(struct Extend_Node&n)
     assert(n.for_type->type);
 
     auto old_is_extending = is_extending;
+    locality->push(true);
     is_extending = n.for_type->type;
     for (auto &&fn : n.body)
     {   // @FixMe: Need to declare these so source ordering earlier defined functions may
@@ -1032,6 +1033,7 @@ void Ast_To_IR::visit(struct Extend_Node&n)
         block.push_back(converted);
     }
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
+    locality->pop();
     is_extending = old_is_extending;
     _return(ret);
 }
