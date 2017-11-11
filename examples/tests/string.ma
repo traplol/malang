@@ -135,11 +135,11 @@ extend int {
 
 println("hello " * 15) # hello hello hello hello hello hello hello hello hello hello 
 
-spl := ("hello " * 15).split(? )
+split := ("hello " * 15).split(? )
 
-println("spl.length: " + spl.length.to_s())
+println("split.length: " + split.length.to_s())
 i := 0
-while i < spl.length {
-    println("spl[" + i.to_s() + "]=" + spl[i] + " len=" + spl[i].length.to_s()) 
+while i < split.length {
+    println("split[" + i.to_s() + "]=" + split[i] + " len=" + split[i].length.to_s()) 
     i += 1
 }
