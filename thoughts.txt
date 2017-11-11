@@ -21,6 +21,20 @@ TODO:
     front by a variable/command line argument.
 
 ==============================================================================================
+Parametric typing:
+    ? Generics should be parsed into their own special AST nodes which would allow them to be
+    instantiated only when they are used and for those specific types; this is essentially
+    generics via templates in C++
+
+    ? The Type_Map will want some way to push/pop scope of these generic types so they are
+    only visible within that type/function/trait. This allows generics in different scopes to
+    share the same name for their generic types.
+
+    ? Generic "Type_Information" returned by the Type_Map will want to be able to replace
+    itself with an existing type which gives the illusion of type instantiation. This allows
+    it to appear as a concrete type from the middle and back-end perspectives.
+
+==============================================================================================
 Vocabulary:
 
     primitive:
