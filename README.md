@@ -82,7 +82,7 @@ x := if get_condition() "yes!" else "nope"
 
 ```
 
-While loops are the only looping construct at the moment
+While loop
 ```
 # poor man's for loop
 i := 0
@@ -91,6 +91,15 @@ while i < n {
   i += 1
 }
 ```
+
+For loops expect the thing being iterated to implement ```fn current() -> T``` and ```fn move_next() -> bool```
+see [for.ma](examples/tests/for.ma) for a trivial Range implementation
+```
+for Range(0, 10) {
+  println(it) # `it'erator is implied
+}
+```
+
 
 ### Functions
 Functions can be defined and bound to a name, assigned to a variable, or used as a value in an expression. The 
