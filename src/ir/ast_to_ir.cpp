@@ -670,7 +670,7 @@ void Ast_To_IR::visit(Index_Node &n)
     if (thing_ty == ir->types->get_buffer())
     {
         auto index = get<IR_Value*>(*n.subscript);
-        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, ir->types->get_int());
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, ir->types->get_char());
         _return(indexable);
     }
     else if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))

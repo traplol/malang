@@ -67,7 +67,7 @@ extend string {
         return string(tmp, i)
     }
 
-    fn split(c :int) -> []string {
+    fn split(c: char) -> []string {
         tmp := [8]string
         matches := 0
         s := 0
@@ -126,7 +126,7 @@ extend int {
             i += 1
         }
         if negative {
-           tmp[i] = "-"[0] # no character literals at the moment so this is a hack
+           tmp[i] = ?-
            i += 1
         }
         return string(tmp, i).reverse()
@@ -135,7 +135,7 @@ extend int {
 
 println("hello " * 15) # hello hello hello hello hello hello hello hello hello hello 
 
-spl := ("hello " * 15).split(32)
+spl := ("hello " * 15).split(? )
 
 println("spl.length: " + spl.length.to_s())
 i := 0

@@ -16,15 +16,15 @@ type StringBuilder = {
         _data = cpy
     }
 
-    fn [] (idx: int) -> int {
+    fn [] (idx: int) -> char {
         return _data[idx]
     }
 
-    fn []= (idx: int, val: int) {
+    fn []= (idx: int, val: char) {
         _data[idx] = val
     }
 
-    fn append(val : int) {
+    fn append(val : char) {
         if _size + 1 >= _data.length {
             _resize()
         }

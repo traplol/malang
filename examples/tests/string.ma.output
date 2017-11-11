@@ -1,19 +1,19 @@
 hello world
 5
 5
-100
+d
 z is: "hello world"
-104
-101
-108
-108
-111
-32
-119
-111
-114
-108
-100
+h
+e
+l
+l
+o
+ 
+w
+o
+r
+l
+d
 hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello 
 spl.length: 15
 spl[0]=hello len=5

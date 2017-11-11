@@ -140,6 +140,7 @@ void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _string = m.get_string();
     auto _int    = m.get_int();
+    auto _char    = m.get_char();
     auto _buffer = m.get_buffer();
 
     string_type_token = _string->type_token();
@@ -150,6 +151,6 @@ void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)
     add_constructor(b, m, _string, {_buffer}, string_buffer_new);
     add_constructor(b, m, _string, {_buffer, _int}, string_buffer_int_new);
 
-    add_bin_op_method(b, m, _string, "[]", _int, _int, string_index_get);
+    add_bin_op_method(b, m, _string, "[]", _int, _char, string_index_get);
     add_bin_op_method(b, m, _string, "+", _string, _string, string_string_add);
 }

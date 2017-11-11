@@ -216,8 +216,11 @@ static void id_neql(Malang_VM &vm)
 void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _int    = m.get_int();
+    auto _char   = m.get_char();
     auto _double = m.get_double();
     auto _bool   = m.get_bool();
+
+    // int
     add_una_op_method(b, m, _int, "~",  _int, i_invert);
     add_una_op_method(b, m, _int, "+@", _int, i_pos);
     add_una_op_method(b, m, _int, "-@", _int, i_neg);
@@ -250,4 +253,27 @@ void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
     add_bin_op_method(b, m, _int, ">=", _double, _bool, id_greater_eq);
     add_bin_op_method(b, m, _int, "==", _double, _bool, id_eql);
     add_bin_op_method(b, m, _int, "!=", _double, _bool, id_neql);
+
+
+    // char
+    add_una_op_method(b, m, _char, "~",  _char, i_invert);
+    add_una_op_method(b, m, _char, "+@", _char, i_pos);
+    add_una_op_method(b, m, _char, "-@", _char, i_neg);
+
+    add_bin_op_method(b, m, _char, "+",  _char, _char, ii_add);
+    add_bin_op_method(b, m, _char, "-",  _char, _char, ii_sub);
+    add_bin_op_method(b, m, _char, "*",  _char, _char, ii_mul);
+    add_bin_op_method(b, m, _char, "/",  _char, _char, ii_div);
+    add_bin_op_method(b, m, _char, "%",  _char, _char, ii_mod);
+    add_bin_op_method(b, m, _char, "&",  _char, _char, ii_and);
+    add_bin_op_method(b, m, _char, "|",  _char, _char, ii_or);
+    add_bin_op_method(b, m, _char, "^",  _char, _char, ii_xor);
+    add_bin_op_method(b, m, _char, "<<", _char, _char, ii_lshift);
+    add_bin_op_method(b, m, _char, ">>", _char, _char, ii_rshift);
+    add_bin_op_method(b, m, _char, "<",  _char, _bool, ii_less);
+    add_bin_op_method(b, m, _char, ">",  _char, _bool, ii_greater);
+    add_bin_op_method(b, m, _char, "<=", _char, _bool, ii_less_eq);
+    add_bin_op_method(b, m, _char, ">=", _char, _bool, ii_greater_eq);
+    add_bin_op_method(b, m, _char, "==", _char, _bool, ii_eql);
+    add_bin_op_method(b, m, _char, "!=", _char, _bool, ii_neql);
 }
