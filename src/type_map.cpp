@@ -14,14 +14,17 @@ Type_Map::~Type_Map()
 
 Type_Map::Type_Map()
 {
-    m_void   = declare_type("void",   nullptr, true, false);
-    m_object = declare_type("object", nullptr, true, true);
-    m_buffer = declare_type("buffer", nullptr, true, true);
-    m_int    = declare_type("int",    nullptr, true, false);
-    m_char   = declare_type("char",   nullptr, true, false);
-    m_double = declare_type("double", nullptr, true, false);
-    m_bool   = declare_type("bool",   nullptr, true, false);
-    m_string = declare_type("string", nullptr, true, true);
+    constexpr bool builtin = true;
+    constexpr bool managed = true;
+    constexpr bool not_managed = false;
+    m_void   = declare_type("void",   nullptr, builtin, not_managed);
+    m_object = declare_type("object", nullptr, builtin, managed);
+    m_buffer = declare_type("buffer", nullptr, builtin, managed);
+    m_int    = declare_type("int",    nullptr, builtin, not_managed);
+    m_char   = declare_type("char",   nullptr, builtin, not_managed);
+    m_double = declare_type("double", nullptr, builtin, not_managed);
+    m_bool   = declare_type("bool",   nullptr, builtin, not_managed);
+    m_string = declare_type("string", nullptr, builtin, managed);
 
 }
 
@@ -40,11 +43,11 @@ Type_Info *Type_Map::get_int() const
     assert(m_int);
     return m_int;
 }
-//Type_Info *Type_Map::get_char() const
-//{
-//    assert(m_char);
-//    return m_char;
-//}
+Type_Info *Type_Map::get_char() const
+{
+    assert(m_char);
+    return m_char;
+}
 Type_Info *Type_Map::get_double() const
 {
     assert(m_double);

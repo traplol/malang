@@ -21,6 +21,7 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Real_Node&n) override;
     virtual void visit(struct String_Node&n) override;
     virtual void visit(struct Boolean_Node&n) override;
+    virtual void visit(struct Character_Node&n) override;
     virtual void visit(struct Logical_Or_Node&n) override;
     virtual void visit(struct Logical_And_Node&n) override;
     virtual void visit(struct Inclusive_Or_Node&n) override;

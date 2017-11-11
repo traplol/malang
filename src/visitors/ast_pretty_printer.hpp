@@ -20,6 +20,7 @@ struct Ast_Pretty_Printer : Ast_Visitor
     virtual void visit(struct Real_Node&) override;
     virtual void visit(struct String_Node&) override;
     virtual void visit(struct Boolean_Node&) override;
+    virtual void visit(struct Character_Node&) override;
     virtual void visit(struct Logical_Or_Node&) override;
     virtual void visit(struct Logical_And_Node&) override;
     virtual void visit(struct Inclusive_Or_Node&) override;

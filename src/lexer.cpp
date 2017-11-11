@@ -1,3 +1,4 @@
+#include <cassert>
 #include <sstream>
 #include <stdarg.h>
 #include "lexer.hpp"
@@ -15,6 +16,12 @@ int64_t Token::to_int() const
 std::string Token::to_string() const
 {
     return m_string;
+}
+
+char Token::to_char() const
+{
+    assert(m_string.size() == 1);
+    return m_string[0];
 }
 
 Token_Id Token::id() const
@@ -46,6 +53,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Integer);
         SET_TK_TYPE_MAP(Real);
         SET_TK_TYPE_MAP(String);
+        SET_TK_TYPE_MAP(Character);
         SET_TK_TYPE_MAP(Equals);
         SET_TK_TYPE_MAP(Colon);
         SET_TK_TYPE_MAP(StmtTerminator);
@@ -202,22 +210,52 @@ bool parse_string(std::vector<Token> &tokens, Source_Code *src)
     src->next(); // eat the first "
     while (src->peek() != src->end_of_file)
     {
-        auto c = (char)src->next();
+        auto c = src->next();
         if (c == '\\')
         {
             auto escaped = src->next();
             if (escaped == src->end_of_file)
                 return false;
-            str << (char)Lexer::to_escaped(escaped);
+            str << (char)Lexer::unescape(escaped);
             continue;
         }
         if (c == '"')
         {
             break;
         }
-        str << c;
+        str << (char)c;
     }
     tokens.push_back(Token(Token_Id::String, str.str(),
+                           {src, src->filename(), line, line_char}));
+    return true;
+}
+
+static
+bool parse_character(std::vector<Token> &tokens, Source_Code *src)
+{
+    std::stringstream str;
+    auto line = src->line();
+    auto line_char = src->line_char();
+    if (src->peek() != '?')
+        return false;
+    src->next(); // eat the open ?
+    auto c = src->next();
+    if (c == src->end_of_file)
+    {
+        return false;
+    }
+    if (c == '\\')
+    {
+        auto escaped = src->next();
+        if (escaped == src->end_of_file)
+            return false;
+        str << (char)Lexer::unescape(escaped);
+    }
+    else
+    {
+        str << (char)c;
+    }
+    tokens.push_back(Token(Token_Id::Character, str.str(),
                            {src, src->filename(), line, line_char}));
     return true;
 }
@@ -266,6 +304,14 @@ bool Lexer::lex(Source_Code *src)
         if (src->peek() == '"')
         {
             if (!parse_string(tokens, src))
+            {
+                return false;
+            }
+            continue;
+        }
+        if (src->peek() == '?') // ?. ?, ?a etc.
+        {
+            if (!parse_character(tokens, src))
             {
                 return false;
             }
@@ -422,7 +468,7 @@ bool Lexer::is_wspace(int c)
     return isspace(c);
 }
 
-int Lexer::to_escaped(int c)
+int Lexer::unescape(int c)
 {
     switch (c)
     {
@@ -430,6 +476,16 @@ int Lexer::to_escaped(int c)
         case 't': return '\t';
         case 'n': return '\n';
         case 'r': return '\r';
+    }
+}
+std::string Lexer::escape(char c)
+{
+    switch (c)
+    {
+        default: return std::string(1, c);
+        case '\t': return "\\t";
+        case '\n': return "\\n";
+        case '\r': return "\\r";
     }
 }
 
@@ -445,6 +501,7 @@ bool Lexer::is_replace_newline_with_semicolon_prev(Token_Id tk)
         case Token_Id::Integer:
         case Token_Id::Real:
         case Token_Id::String:
+        case Token_Id::Character:
         case Token_Id::Close_Paren:
         case Token_Id::Close_Curly:
         case Token_Id::Close_Square:

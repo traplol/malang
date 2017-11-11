@@ -15,6 +15,13 @@ void println_int(Malang_VM &vm)
 }
 
 static
+void println_char(Malang_VM &vm)
+{
+    auto top = vm.pop_data().as_fixnum();
+    printf("%c\n", (Char)top);
+}
+
+static
 void println_object(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_object();
@@ -118,8 +125,8 @@ void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, N
 void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
 {
     make_builtin(b, t, "println", println_int,    {t.get_int()}, t.get_void());
+    make_builtin(b, t, "println", println_char,   {t.get_char()}, t.get_void());
     make_builtin(b, t, "println", println_bool,   {t.get_bool()}, t.get_void());
-    //make_builtib(p, t, "println", println_string, {t.get_string()}, t.get_void());
     make_builtin(b, t, "println", println_object, {t.get_object()}, t.get_void());
     make_builtin(b, t, "println", println_double, {t.get_double()}, t.get_void());
     make_builtin(b, t, "println", println_buffer, {t.get_buffer()}, t.get_void());

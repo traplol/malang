@@ -1,6 +1,7 @@
 #include <cassert>
 #include "ast_pretty_printer.hpp"
 #include "../ast/nodes.hpp"
+#include "../lexer.hpp"
 
 
 std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
@@ -114,11 +115,20 @@ void Ast_Pretty_Printer::visit(Real_Node &n)
 }
 void Ast_Pretty_Printer::visit(String_Node &n)
 {
-    str << "\"" << n.value << "\"";
+    str << '"';
+    for (auto c : n.value)
+    {
+        str << Lexer::escape(c);
+    }
+    str << '"';
 }
 void Ast_Pretty_Printer::visit(Boolean_Node &n)
 {
     str << (n.value ? "true" : "false");
+}
+void Ast_Pretty_Printer::visit(Character_Node &n)
+{
+    str << "?" << Lexer::escape(n.value);
 }
 #define BIN_OP_PP(n, opStr) \
     str << "("; to_string(*(n).lhs); str << " " opStr " "; to_string(*(n).rhs); str << ")"

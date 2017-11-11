@@ -56,7 +56,7 @@ byte *Disassembler::dis1(byte *p, int offset, std::string &out)
             ss << get_n_bytes(p, 2);
             ++p;
             auto n = fetch8(p);
-            ss << ins_str << " <" << n << ">";
+            ss << ins_str << " <" << std::hex << static_cast<int>(n) << ">";
             p += sizeof(n);
         } break;
         case Instruction::Literal_16:
@@ -70,7 +70,7 @@ byte *Disassembler::dis1(byte *p, int offset, std::string &out)
             ss << get_n_bytes(p, 3);
             ++p;
             auto n = fetch16(p);
-            ss << ins_str << " <" << n << ">";
+            ss << ins_str << " <" << std::hex << static_cast<int>(n) << ">";
             p += sizeof(n);
         } break;
         case Instruction::Load_Global:
@@ -85,7 +85,7 @@ byte *Disassembler::dis1(byte *p, int offset, std::string &out)
             ss << get_n_bytes(p, 5);
             ++p;
             auto n = fetch32(p);
-            ss << ins_str <<" <" << n << ">";
+            ss << ins_str <<" <" << std::hex << n << ">";
             p += sizeof(n);
         } break;
         case Instruction::Branch:
@@ -97,7 +97,7 @@ byte *Disassembler::dis1(byte *p, int offset, std::string &out)
             ss << get_n_bytes(p, 5);
             ++p;
             auto n = fetch32(p);
-            ss << ins_str << "(" << n << ") -> ";
+            ss << ins_str << "(" << std::hex << n << ") -> ";
             ss << offset + n;
             p += sizeof(n);
         } break;

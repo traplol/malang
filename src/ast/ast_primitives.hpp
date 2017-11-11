@@ -22,6 +22,7 @@
 DEF_VALUE_NODE(Integer_Node, int64_t);
 DEF_VALUE_NODE(Real_Node, double);
 DEF_VALUE_NODE(String_Node, std::string);
+DEF_VALUE_NODE(Character_Node, char);
 DEF_VALUE_NODE(Boolean_Node, bool);
 
 

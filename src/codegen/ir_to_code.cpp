@@ -33,14 +33,20 @@ void IR_To_Code::visit(IR_Boolean &n)
     cg->push_back_literal_32(n.value);
 }
 
-void IR_To_Code::visit(IR_Char &n)
-{
-    cg->push_back_literal_value(n.value);
-}
-
 void IR_To_Code::visit(IR_Fixnum &n)
 {
-    cg->push_back_literal_32(n.value);
+    if (static_cast<int8_t>(n.value) == n.value)
+    {
+        cg->push_back_literal_8(n.value);
+    }
+    else if (static_cast<int16_t>(n.value) == n.value)
+    {
+        cg->push_back_literal_16(n.value);
+    }
+    else
+    {
+        cg->push_back_literal_32(n.value);
+    }
 }
 
 void IR_To_Code::visit(IR_Single &n)

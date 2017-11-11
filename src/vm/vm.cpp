@@ -629,7 +629,7 @@ void run_code(Malang_VM &vm)
                 ip++;
                 auto n = fetch8(ip);
                 ip += sizeof(n);
-                vm.push_data(n);
+                vm.push_data(static_cast<Fixnum>(n));
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_16)
@@ -637,7 +637,7 @@ void run_code(Malang_VM &vm)
                 ip++;
                 auto n = fetch16(ip);
                 ip += sizeof(n);
-                vm.push_data(n);
+                vm.push_data(static_cast<Fixnum>(n));
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_32)
@@ -645,7 +645,7 @@ void run_code(Malang_VM &vm)
                 ip++;
                 auto n = fetch32(ip);
                 ip += sizeof(n);
-                vm.push_data(n);
+                vm.push_data(static_cast<Fixnum>(n));
                 DISPATCH_NEXT;
             }
             DISPATCH(Literal_value)

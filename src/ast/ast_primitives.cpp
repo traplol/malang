@@ -42,3 +42,12 @@ Type_Info *Boolean_Node::get_type()
 }
 AST_NODE_OVERRIDES_IMPL(Boolean_Node)
 
+Character_Node::~Character_Node()
+{
+    PRINT_DTOR;
+}
+Type_Info *Character_Node::get_type()
+{
+    return type;
+}
+AST_NODE_OVERRIDES_IMPL(Character_Node)

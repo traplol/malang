@@ -394,6 +394,12 @@ void Ast_To_IR::visit(Boolean_Node &n)
     _return(boolean);
 }
 
+void Ast_To_IR::visit(Character_Node &n)
+{
+    auto chr = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_char(), n.value);
+    _return(chr);
+}
+
 void Ast_To_IR::visit(Logical_Or_Node &n)
 {
 

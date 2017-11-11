@@ -22,22 +22,6 @@ struct IR_Boolean : IR_RValue
     IR_NODE_OVERRIDES;
 };
 
-struct IR_Char : IR_RValue
-{
-    virtual ~IR_Char();
-    IR_Char(const Source_Location &src_loc, Type_Info *type, Char value)
-        : IR_RValue(src_loc)
-        , type(type)
-        , value(value)
-        {}
-    Type_Info *type;
-    Char value;
-
-    virtual Type_Info *get_type() const override { return type; }
-    
-    IR_NODE_OVERRIDES;
-};
-
 struct IR_Fixnum : IR_RValue
 {
     virtual ~IR_Fixnum();

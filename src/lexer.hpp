@@ -12,6 +12,7 @@ enum class Token_Id : size_t
     Integer,
     Real,
     String,
+    Character,          // ?a ?b ?c ?\t etc.
     Equals,             // =
     Colon,              // :
     StmtTerminator,     // ;
@@ -101,6 +102,7 @@ public:
 
     double to_real() const;
     int64_t to_int() const;
+    char to_char() const;
     std::string to_string() const;
     Token_Id id() const;
     Source_Location src_loc() const;
@@ -123,7 +125,8 @@ struct Lexer
     static bool is_ident_char(int c);
     static bool is_digit(int c);
     static bool is_wspace(int c);
-    static int to_escaped(int c);
+    static std::string escape(char c);
+    static int unescape(int c);
     static bool is_replace_newline_with_semicolon_prev(Token_Id tk);
     static bool should_not_insert_semicolon_next(Source_Code *src);
 };

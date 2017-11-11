@@ -13,6 +13,7 @@ struct Ast_Visitor
     virtual void visit(struct Real_Node&) = 0;
     virtual void visit(struct String_Node&) = 0;
     virtual void visit(struct Boolean_Node&) = 0;
+    virtual void visit(struct Character_Node&) = 0;
     virtual void visit(struct Logical_Or_Node&) = 0;
     virtual void visit(struct Logical_And_Node&) = 0;
     virtual void visit(struct Inclusive_Or_Node&) = 0;

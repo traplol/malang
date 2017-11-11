@@ -20,7 +20,7 @@ struct Type_Map
     Type_Info *get_void() const;
     Type_Info *get_object() const;
     Type_Info *get_int() const;
-    //Type_Info *get_char() const;
+    Type_Info *get_char() const;
     Type_Info *get_double() const;
     Type_Info *get_string() const;
     Type_Info *get_bool() const;

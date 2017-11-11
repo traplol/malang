@@ -5,10 +5,6 @@ IR_NODE_OVERRIDES_IMPL(IR_Boolean);
 IR_Boolean::~IR_Boolean()
 {
 }
-IR_NODE_OVERRIDES_IMPL(IR_Char);
-IR_Char::~IR_Char()
-{
-}
 IR_NODE_OVERRIDES_IMPL(IR_Fixnum);
 IR_Fixnum::~IR_Fixnum()
 {

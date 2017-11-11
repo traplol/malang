@@ -12,7 +12,6 @@ struct IR_Visitor
     virtual void visit(struct IR_Block&) = 0;
 
     virtual void visit(struct IR_Boolean&) = 0;
-    virtual void visit(struct IR_Char&) = 0;
     virtual void visit(struct IR_Fixnum&) = 0;
     virtual void visit(struct IR_Single&) = 0;
     virtual void visit(struct IR_Double&) = 0;

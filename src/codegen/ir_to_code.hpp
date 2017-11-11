@@ -15,7 +15,6 @@ struct IR_To_Code : IR_Visitor
     virtual void visit(struct IR_Block &n) override;
 
     virtual void visit(struct IR_Boolean &n) override;
-    virtual void visit(struct IR_Char &n) override;
     virtual void visit(struct IR_Fixnum &n) override;
     virtual void visit(struct IR_Single &n) override;
     virtual void visit(struct IR_Double &n) override;
