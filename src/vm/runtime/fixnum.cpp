@@ -220,7 +220,7 @@ void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
     auto _double = m.get_double();
     auto _bool   = m.get_bool();
 
-    // int
+    // int(int)
     add_una_op_method(b, m, _int, "~",  _int, i_invert);
     add_una_op_method(b, m, _int, "+@", _int, i_pos);
     add_una_op_method(b, m, _int, "-@", _int, i_neg);
@@ -242,6 +242,25 @@ void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
     add_bin_op_method(b, m, _int, "==", _int, _bool, ii_eql);
     add_bin_op_method(b, m, _int, "!=", _int, _bool, ii_neql);
 
+    // int(char)
+    add_bin_op_method(b, m, _int, "+",  _char, _int, ii_add);
+    add_bin_op_method(b, m, _int, "-",  _char, _int, ii_sub);
+    add_bin_op_method(b, m, _int, "*",  _char, _int, ii_mul);
+    add_bin_op_method(b, m, _int, "/",  _char, _int, ii_div);
+    add_bin_op_method(b, m, _int, "%",  _char, _int, ii_mod);
+    add_bin_op_method(b, m, _int, "&",  _char, _int, ii_and);
+    add_bin_op_method(b, m, _int, "|",  _char, _int, ii_or);
+    add_bin_op_method(b, m, _int, "^",  _char, _int, ii_xor);
+    add_bin_op_method(b, m, _int, "<<", _char, _int, ii_lshift);
+    add_bin_op_method(b, m, _int, ">>", _char, _int, ii_rshift);
+    add_bin_op_method(b, m, _int, "<",  _char, _bool, ii_less);
+    add_bin_op_method(b, m, _int, ">",  _char, _bool, ii_greater);
+    add_bin_op_method(b, m, _int, "<=", _char, _bool, ii_less_eq);
+    add_bin_op_method(b, m, _int, ">=", _char, _bool, ii_greater_eq);
+    add_bin_op_method(b, m, _int, "==", _char, _bool, ii_eql);
+    add_bin_op_method(b, m, _int, "!=", _char, _bool, ii_neql);
+
+    // int(double)
     add_bin_op_method(b, m, _int, "+",  _double, _double, id_add);
     add_bin_op_method(b, m, _int, "-",  _double, _double, id_sub);
     add_bin_op_method(b, m, _int, "*",  _double, _double, id_mul);
@@ -254,8 +273,7 @@ void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
     add_bin_op_method(b, m, _int, "==", _double, _bool, id_eql);
     add_bin_op_method(b, m, _int, "!=", _double, _bool, id_neql);
 
-
-    // char
+    // char(char)
     add_una_op_method(b, m, _char, "~",  _char, i_invert);
     add_una_op_method(b, m, _char, "+@", _char, i_pos);
     add_una_op_method(b, m, _char, "-@", _char, i_neg);
@@ -276,4 +294,22 @@ void Malang_Runtime::runtime_fixnum_init(Bound_Function_Map &b, Type_Map &m)
     add_bin_op_method(b, m, _char, ">=", _char, _bool, ii_greater_eq);
     add_bin_op_method(b, m, _char, "==", _char, _bool, ii_eql);
     add_bin_op_method(b, m, _char, "!=", _char, _bool, ii_neql);
+
+    // char(int)
+    add_bin_op_method(b, m, _char, "+",  _int, _int, ii_add);
+    add_bin_op_method(b, m, _char, "-",  _int, _int, ii_sub);
+    add_bin_op_method(b, m, _char, "*",  _int, _int, ii_mul);
+    add_bin_op_method(b, m, _char, "/",  _int, _int, ii_div);
+    add_bin_op_method(b, m, _char, "%",  _int, _int, ii_mod);
+    add_bin_op_method(b, m, _char, "&",  _int, _int, ii_and);
+    add_bin_op_method(b, m, _char, "|",  _int, _int, ii_or);
+    add_bin_op_method(b, m, _char, "^",  _int, _int, ii_xor);
+    add_bin_op_method(b, m, _char, "<<", _int, _int, ii_lshift);
+    add_bin_op_method(b, m, _char, ">>", _int, _int, ii_rshift);
+    add_bin_op_method(b, m, _char, "<",  _int, _bool, ii_less);
+    add_bin_op_method(b, m, _char, ">",  _int, _bool, ii_greater);
+    add_bin_op_method(b, m, _char, "<=", _int, _bool, ii_less_eq);
+    add_bin_op_method(b, m, _char, ">=", _int, _bool, ii_greater_eq);
+    add_bin_op_method(b, m, _char, "==", _int, _bool, ii_eql);
+    add_bin_op_method(b, m, _char, "!=", _int, _bool, ii_neql);
 }
