@@ -18,7 +18,6 @@ Type_Map::Type_Map()
     constexpr bool managed = true;
     constexpr bool not_managed = false;
     m_void   = declare_type("void",   nullptr, builtin, not_managed);
-    m_object = declare_type("object", nullptr, builtin, managed);
     m_buffer = declare_type("buffer", nullptr, builtin, managed);
     m_int    = declare_type("int",    nullptr, builtin, not_managed);
     m_char   = declare_type("char",   nullptr, builtin, not_managed);
@@ -32,11 +31,6 @@ Type_Info *Type_Map::get_void() const
 {
     assert(m_void);
     return m_void;
-}
-Type_Info *Type_Map::get_object() const
-{
-    assert(m_object);
-    return m_object;
 }
 Type_Info *Type_Map::get_int() const
 {
@@ -103,7 +97,7 @@ static
 std::string create_function_typename(Type_Info *return_type, const std::vector<Type_Info*> parameter_types, bool is_native)
 {
     // This should generate a string in the form of:
-    // "fn (int, string, MyObj) -> void"
+    // "fn (int, string, MyType) -> void"
     assert(return_type);
     std::stringstream ss;
     ss << (is_native ? "pfn (" : "fn (");

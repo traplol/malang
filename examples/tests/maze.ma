@@ -29,9 +29,7 @@ type Random = {
         t ^= s
         t ^= s >> 19
         state[0] = t
-        if t < 0
-            t *= -1
-        return t
+        return if t < 0 {-t} else {t}
     }
 
     fn next(max: int) -> int {
@@ -52,7 +50,7 @@ i := 1
 while i <= 500 {
     print(strs[r.next(strs.length)])
     if i % 50 == 0
-        println("")
+        println()
     i += 1
 }
 

@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-
 static
 void print_int(Malang_VM &vm)
 {
@@ -20,13 +19,6 @@ void print_char(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
     printf("%c", (Char)top);
-}
-
-static
-void print_object(Malang_VM &vm)
-{
-    auto top = vm.pop_data().as_object();
-    printf("%s", top->type->name().c_str());
 }
 
 static
@@ -101,13 +93,6 @@ void println_char(Malang_VM &vm)
 }
 
 static
-void println_object(Malang_VM &vm)
-{
-    print_object(vm);
-    printf("\n");
-}
-
-static
 void println_buffer(Malang_VM &vm)
 {
     print_buffer(vm);
@@ -132,6 +117,12 @@ static
 void println_string(Malang_VM &vm)
 {
     print_string(vm);
+    printf("\n");
+}
+
+static
+void println_empty(Malang_VM &)
+{
     printf("\n");
 }
 
@@ -175,25 +166,42 @@ void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, N
 
 void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
 {
+    // fn println() -> void
+    make_builtin(b, t, "println", println_empty,  {}, t.get_void());
+    // fn println(int) -> void
     make_builtin(b, t, "println", println_int,    {t.get_int()}, t.get_void());
+    // fn println(char) -> void
     make_builtin(b, t, "println", println_char,   {t.get_char()}, t.get_void());
+    // fn println(bool) -> void
     make_builtin(b, t, "println", println_bool,   {t.get_bool()}, t.get_void());
-    make_builtin(b, t, "println", println_object, {t.get_object()}, t.get_void());
+    // fn println(double) -> void
     make_builtin(b, t, "println", println_double, {t.get_double()}, t.get_void());
+    // fn println(buffer) -> void
     make_builtin(b, t, "println", println_buffer, {t.get_buffer()}, t.get_void());
+    // fn println(string) -> void
     make_builtin(b, t, "println", println_string, {t.get_string()}, t.get_void());
 
+    // fn print(int) -> void
     make_builtin(b, t, "print", print_int,    {t.get_int()}, t.get_void());
+    // fn print(char) -> void
     make_builtin(b, t, "print", print_char,   {t.get_char()}, t.get_void());
+    // fn print(bool) -> void
     make_builtin(b, t, "print", print_bool,   {t.get_bool()}, t.get_void());
-    make_builtin(b, t, "print", print_object, {t.get_object()}, t.get_void());
+    // fn print(double) -> void
     make_builtin(b, t, "print", print_double, {t.get_double()}, t.get_void());
+    // fn print(buffer) -> void
     make_builtin(b, t, "print", print_buffer, {t.get_buffer()}, t.get_void());
+    // fn print(string) -> void
     make_builtin(b, t, "print", print_string, {t.get_string()}, t.get_void());
 
+    // fn stack_trace() -> void
     make_builtin(b, t, "stack_trace", stack_trace, {}, t.get_void());
+    // fn gc_pause() -> void
     make_builtin(b, t, "gc_pause",    gc_pause,    {}, t.get_void());
+    // fn gc_resume() -> void
     make_builtin(b, t, "gc_resume",   gc_resume,   {}, t.get_void());
+    // fn gc_run() -> void
     make_builtin(b, t, "gc_run",      gc_run,      {}, t.get_void());
-    make_builtin(b, t, "breakpoint",  breakpoint,      {}, t.get_void());
+    // fn breakpoint() -> void
+    make_builtin(b, t, "breakpoint",  breakpoint,  {}, t.get_void());
 }

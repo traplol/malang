@@ -935,6 +935,8 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
 {   // expression :=
     //     function
     //     if_else
+    //     new_array
+    //     array_literal
     //     l_or
     auto tk = parser.peek();
     if (!tk)

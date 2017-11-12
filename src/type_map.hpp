@@ -18,7 +18,6 @@ struct Type_Map
     Type_Info *get_type(Type_Token type_token);
 
     Type_Info *get_void() const;
-    Type_Info *get_object() const;
     Type_Info *get_int() const;
     Type_Info *get_char() const;
     Type_Info *get_double() const;
@@ -32,7 +31,6 @@ private:
     Type_Info *declare_type(const std::string &name, struct Type_Info *parent, bool is_builtin, bool is_gc_managed);
 
     Type_Info *m_void;
-    Type_Info *m_object;
     Type_Info *m_int;
     Type_Info *m_char;
     Type_Info *m_double;
