@@ -73,7 +73,7 @@ struct IR_Double : IR_RValue
 struct IR_New_Array : IR_LValue
 {
     virtual ~IR_New_Array();
-    IR_New_Array(const Source_Location &src_loc, Array_Type_Info *type, Type_Token of_type, IR_Value *size)
+    IR_New_Array(const Source_Location &src_loc, Array_Type_Info *type, Type_Info *of_type, IR_Value *size)
         : IR_LValue(src_loc)
         , type(type)
         , size(size)
@@ -81,7 +81,7 @@ struct IR_New_Array : IR_LValue
         {}
     Array_Type_Info *type;
     IR_Value *size;
-    Type_Token of_type;
+    Type_Info *of_type;
 
     virtual Type_Info *get_type() const override { return type; }
     IR_NODE_OVERRIDES;

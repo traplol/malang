@@ -161,12 +161,12 @@ Index_Node::~Index_Node()
     subscript = nullptr;
     PRINT_DTOR;
 }
-Type_Info *Index_Node::get_type()
-{
-    // @TODO: get_type for Index_Node
-    printf("TODO: %s:%d: %s get_type()\n", __FILE__, __LINE__, type_name().c_str());
-    return nullptr;
-}
+//Type_Info *Index_Node::get_type()
+//{
+//    // @TODO: get_type for Index_Node
+//    printf("TODO: %s:%d: %s get_type()\n", __FILE__, __LINE__, type_name().c_str());
+//    return nullptr;
+//}
 
 AST_NODE_OVERRIDES_IMPL(Member_Accessor_Node)
 Member_Accessor_Node::~Member_Accessor_Node()

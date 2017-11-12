@@ -7,55 +7,56 @@
 
 #include <stdio.h>
 
+
 static
-void println_int(Malang_VM &vm)
+void print_int(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
-    printf("%d\n", top);
+    printf("%d", top);
 }
 
 static
-void println_char(Malang_VM &vm)
+void print_char(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
-    printf("%c\n", (Char)top);
+    printf("%c", (Char)top);
 }
 
 static
-void println_object(Malang_VM &vm)
+void print_object(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_object();
-    printf("%s\n", top->type->name().c_str());
+    printf("%s", top->type->name().c_str());
 }
 
 static
-void println_buffer(Malang_VM &vm)
+void print_buffer(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_object();
     assert(top->object_tag == Buffer);
     auto buffer = reinterpret_cast<Malang_Buffer*>(top);
-    printf("%.*s\n", buffer->size, buffer->data);
+    printf("%.*s", buffer->size, buffer->data);
 }
 
 static
-void println_double(Malang_VM &vm)
+void print_double(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_double();
-    printf("%lf\n", top);
+    printf("%lf", top);
 }
 
 static
-void println_bool(Malang_VM &vm)
+void print_bool(Malang_VM &vm)
 {
     auto top = vm.pop_data().as_fixnum();
     if (top == 0)
-        printf("false\n");
+        printf("false");
     else
-        printf("true\n");
+        printf("true");
 }
 
 static
-void println_string(Malang_VM &vm)
+void print_string(Malang_VM &vm)
 {
     static bool once = true;
     static uint16_t length_idx = 0, intern_data_idx = 0;
@@ -81,9 +82,59 @@ void println_string(Malang_VM &vm)
     if (len)
     {
         auto data = string->fields[intern_data_idx].as_pointer();
-        printf("%.*s\n", len, static_cast<char*>(data));
+        printf("%.*s", len, static_cast<char*>(data));
     }
 }
+
+static
+void println_int(Malang_VM &vm)
+{
+    print_int(vm);
+    printf("\n");
+}
+
+static
+void println_char(Malang_VM &vm)
+{
+    print_char(vm);
+    printf("\n");
+}
+
+static
+void println_object(Malang_VM &vm)
+{
+    print_object(vm);
+    printf("\n");
+}
+
+static
+void println_buffer(Malang_VM &vm)
+{
+    print_buffer(vm);
+    printf("\n");
+}
+
+static
+void println_double(Malang_VM &vm)
+{
+    print_double(vm);
+    printf("\n");
+}
+
+static
+void println_bool(Malang_VM &vm)
+{
+    print_bool(vm);
+    printf("\n");
+}
+
+static
+void println_string(Malang_VM &vm)
+{
+    print_string(vm);
+    printf("\n");
+}
+
 
 static
 void stack_trace(Malang_VM &vm)
@@ -131,6 +182,14 @@ void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
     make_builtin(b, t, "println", println_double, {t.get_double()}, t.get_void());
     make_builtin(b, t, "println", println_buffer, {t.get_buffer()}, t.get_void());
     make_builtin(b, t, "println", println_string, {t.get_string()}, t.get_void());
+
+    make_builtin(b, t, "print", print_int,    {t.get_int()}, t.get_void());
+    make_builtin(b, t, "print", print_char,   {t.get_char()}, t.get_void());
+    make_builtin(b, t, "print", print_bool,   {t.get_bool()}, t.get_void());
+    make_builtin(b, t, "print", print_object, {t.get_object()}, t.get_void());
+    make_builtin(b, t, "print", print_double, {t.get_double()}, t.get_void());
+    make_builtin(b, t, "print", print_buffer, {t.get_buffer()}, t.get_void());
+    make_builtin(b, t, "print", print_string, {t.get_string()}, t.get_void());
 
     make_builtin(b, t, "stack_trace", stack_trace, {}, t.get_void());
     make_builtin(b, t, "gc_pause",    gc_pause,    {}, t.get_void());

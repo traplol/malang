@@ -670,21 +670,23 @@ void Ast_To_IR::visit(Index_Node &n)
     if (thing_ty == ir->types->get_buffer())
     {
         auto index = get<IR_Value*>(*n.subscript);
+        assert(index);
         auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, ir->types->get_char());
         _return(indexable);
     }
     else if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
     {
         auto index = get<IR_Value*>(*n.subscript);
+        assert(index);
         auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, arr_ty->of_type());
         _return(indexable);
     }
     else
     {
         auto index = get<IR_Value*>(*n.subscript);
+        assert(index);
         if (auto method = thing_ty->get_method("[]", {index->get_type()}))
         {
-            auto index = get<IR_Value*>(*n.subscript);
             auto indexable = ir->alloc<IR_Indexable>(
                     n.src_loc, thing, index, method->type()->return_type());
             _return(indexable);
@@ -1382,7 +1384,66 @@ void Ast_To_IR::visit(If_Else_Node &n)
 
 void Ast_To_IR::visit(struct Array_Literal_Node &n)
 {
-    NOT_IMPL;
+    assert(n.values);
+    std::vector<IR_Value*> values;
+    Type_Info *of_type = nullptr;
+    for (auto c : n.values->contents)
+    {
+        auto v = get<IR_Value*>(*c);
+        if (!v)
+        {
+            c->src_loc.report("error", "Expected a value.");
+            abort();
+        }
+        auto v_ty = v->get_type();
+        if (!of_type)
+        {
+            of_type = v_ty;
+            assert(of_type);
+        }
+        else if (of_type != v_ty)
+        {
+            c->src_loc.report("error",
+                              "Union types not yet implemented and the expected type of this array literal is `%s', got a `%s'",
+                              of_type->name().c_str(), v_ty->name().c_str());
+            abort();
+        }
+        values.push_back(v);
+    }
+    if (values.empty())
+    {
+        n.src_loc.report("error", "Cannot deduce type for an empty array literal!");
+        abort();
+    }
+
+    std::vector<IR_Node*> block;
+    locality->push(false);
+    auto array_type = ir->types->get_array_type(of_type);
+    auto size = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), values.size());
+    auto new_array = ir->alloc<IR_New_Array>(n.src_loc, array_type, of_type, size);
+    auto arr_tmp = locality->current().symbols().make_symbol(".array_lit",
+                                                             array_type,
+                                                             n.src_loc,
+                                                             cur_symbol_scope);
+    arr_tmp->is_readonly = true;
+    auto assign_arr = ir->alloc<IR_Assignment>(n.src_loc, arr_tmp, new_array, cur_symbol_scope);
+
+    // Create the array
+    block.push_back(assign_arr);
+    // Assign the values
+    for (Fixnum i = 0; i < (Fixnum)values.size(); ++i)
+    {
+        auto idx = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), i);
+        auto val = values[i];
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, arr_tmp, idx, of_type);
+        auto assign_to_idx = ir->alloc<IR_Assignment>(n.src_loc, indexable, val, cur_symbol_scope);
+        block.push_back(assign_to_idx);
+    }
+    // And finally give the array back
+    block.push_back(arr_tmp);
+    locality->pop();
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, array_type);
+    _return(ret);
 }
 void Ast_To_IR::visit(struct New_Array_Node &n)
 {
@@ -1400,10 +1461,7 @@ void Ast_To_IR::visit(struct New_Array_Node &n)
                              size_ty->name().c_str());
         abort();
     }
-    auto new_array = ir->alloc<IR_New_Array>(n.src_loc,
-                                      n.array_type,
-                                      n.of_type->type->type_token(),
-                                      size);
+    auto new_array = ir->alloc<IR_New_Array>(n.src_loc, n.array_type, n.of_type->type, size);
     _return(new_array);
 }
 

@@ -78,7 +78,7 @@ struct Index_Node : public Ast_LValue
         , thing(thing)
         , subscript(subscript)
         {}
-    virtual Type_Info *get_type() final;
+    //virtual Type_Info *get_type() final;
     AST_NODE_OVERRIDES;
 };
 

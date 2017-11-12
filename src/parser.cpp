@@ -905,6 +905,7 @@ static uptr<List_Node> parse_expression_list(Parser &parser, const Source_Locati
 {   // expression_list :=
     //     expression
     //     expression_list , expression
+    //     expression_list ,
     std::vector<Ast_Value*> contents;
     while (true)
     {
@@ -913,10 +914,12 @@ static uptr<List_Node> parse_expression_list(Parser &parser, const Source_Locati
         {
             if (!contents.empty())
             {
-                printf(">>>%d\n", parser.lex_idx-1);
                 auto &prev_tk = parser.lexer.tokens[parser.lex_idx-1];
-                parser.report_error(prev_tk, "Unexpected token %s in expression list",
-                                    prev_tk.debug().c_str());
+                if (prev_tk.id() != Token_Id::Comma)
+                {
+                    parser.report_error(prev_tk, "Unexpected token %s in expression list",
+                                        prev_tk.debug().c_str());
+                }
             }
             break; // an empty list is a valid list
         }

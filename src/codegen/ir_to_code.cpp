@@ -61,8 +61,11 @@ void IR_To_Code::visit(IR_Double &n)
 
 void IR_To_Code::visit(IR_New_Array &n)
 {
+    assert(n.size);
+    assert(n.of_type);
+
     convert_one(*n.size);
-    cg->push_back_array_new(n.of_type);
+    cg->push_back_array_new(n.of_type->type_token());
 }
 
 void IR_To_Code::visit(IR_String &n)
@@ -894,6 +897,7 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
     cg = new Codegen;
     this->ir = &ir;
+    skip_next_drop = false;
     convert_many(ir.first);
     convert_many(ir.second);
     cg->push_back_halt();
