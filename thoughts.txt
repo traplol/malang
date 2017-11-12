@@ -436,3 +436,8 @@ Nov 10, 2017:
     + Fixed some bugs in the GC and string concat builtin
     + Added some interesting extensions to `examples/tests/string.ma'
 
+Nov 11, 2017:
+    + Fixed scoping bug in extensions where an extension method would be visible in global
+    scope and reserve that variable name. Also added some regression tests for this
+    + Added `char' type and updated strings and buffers to be composed of them
+    + Added character literal syntax: ?a ?b ?c ?\t ?\n ?# etc.
