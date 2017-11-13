@@ -441,3 +441,11 @@ Nov 11, 2017:
     scope and reserve that variable name. Also added some regression tests for this
     + Added `char' type and updated strings and buffers to be composed of them
     + Added character literal syntax: ?a ?b ?c ?\t ?\n ?# etc.
+
+Nov 12, 2017:
+    + Implemented array literals of one type
+    + Experimenting with giving named functions visibility precedence over constructors
+      ? Maybe require any named functions sharing a type's name to return that type, this
+      acts as a way to implement casting. There should be some checking to ensure there
+      aren't conflicts with ambigious parameters, precedence should probably favor the
+      constructors in this case.
