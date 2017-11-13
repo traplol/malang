@@ -35,11 +35,6 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
 void Ast_To_IR::visit(Variable_Node &n)
 {
 
-    if (auto type = ir->types->get_type(n.name))
-    {   // Calling constructor
-        auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
-        _return(alloc);
-    }
     if (cur_fn && n.name == "recurse")
     {
         assert(cur_fn_ep);
@@ -75,6 +70,11 @@ void Ast_To_IR::visit(Variable_Node &n)
                 ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(), bound_fn.fn_type());
             _return(callable);
         }
+    }
+    if (auto type = ir->types->get_type(n.name))
+    {   // Calling constructor
+        auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
+        _return(alloc);
     }
     auto symbol = find_symbol(n.name);
     if (!symbol)

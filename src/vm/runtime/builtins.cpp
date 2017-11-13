@@ -155,6 +155,30 @@ void breakpoint(Malang_VM &vm)
     vm.breaking = true;
 }
 
+static
+void cast_int_to_char(Malang_VM &vm)
+{
+    auto top = vm.pop_data().as_fixnum();
+    vm.push_data(static_cast<Char>(top));
+}
+
+static
+void cast_char_to_int(Malang_VM &) {/*NOOP*/}
+
+static
+void cast_double_to_int(Malang_VM &vm)
+{
+    auto top = vm.pop_data().as_double();
+    vm.push_data(static_cast<Fixnum>(top));
+}
+
+static
+void cast_int_to_double(Malang_VM &vm)
+{
+    auto top = vm.pop_data().as_fixnum();
+    vm.push_data(static_cast<Double>(top));
+}
+
 
 void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, Native_Code native_code, const std::vector<Type_Info*> &param_types, Type_Info *return_type)
 {
@@ -166,14 +190,23 @@ void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, N
 
 void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
 {
+    // fn char(int) -> char
+    make_builtin(b, t, "char",   cast_int_to_char,   {t.get_int()},    t.get_char());
+    // fn int(char) -> int
+    make_builtin(b, t, "int",    cast_char_to_int,   {t.get_char()},   t.get_int());
+    // fn int(double) -> int
+    make_builtin(b, t, "int",    cast_double_to_int, {t.get_double()}, t.get_int());
+    // fn double(int) -> double
+    make_builtin(b, t, "double", cast_int_to_double, {t.get_int()},    t.get_double());
+
     // fn println() -> void
-    make_builtin(b, t, "println", println_empty,  {}, t.get_void());
+    make_builtin(b, t, "println", println_empty,  {},               t.get_void());
     // fn println(int) -> void
-    make_builtin(b, t, "println", println_int,    {t.get_int()}, t.get_void());
+    make_builtin(b, t, "println", println_int,    {t.get_int()},    t.get_void());
     // fn println(char) -> void
-    make_builtin(b, t, "println", println_char,   {t.get_char()}, t.get_void());
+    make_builtin(b, t, "println", println_char,   {t.get_char()},   t.get_void());
     // fn println(bool) -> void
-    make_builtin(b, t, "println", println_bool,   {t.get_bool()}, t.get_void());
+    make_builtin(b, t, "println", println_bool,   {t.get_bool()},   t.get_void());
     // fn println(double) -> void
     make_builtin(b, t, "println", println_double, {t.get_double()}, t.get_void());
     // fn println(buffer) -> void
@@ -182,11 +215,11 @@ void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
     make_builtin(b, t, "println", println_string, {t.get_string()}, t.get_void());
 
     // fn print(int) -> void
-    make_builtin(b, t, "print", print_int,    {t.get_int()}, t.get_void());
+    make_builtin(b, t, "print", print_int,    {t.get_int()},    t.get_void());
     // fn print(char) -> void
-    make_builtin(b, t, "print", print_char,   {t.get_char()}, t.get_void());
+    make_builtin(b, t, "print", print_char,   {t.get_char()},   t.get_void());
     // fn print(bool) -> void
-    make_builtin(b, t, "print", print_bool,   {t.get_bool()}, t.get_void());
+    make_builtin(b, t, "print", print_bool,   {t.get_bool()},   t.get_void());
     // fn print(double) -> void
     make_builtin(b, t, "print", print_double, {t.get_double()}, t.get_void());
     // fn print(buffer) -> void
