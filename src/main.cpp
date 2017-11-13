@@ -48,14 +48,8 @@ std::vector<std::string> get_parse_test_output(Parse_Test &test)
             printf("there were parsing errors...\n");
             return {""};
         }
-        std::vector<std::string> result;
         Ast_Pretty_Printer pp;
-        for (auto &&n : ast.roots)
-        {
-            result.push_back(pp.to_string(*n));
-            pp.reset();
-        }
-        return result;
+        return pp.to_strings(ast);
     }
     catch(...)
     {
@@ -480,11 +474,17 @@ void parse_to_code(Args *args)
     if (args->noisy)
     {
         printf("\nGenerated AST\n");
-        for (auto &&n : ast.roots)
+        Ast_Pretty_Printer pp;
+        auto strings = pp.to_strings(ast);
+        for (auto &&s : strings)
         {
-            Ast_Pretty_Printer pp;
-            printf("%s\n", pp.to_string(*n).c_str());
+            printf("%s\n", s.c_str());
         }
+        //for (auto &&n : ast.roots)
+        //{
+        //    Ast_Pretty_Printer pp;
+        //    printf("%s\n", pp.to_string(*n).c_str());
+        //}
         printf("\n");
     }
 

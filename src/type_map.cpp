@@ -24,7 +24,6 @@ Type_Map::Type_Map()
     m_double = declare_type("double", nullptr, builtin, not_managed);
     m_bool   = declare_type("bool",   nullptr, builtin, not_managed);
     m_string = declare_type("string", nullptr, builtin, managed);
-
 }
 
 Type_Info *Type_Map::get_void() const

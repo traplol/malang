@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sstream>
 #include "ast.hpp"
+#include "nodes.hpp"
 
 Ast_Node::~Ast_Node()
 {
@@ -11,9 +12,33 @@ METADATA_OVERRIDES_IMPL(Ast_Node)
 
 Ast::~Ast()
 {
-    for (auto &&n : roots)
+    for (auto &&n : imports)
     {
         delete n;
     }
-    roots.clear();
+    imports.clear();
+
+    for (auto &&n : type_defs)
+    {
+        delete n;
+    }
+    type_defs.clear();
+
+    for (auto &&n : extensions)
+    {
+        delete n;
+    }
+    extensions.clear();
+
+    for (auto &&n : bound_funcs)
+    {
+        delete n;
+    }
+    bound_funcs.clear();
+
+    for (auto &&n : stmts)
+    {
+        delete n;
+    }
+    stmts.clear();
 }

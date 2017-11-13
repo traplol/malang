@@ -12,6 +12,7 @@
 
 struct Ast_To_IR : Ast_Visitor
 {
+    virtual void visit(struct Import_Node&n) override;
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
     virtual void visit(struct Decl_Node&n) override;

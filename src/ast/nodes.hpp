@@ -18,6 +18,7 @@
 #include "ast_if_else.hpp"
 #include "ast_array.hpp"
 #include "ast_extend.hpp"
+#include "ast_module.hpp"
 
 
 #endif /* MALANG_AST_NODES_HPP */

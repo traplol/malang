@@ -32,6 +32,11 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
+void Ast_To_IR::visit(Import_Node &n)
+{
+    NOT_IMPL;
+}
+
 void Ast_To_IR::visit(Variable_Node &n)
 {
 
@@ -1476,7 +1481,24 @@ void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vect
     this->ir = ir;
     this->locality = global;
     this->strings = strings;
-    convert_body(ast.roots, ir->second);
+
+    for (auto imp : ast.imports)
+    {
+        ir->first.push_back(get(*imp));
+    }
+    for (auto type : ast.type_defs)
+    {
+        ir->first.push_back(get(*type));
+    }
+    for (auto ext : ast.extensions)
+    {
+        ir->first.push_back(get(*ext));
+    }
+    for (auto fn : ast.bound_funcs)
+    {
+        ir->first.push_back(get(*fn));
+    }
+    convert_body(ast.stmts, ir->second);
 }
 
 IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)

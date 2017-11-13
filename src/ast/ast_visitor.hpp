@@ -4,6 +4,7 @@
 struct Ast_Visitor
 {
     virtual ~Ast_Visitor() {}
+    virtual void visit(struct Import_Node&) = 0;
     virtual void visit(struct Variable_Node&) = 0;
     virtual void visit(struct Assign_Node&) = 0;
     virtual void visit(struct Decl_Node&) = 0;

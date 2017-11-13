@@ -11,6 +11,7 @@ struct Ast_Pretty_Printer : Ast_Visitor
     Ast_Pretty_Printer()
         : indent_level(0)
         {}
+    virtual void visit(struct Import_Node&) override;
     virtual void visit(struct Variable_Node&) override;
     virtual void visit(struct Assign_Node&) override;
     virtual void visit(struct Decl_Node&) override;
@@ -61,7 +62,8 @@ struct Ast_Pretty_Printer : Ast_Visitor
     virtual void visit(struct Array_Literal_Node&) override;
     virtual void visit(struct New_Array_Node&) override;
 
-    std::string to_string(struct Ast_Node& n);
+    std::vector<std::string> to_strings(struct Ast &ast);
+    std::string to_string(struct Ast_Node &n);
     void reset();
 private:
     int indent_level;

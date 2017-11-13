@@ -4,24 +4,6 @@
 #include "parser.hpp"
 #include "ast/nodes.hpp"
 
-
-static Ast_Node *parse_top_level(Parser &parser);
-Ast Parser::parse(Source_Code *src_code)
-{
-    errors = 0;
-    code = src_code;
-    lexer.lex(code);
-    //lexer.dump();
-    is_extending = nullptr;
-    lex_idx = 0;
-    Ast ast;
-    while (auto root = parse_top_level(*this))
-    {
-        ast.roots.push_back(root);
-    }
-    return ast;
-}
-
 const Token *Parser::peek(int n) const
 {
     if (lex_idx + n >= (int)lexer.tokens.size())
@@ -1330,31 +1312,55 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     }
     PARSE_FAIL;
 }
-static Ast_Node *parse_top_level(Parser &parser)
+void build_ast(Parser &parser, Ast &ast)
 {
     // top-level :=
     //     <nothing>
     //     statement top-level
-    SAVE;
-    while (parser.accept({Token_Id::StmtTerminator}))
+    for (;;)
     {
-        // eat stray semicolons
+        while (parser.accept({Token_Id::StmtTerminator}))
+        {
+            // eat stray semicolons
+        }
+        //if (auto module_name = parse_module(parser))
+        //{
+        //    continue;
+        //}
+        if (auto type_def = parse_type_definition(parser))
+        {
+            ast.type_defs.push_back(type_def.release());
+            continue;
+        }
+        if (auto extend = parse_extend(parser))
+        {
+            ast.extensions.push_back(extend.release());
+            continue;
+        }
+        if (auto bound_fn = parse_bound_fn(parser))
+        {
+            ast.bound_funcs.push_back(bound_fn.release());
+            continue;
+        }
+        if (auto stmt = parse_statement(parser))
+        {
+            ast.stmts.push_back(stmt.release());
+            continue;
+        }
+        break;
     }
-    if (auto type_def = parse_type_definition(parser))
-    {
-        return type_def.release();
-    }
-    if (auto extend = parse_extend(parser))
-    {
-        return extend.release();
-    }
-    if (auto bound_fn = parse_bound_fn(parser))
-    {
-        return bound_fn.release();
-    }
-    if (auto stmt = parse_statement(parser))
-    {
-        return stmt.release();
-    }
-    PARSE_FAIL;
+}
+
+
+Ast Parser::parse(Source_Code *src_code)
+{
+    errors = 0;
+    code = src_code;
+    lexer.lex(code);
+    //lexer.dump();
+    is_extending = nullptr;
+    lex_idx = 0;
+    Ast ast;
+    build_ast(*this, ast);
+    return ast;
 }

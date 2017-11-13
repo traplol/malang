@@ -2,6 +2,7 @@
 #include "ast_pretty_printer.hpp"
 #include "../ast/nodes.hpp"
 #include "../lexer.hpp"
+#include "../module_map.hpp"
 
 
 std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
@@ -9,6 +10,42 @@ std::string Ast_Pretty_Printer::to_string(Ast_Node &n)
     n.accept(*this);
     return str.str();
 }
+std::vector<std::string> Ast_Pretty_Printer::to_strings(Ast &ast)
+{
+    std::vector<std::string> res;
+    for (auto import : ast.imports)
+    {
+        to_string(*import);
+        res.push_back(str.str());
+        reset();
+    }
+    for (auto type : ast.type_defs)
+    {
+        to_string(*type);
+        res.push_back(str.str());
+        reset();
+    }
+    for (auto extend : ast.extensions)
+    {
+        to_string(*extend);
+        res.push_back(str.str());
+        reset();
+    }
+    for (auto bound_fn : ast.bound_funcs)
+    {
+        to_string(*bound_fn);
+        res.push_back(str.str());
+        reset();
+    }
+    for (auto stmt : ast.stmts)
+    {
+        to_string(*stmt);
+        res.push_back(str.str());
+        reset();
+    }
+    return res;
+}
+
 void Ast_Pretty_Printer::reset()
 {
     indent_level = 0;
@@ -49,6 +86,11 @@ void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
     str << "}";
 }
 
+void Ast_Pretty_Printer::visit(Import_Node &n)
+{
+    assert(n.mod_info);
+    str << "import " << n.mod_info->name();
+}
 void Ast_Pretty_Printer::visit(Variable_Node &n)
 {
     str << n.name;

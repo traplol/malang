@@ -116,6 +116,8 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_alias);
         SET_TK_TYPE_MAP(K_break);
         SET_TK_TYPE_MAP(K_continue);
+        SET_TK_TYPE_MAP(K_module);
+        SET_TK_TYPE_MAP(K_import);
         SET_TK_TYPE_MAP(Back_Slash);
 #undef SET_TK_TYPE_MAP
         // this is a runtime check that will warn if we forgot any
@@ -343,7 +345,9 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("for", K_for);
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
+        PUSH_KEY_IDENT("import", K_import);
         PUSH_KEY_IDENT("match", K_match);
+        PUSH_KEY_IDENT("module", K_module);
         PUSH_KEY_IDENT("or", Log_Or);
         PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("true", K_true);

@@ -78,6 +78,8 @@ enum class Token_Id : size_t
     K_alias,            // alias
     K_break,            // break
     K_continue,         // continue
+    K_module,           // module
+    K_import,           // import
 
     Back_Slash,         // "\\"
 
