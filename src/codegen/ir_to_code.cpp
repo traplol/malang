@@ -136,7 +136,14 @@ void backfill_label(Codegen *cg, IR_Label *label)
 void IR_To_Code::visit(IR_Indexable &n)
 {
     convert_one(*n.thing);
-    convert_one(*n.index);
+    std::vector<Type_Info*> arg_types;
+    for (auto &&a : n.arguments)
+    {
+        auto t = a->get_type();
+        assert(t);
+        arg_types.push_back(t);
+        convert_one(*a);
+    }
     auto thing_ty = n.thing->get_type();
     assert(thing_ty);
     if (thing_ty == ir->types->get_buffer())
@@ -149,7 +156,7 @@ void IR_To_Code::visit(IR_Indexable &n)
     }
     else
     {
-        auto method = thing_ty->get_method("[]", {n.index->get_type()});
+        auto method = thing_ty->get_method("[]", arg_types);
         assert(method);
         if (method->is_native())
         {
@@ -393,7 +400,18 @@ void IR_To_Code::visit(IR_Assignment &n)
     else if (auto idx = dynamic_cast<IR_Indexable*>(n.lhs))
     {
         convert_one(*idx->thing);
-        convert_one(*idx->index);
+        std::vector<Type_Info*> arg_types;
+        for (auto &&a : idx->arguments)
+        {
+            auto t = a->get_type();
+            assert(t);
+            arg_types.push_back(t);
+            convert_one(*a);
+        }
+        assert(n.rhs);
+        auto val_ty = n.rhs->get_type();
+        assert(val_ty);
+        arg_types.push_back(val_ty);
         convert_one(*n.rhs);
         auto thing_ty = idx->thing->get_type();
         if (thing_ty == ir->types->get_buffer())
@@ -407,7 +425,7 @@ void IR_To_Code::visit(IR_Assignment &n)
         else
         {
             if (auto method =
-                thing_ty->get_method("[]=", {idx->index->get_type(), n.rhs->get_type()}))
+                thing_ty->get_method("[]=", arg_types))
             {
                 if (method->is_native())
                 {

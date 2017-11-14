@@ -117,18 +117,18 @@ struct IR_Method : IR_Callable
 struct IR_Indexable : IR_LValue
 {
     virtual ~IR_Indexable() = default;
-    IR_Indexable(const Source_Location &src_loc, IR_Value *thing, IR_Value *index, Type_Info *value_type)
+    IR_Indexable(const Source_Location &src_loc, IR_Value *thing, Type_Info *value_type, const std::vector<IR_Value*> args)
         : IR_LValue(src_loc)
         , thing(thing)
-        , index(index)
         , value_type(value_type)
+        , arguments(args)
         {}
 
     IR_NODE_OVERRIDES;
 
     IR_Value *thing;
-    IR_Value *index;
     Type_Info *value_type;
+    std::vector<IR_Value*> arguments;
     virtual Type_Info *get_type() const override { return value_type; };
 };
 

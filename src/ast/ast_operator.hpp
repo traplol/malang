@@ -71,9 +71,9 @@ struct Call_Node : public Ast_RValue
 struct Index_Node : public Ast_LValue
 {
     Ast_Value *thing; 
-    Ast_Value *subscript;
+    List_Node *subscript;
     ~Index_Node();
-    Index_Node(const Source_Location &src_loc, Ast_Value *thing, Ast_Value *subscript)
+    Index_Node(const Source_Location &src_loc, Ast_Value *thing, List_Node *subscript)
         : Ast_LValue(src_loc)
         , thing(thing)
         , subscript(subscript)

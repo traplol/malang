@@ -674,26 +674,57 @@ void Ast_To_IR::visit(Index_Node &n)
     assert(thing_ty);
     if (thing_ty == ir->types->get_buffer())
     {
-        auto index = get<IR_Value*>(*n.subscript);
-        assert(index);
-        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, ir->types->get_char());
+        assert(n.subscript);
+        if (n.subscript->contents.size() != 1)
+        {
+            n.src_loc.report("error", "Buffer index only takes one argument");
+            abort();
+        }
+        std::vector<IR_Value*> args;
+        for (auto &&n : n.subscript->contents)
+        {
+            auto a = get<IR_Value*>(*n);
+            assert(a);
+            args.push_back(a);
+        }
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, ir->types->get_char(), args);
         _return(indexable);
     }
     else if (auto arr_ty = dynamic_cast<Array_Type_Info*>(thing_ty))
     {
-        auto index = get<IR_Value*>(*n.subscript);
-        assert(index);
-        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, index, arr_ty->of_type());
+        assert(n.subscript);
+        if (n.subscript->contents.size() != 1)
+        {
+            n.src_loc.report("error", "Buffer index only takes one argument");
+            abort();
+        }
+        std::vector<IR_Value*> args;
+        for (auto &&n : n.subscript->contents)
+        {
+            auto a = get<IR_Value*>(*n);
+            assert(a);
+            args.push_back(a);
+        }
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, thing, arr_ty->of_type(), args);
         _return(indexable);
     }
     else
     {
-        auto index = get<IR_Value*>(*n.subscript);
-        assert(index);
-        if (auto method = thing_ty->get_method("[]", {index->get_type()}))
+        std::vector<IR_Value*> args;
+        std::vector<Type_Info*> arg_types;
+        for (auto &&n : n.subscript->contents)
+        {
+            auto a = get<IR_Value*>(*n);
+            assert(a);
+            auto t = a->get_type();
+            assert(t);
+            args.push_back(a);
+            arg_types.push_back(t);
+        }
+        if (auto method = thing_ty->get_method("[]", arg_types))
         {
             auto indexable = ir->alloc<IR_Indexable>(
-                    n.src_loc, thing, index, method->type()->return_type());
+                n.src_loc, thing, method->type()->return_type(), args);
             _return(indexable);
         }
         else
@@ -1440,7 +1471,8 @@ void Ast_To_IR::visit(struct Array_Literal_Node &n)
     {
         auto idx = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), i);
         auto val = values[i];
-        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, arr_tmp, idx, of_type);
+        std::vector<IR_Value*> arg{idx};
+        auto indexable = ir->alloc<IR_Indexable>(n.src_loc, arr_tmp, of_type, arg);
         auto assign_to_idx = ir->alloc<IR_Assignment>(n.src_loc, indexable, val, cur_symbol_scope);
         block.push_back(assign_to_idx);
     }
