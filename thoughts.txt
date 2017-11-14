@@ -135,71 +135,134 @@ VM Calling Convention:
         Drop_3              ; drop args(3,2,1)
 
 ==============================================================================================
-Type syntax:
+Type and alias syntax:
+
+    # Strong type alias can be used to make psuedo-"subtypes" with no runtime overhead
+    # There probably needs to be an "unalias" keyword to bring an instance of an aliased type
+    # back to its original type
+
+    type Thing = {
+        name: string
+        data: [10]int
+
+        fn do_stuff() { ... }
+    }
+
+    type alias ThingUtil = Thing
+
+    extend ThingUtil {
+        fn print_name() {
+            println(self.name)
+        }
+    }
+
+    t := Thing()
+    t.print_name()     # compile error, no method `print_name' exists for type `Thing'
+    t.do_stuff()       # ok
+    tu := ThingUtil()
+    tu.print_name()    # ok  ThingUtil:print_name()
+    tu.do_stuff()      # ok  Thing:do_stuff()
 
     type alias cents   = int
     type alias dollars = int
     type alias time_ms = int
 
-    to_cents :: fn(dollars: dollars) -> cents {
-        return cast(cents, dollars*100)
+    # `fn cents(int) -> cents'
+    # `fn dollars(int) -> dollars'
+    # `fn time_ms(int) -> time_ms'
+    # could all be implicitly recognized as a type conversion that results into a NOOP 
+
+    fn cents(d: dollars) -> cents {
+        return cents(unalias(d) * 100)
     }
-    to_dollars :: fn(cents: cents) -> dollars {
-        return cast(dollars, cents/100)
-    }
-
-    money : dollars = 45          // good, 45
-    pennies := to_cents(dollars)  // good, 450
-    duration : time_ms = 2750
-    wtf1 := to_cents(duration)     // bad, compile error
-    wtf2 := to_dollars(duration)   // bad, compile error
-    ok   := to_dollars(45)         // 45 is an int which is the aliased type
-    ok   := to_cents(9999)         // 9999 is an int which is the aliased type
-    bad  := to_cents(42.69)        // 42.69 is not an int
-
-
-    type Greeting = string
-    type Name = string
-
-    type Greeter = {
-        # .init is implicitly defined and handles setting default values and such
-        .init (self: Greeter) {
-            name = ""
-            greeting = ""
-            has_greeted = false
-            greet = ...
-            PI = 3.14159
-            say_pi = ...
-        }
-        # new (...) is a user defined constructor and will be called after .init
-        # if it exists and one matches the arguments being passed. It is not a
-        # proper method attached to the Greeter type nor an instance of Greeter
-        # and the only way to invoke it would be by calling the type like: Greeter()
-        new (self: Greeter, name: Name, greeting: Greeting) {
-            self.name = name
-            self.greeting = greeting
-        }
-        new (self: Greeter) {
-            self.name = "bob"
-            self.greeing = "hihihi"
-        }
-        name : Name,
-        greeting : Greeting,
-        has_greeted := false,
-        greet :: fn (who: Name) {
-            println("#{self.greeting} #{who}, I am #{self.name}")
-            self.has_greeted = true
-        },
-        PI :: 3.14159,
-        say_pi :: fn () {
-            println("#{self.PI}, I'm #{self.name}... get it?")
-        }
+    fn dollars(c: cents) -> dollars {
+        return dollars(unalias(c) / 100)
     }
 
-    g1      := Greeter()
-    greeter := Greeter("Bob, "Salutations")
-    greeter.greet("Max")
-    greeter.say_pi()
+    money    := dollars(45)    # ok: 45
+    pennies  := cents(dollars) # ok: 450
+    duration := time_ms(2750)  # ok: 2750
+
+    bad := cents(duration)     # compile error, no conversion exists
+    bad := dollars(duration)   # compile error, no conversion exists
+    ok  := dollars(45)         # 45 is an int which is the aliased type
+    ok  := cents(9999)         # 9999 is an int which is the aliased type
+    bad := cents(42.69)        # 42.69 is not an int
+
+    # the above creates an interesting scenario because something like:
+    #   `fn print(dollars) -> void'
+    #   `fn println(dollars) -> void'
+    # doesn't exist, however `fn print(int) -> void' does exist. This is reasonable because
+    # printing dollars in the same format as printing an integer doesn't really make sense.
+    # One implementation of `print' and `println' for dollars might look like:
+    fn print(dollars: dollars) {
+        # $123
+        print(?$)
+        # notice you can print it using the `int' version by using unalias
+        print(unalias(dollars))
+    }
+    fn println(dollars: dollars) {
+        print(dollars)
+        println()
+    }
+
+    # how will aliasing an aliased type be handled and does it even make sense to be legal?
+    type alias A = int
+    type alias B = A
+    type alias C = B
+
+    # are these legal?
+    a := A(42)          # this is always ok
+    b := B(123)         # B is not aliased to int
+    b := B(A(123))      # this is ok, but very verbose for a NOOP
+    c := C(123)         # following B, this isn't legal
+    c := C(B(123))      # this isn't legal because B(123) isn't legal
+    c := C(B(A(123)))   # this is ok, but again, it's very verbose for a NOOP
+
+    # what would the types of these be?
+    unalias(b) # `A' or `int'?
+    unalias(c) # `B' or `int'?
+
+    # extensions are the only place this makes sense, using the above `Thing' and `ThingUtil'
+
+    extend Thing {
+        fn baz() {
+            println("baz")
+        }
+    }
+
+    extend ThingUtil {
+        fn bar() {
+            println("bar")
+            self.baz()     # Thing:baz
+        }
+    }
+
+    type alias ThingWithMoreUtil = ThingUtil
+    extend ThingWithMoreUtil {
+        fn foo() {
+            println("foo")
+            self.bar()     # ThingUtil:bar
+        }
+    }
+
+
+    t := Thing()
+    t.baz()      # Thing:baz
+    t.bar()      # compile error
+    t.foo()      # compile error
+
+    tu := ThingWithUtil(t)
+    tu.baz()     # Thing:baz
+    tu.bar()     # ThingUtil:bar
+    tu.foo()     # compile error
+
+    tmu := ThingWithMoreUtil(tu)
+    tmu.baz()    # Thing:baz
+    tmu.bar()    # ThingUtil:bar
+    tmu.foo()    # ThingWithMoreUtil:foo
+
+
 
 ==============================================================================================
 Block as values:
@@ -449,3 +512,8 @@ Nov 12, 2017:
       acts as a way to implement casting. There should be some checking to ensure there
       aren't conflicts with ambigious parameters, precedence should probably favor the
       constructors in this case.
+
+Nov 13, 2017:
+    + Parsing imports
+    + Partial implementation of Module_Map and Module
+    + Indexing can now correctly accept multiple indices
