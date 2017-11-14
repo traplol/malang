@@ -805,7 +805,7 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
             } break;
             case Token_Id::Open_Square:
             {
-                auto index = parse_expression(parser);
+                auto index = parse_expression_list(parser, tok.src_loc());
                 CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Square));
                 expr = uptr<Ast_Value>(new Index_Node(tok.src_loc(), expr.release(), index.release()));
             } break;
@@ -1312,21 +1312,68 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
     }
     PARSE_FAIL;
 }
+
+
+static
+uptr<Import_Node> parse_import(Parser &parser)
+{   // import :=
+    //     import qualified_name
+
+    // qualified_name :=
+    //     ident
+    //     ident : qualified_name
+
+    SAVE;
+    Token import;
+    ACCEPT_OR_FAIL(import, {Token_Id::K_import});
+    std::vector<std::string> fully_qualified_name;
+    Token mod_name;
+    CHECK_OR_FAIL(parser.expect(mod_name, Token_Id::Identifier));
+    fully_qualified_name.push_back(mod_name.to_string());
+    if (parser.accept({Token_Id::Colon}))
+    {
+        while (true)
+        {
+            CHECK_OR_FAIL(parser.expect(mod_name, Token_Id::Identifier));
+            fully_qualified_name.push_back(mod_name.to_string());
+            if (parser.accept({Token_Id::Colon}))
+            {
+                continue;
+            }
+            break;
+        }
+    }
+
+    auto mod = parser.modules->get(fully_qualified_name);
+    return std::make_unique<Import_Node>(import.src_loc(), mod);
+}
+
 void build_ast(Parser &parser, Ast &ast)
 {
     // top-level :=
     //     <nothing>
     //     statement top-level
+    bool is_allowed_to_import = true;
     for (;;)
     {
         while (parser.accept({Token_Id::StmtTerminator}))
         {
             // eat stray semicolons
         }
-        //if (auto module_name = parse_module(parser))
-        //{
-        //    continue;
-        //}
+        auto tk = parser.peek();
+        if (!tk)
+            return;
+        if (auto import = parse_import(parser))
+        {
+            if (!is_allowed_to_import)
+            {
+                parser.report_error(*tk,
+                                    "Imports are only allowed before any non-import statement.");
+            }
+            ast.imports.push_back(import.release());
+            continue;
+        }
+        is_allowed_to_import = false;
         if (auto type_def = parse_type_definition(parser))
         {
             ast.type_defs.push_back(type_def.release());

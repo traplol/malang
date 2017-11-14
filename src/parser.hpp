@@ -5,11 +5,15 @@
 #include "source_code.hpp"
 #include "lexer.hpp"
 #include "type_map.hpp"
+#include "module_map.hpp"
 #include "ast/ast.hpp"
 
 struct Parser
 {
-    Parser(Type_Map *types) : types(types) {}
+    Parser(Type_Map *types, Module_Map *modules)
+        : types(types)
+        , modules(modules)
+        {}
     Ast parse(const std::string &filename);
     Ast parse(Source_Code *src_code);
     Token_Id peek_id(int n=0) const;
@@ -23,6 +27,7 @@ struct Parser
     void report_debug(const Token &token, const char *fmt, ...) const;
 
     Type_Map *types;
+    Module_Map *modules;
     int errors;
     Source_Code *code;
     Lexer lexer;

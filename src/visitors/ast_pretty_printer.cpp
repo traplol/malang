@@ -89,7 +89,7 @@ void Ast_Pretty_Printer::do_body(const std::vector<Ast_Node*> &body)
 void Ast_Pretty_Printer::visit(Import_Node &n)
 {
     assert(n.mod_info);
-    str << "import " << n.mod_info->name();
+    str << "import " << n.mod_info->fully_qualified_name();
 }
 void Ast_Pretty_Printer::visit(Variable_Node &n)
 {

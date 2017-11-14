@@ -37,8 +37,9 @@ std::vector<std::string> get_parse_test_output(Parse_Test &test)
 {
     Bound_Function_Map builtins;
     Type_Map types;
+    Module_Map modules;
     Malang_Runtime::init_types(builtins, types);
-    Parser parser(&types);
+    Parser parser(&types, &modules);
     try
     {
         auto src = new Source_Code("test.a", test.input);
@@ -386,8 +387,6 @@ void parse_tests()
         {"break 1,2,3", "break 1, 2, 3"},
 
         {"continue", "continue"},
-        {"continue aa", "continue aa"},
-        {"continue 1,2,3", "continue 1, 2, 3"},
 
         {"return", "return"},
         {"return aa", "return aa"},
@@ -406,7 +405,31 @@ void parse_tests()
          "for thing {\n"
          "    println(it)\n"
          "    break\n"
-         "}"}
+         "}"},
+
+        {"import x",
+         "import x"},
+
+        {"import x:y",
+         "import x:y"},
+
+        {"import x : y : z",
+         "import x:y:z"},
+
+        {"import std :foo: bar: baz",
+         "import std:foo:bar:baz"},
+
+        {"import x\n"
+         "import x\n"
+         "import x\n"
+         "import x\n"
+         "import x\n" ,
+         {"import x",
+          "import x",
+          "import x",
+          "import x",
+          "import x"}},
+
          
     };
     int total_run = 0;
@@ -432,9 +455,9 @@ void parse_tests()
                 printf("\nexpected: %s\nactual:   %s\n",
                        it.expected[i].c_str(), actual[i].c_str());
             }
-            if (total_run && total_run % 40 == 0)
+            if ((total_run+1) % 40 == 0)
             {
-                printf(" %d\n", (int)total_run);
+                printf(" %d\n", (int)total_run+1);
             }
         }
     }
@@ -459,11 +482,12 @@ void parse_to_code(Args *args)
 {
     std::vector<String_Constant> string_constants;
     Type_Map types;
+    Module_Map modules;
     Malang_IR ir{&types};
     Scope_Lookup global_scope{&ir};
     
     Malang_Runtime::init_types(global_scope.current().bound_functions(), types);
-    Parser parser(&types);
+    Parser parser(&types, &modules);
     if (args->noisy)
     {
         printf("Input source:\n%s\n", args->code.c_str());
