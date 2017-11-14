@@ -1,5 +1,6 @@
 #include <cassert>
 #include <sstream>
+#include <unistd.h> // getcwd: @FixMe: move this to OS agnostic utility
 #include "module_map.hpp"
 
 const std::string &Module::name() const
@@ -10,6 +11,11 @@ const std::string &Module::name() const
 Module *Module::parent()
 {
     return m_parent;
+}
+
+Module_Map *Module::module_map()
+{
+    return m_mod_map;
 }
 
 void Module::add_child(Module *module)
@@ -59,8 +65,13 @@ Module *Module::find_child(const std::vector<std::string> &name)
 
 const std::string &Module::filepath()
 {
-    printf("Module::filepath not impl\n");
-    abort();
+    if (!m_filepath.empty())
+    {
+        return m_filepath;
+    }
+
+    m_filepath = build_name("/") + ".ma";
+    return m_filepath;
 }
 
 const std::string &Module::fully_qualified_name()
@@ -70,7 +81,7 @@ const std::string &Module::fully_qualified_name()
         return m_fully_qualified_name;
     }
 
-    m_fully_qualified_name = build_name(":");
+    m_fully_qualified_name = build_name("$");
     return m_fully_qualified_name;
 }
 
@@ -97,7 +108,8 @@ Module *Module_Map::get(const std::vector<std::string> &name)
         auto child = it->second->find_child({name[1]});
         if (!child)
         {
-            auto mod = new Module(name[1]);
+            auto mod = make_mod(name[1]);
+            m_all_modules.push_back(mod);
             it->second->add_child(mod);
             child = mod;
         }
@@ -109,7 +121,7 @@ Module *Module_Map::get(const std::vector<std::string> &name)
             }
             else
             {
-                auto mod = new Module(name[i]);
+                auto mod = make_mod(name[i]);
                 child->add_child(mod);
                 child = mod;
             }
@@ -118,15 +130,47 @@ Module *Module_Map::get(const std::vector<std::string> &name)
     }
     else
     {   // If the root node doesn't exist then none of the subnodes exist either
-        auto root = new Module(name[0]);
+        auto root = make_mod(name[0]);
         auto cur = root;
         for (size_t i = 1; i < name.size(); ++i)
         {
-            auto tmp = new Module(name[i]);
+            auto tmp = make_mod(name[i]);
             cur->add_child(tmp);
             cur = tmp;
         }
         m_root_modules[name[0]]= root;
         return cur;
+    }
+}
+
+Module *Module_Map::make_mod(const std::string &name)
+{
+    auto mod = new Module(name);
+    mod->m_mod_map = this;
+    m_all_modules.push_back(mod);
+    return mod;
+}
+
+Module_Map::~Module_Map()
+{
+    for (auto m : m_all_modules)
+    {
+        delete m;
+    }
+    m_all_modules.clear();
+    m_root_modules.clear();
+    m_search_directories.clear();
+}
+
+Module_Map::Module_Map()
+{
+    char buf[2048]{};
+    if (getcwd(buf, 2048))
+    {
+        m_search_directories.push_back(buf);
+    }
+    else
+    {
+        m_search_directories.push_back("");
     }
 }

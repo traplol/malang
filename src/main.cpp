@@ -410,14 +410,14 @@ void parse_tests()
         {"import x",
          "import x"},
 
-        {"import x:y",
-         "import x:y"},
+        {"import x$y",
+         "import x$y"},
 
-        {"import x : y : z",
-         "import x:y:z"},
+        {"import x $ y $ z",
+         "import x$y$z"},
 
-        {"import std :foo: bar: baz",
-         "import std:foo:bar:baz"},
+        {"import std $foo$ bar$ baz",
+         "import std$foo$bar$baz"},
 
         {"import x\n"
          "import x\n"
@@ -429,6 +429,12 @@ void parse_tests()
           "import x",
           "import x",
           "import x"}},
+
+        {"a := x$ y$ z", "a : = x$y$z"},
+
+        {"a :: x$ y$ z()", "a : : x$y$z()"},
+
+        {"x $y $z()", "x$y$z()"},
 
          
     };

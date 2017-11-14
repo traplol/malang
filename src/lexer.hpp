@@ -14,6 +14,7 @@ enum class Token_Id : size_t
     String,
     Character,          // ?a ?b ?c ?\t etc.
     Equals,             // =
+    Dollar,             // $
     Colon,              // :
     StmtTerminator,     // ;
     Open_Paren,         // (

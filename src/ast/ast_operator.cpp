@@ -184,7 +184,7 @@ Type_Info *Member_Accessor_Node::get_type()
     {
         return nullptr;
     }
-    auto field_info = thing_ty->get_field(member->name);
+    auto field_info = thing_ty->get_field(member->local_name());
     if (!field_info)
     {
         return nullptr;

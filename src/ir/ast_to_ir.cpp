@@ -40,23 +40,23 @@ void Ast_To_IR::visit(Import_Node &n)
 void Ast_To_IR::visit(Variable_Node &n)
 {
 
-    if (cur_fn && n.name == "recurse")
+    if (cur_fn && n.name() == "recurse")
     {
         assert(cur_fn_ep);
         auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep, cur_fn->fn_type);
         _return(callable);
     }
-    auto bound_fn = locality->current().find_bound_function(n.name, *cur_call_arg_types);
+    auto bound_fn = locality->current().find_bound_function(n.name(), *cur_call_arg_types);
     if (bound_fn.is_valid())
     {
         if (!cur_call_arg_types)
         {
-            n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name.c_str());
+            n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name().c_str());
             abort();
         }
         if (is_extending)
         {
-            if (auto method = is_extending->get_method(n.name, bound_fn.fn_type()->parameter_types()))
+            if (auto method = is_extending->get_method(n.name(), bound_fn.fn_type()->parameter_types()))
             {
                 auto meth_call =
                     ir->alloc<IR_Call_Method>(n.src_loc, nullptr, method, std::vector<IR_Value*>());
@@ -76,15 +76,15 @@ void Ast_To_IR::visit(Variable_Node &n)
             _return(callable);
         }
     }
-    if (auto type = ir->types->get_type(n.name))
+    if (auto type = ir->types->get_type(n.name()))
     {   // Calling constructor
         auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
         _return(alloc);
     }
-    auto symbol = find_symbol(n.name);
+    auto symbol = find_symbol(n.name());
     if (!symbol)
     {
-        n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name.c_str());
+        n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name().c_str());
         abort();
     }
     _return(symbol);
@@ -740,7 +740,7 @@ void Ast_To_IR::visit(Member_Accessor_Node &n)
 {
     auto thing = get<IR_Value*>(*n.thing);
     assert(thing);
-    auto member_access = ir->alloc<IR_Member_Access>(n.src_loc, thing, n.member->name);
+    auto member_access = ir->alloc<IR_Member_Access>(n.src_loc, thing, n.member->name());
     _return(member_access);
 }
 

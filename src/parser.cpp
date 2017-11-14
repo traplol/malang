@@ -813,7 +813,7 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
             {
                 Token ident;
                 CHECK_OR_FAIL(parser.expect(ident, Token_Id::Identifier));
-                auto var = new Variable_Node(ident.src_loc(), ident.to_string());
+                auto var = new Variable_Node(ident.src_loc(), ident.to_string(), {});
                 expr = uptr<Ast_Value>(new Member_Accessor_Node(tok.src_loc(), expr.release(), var));
             } break;
         }
@@ -824,6 +824,24 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
     }
     PARSE_FAIL;
 }
+
+static uptr<Variable_Node> parse_qualified_name(Parser &parser)
+{   // qualified_name :=
+    //     ident
+    //     ident $ qualified_name
+    SAVE;
+    Token name, first;
+    ACCEPT_OR_FAIL(name, {Token_Id::Identifier});
+    first = name;
+    Variable_Node::Name_Qualifiers qualifiers;
+    while (parser.accept({Token_Id::Dollar}))
+    {
+        qualifiers.push_back(name.to_string());
+        CHECK_OR_FAIL(parser.expect(name, Token_Id::Identifier));
+    }
+    return std::make_unique<Variable_Node>(first.src_loc(), name.to_string(), qualifiers);
+}
+
 static uptr<Ast_Value> parse_primary(Parser &parser)
 {
     SAVE;
@@ -876,11 +894,15 @@ static uptr<Ast_Value> parse_primary(Parser &parser)
         return uptr<Ast_Value>(
             new Boolean_Node(token.src_loc(), value, parser.types->get_bool()));
     }
-    if (parser.accept(token, { Token_Id::Identifier }))
+    if (auto qualified_name = parse_qualified_name(parser))
     {
-        return uptr<Ast_Value>(
-            new Variable_Node(token.src_loc(), token.to_string()));
+        return qualified_name;
     }
+    //if (parser.accept(token, { Token_Id::Identifier }))
+    //{
+    //    return uptr<Ast_Value>(
+    //        new Variable_Node(token.src_loc(), token.to_string()));
+    //}
     PARSE_FAIL;
 }
 static uptr<List_Node> parse_expression_list(Parser &parser, const Source_Location &src_loc)
@@ -941,7 +963,7 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
 }
 static uptr<Type_Node> parse_type(Parser &parser)
 {   // type :=
-    //     ident
+    //     qualified_ident
     //     [ ] type
     //     [] type
     //     fn ( ) -> type
@@ -998,13 +1020,12 @@ static uptr<Type_Node> parse_type(Parser &parser)
         auto array_type = parser.types->get_array_type(of_ty_node->type);
         return uptr<Type_Node>(new Type_Node(first_tk.src_loc(), array_type));
     }
-    else
+    else if (auto qual_name = parse_qualified_name(parser))
     {
-        Token ident_tk;
-        ACCEPT_OR_FAIL(ident_tk, {Token_Id::Identifier});
-        auto type = parser.types->get_or_declare_type(ident_tk.to_string());
-        return uptr<Type_Node>(new Type_Node(ident_tk.src_loc(), type));
+        auto type = parser.types->get_or_declare_type(qual_name->name());
+        return uptr<Type_Node>(new Type_Node(qual_name->src_loc, type));
     }
+    PARSE_FAIL;
 }
 static bool parse_body(Parser &parser, std::vector<Ast_Node*> &body)
 {
@@ -1319,30 +1340,14 @@ uptr<Import_Node> parse_import(Parser &parser)
 {   // import :=
     //     import qualified_name
 
-    // qualified_name :=
-    //     ident
-    //     ident : qualified_name
-
     SAVE;
     Token import;
     ACCEPT_OR_FAIL(import, {Token_Id::K_import});
-    std::vector<std::string> fully_qualified_name;
-    Token mod_name;
-    CHECK_OR_FAIL(parser.expect(mod_name, Token_Id::Identifier));
-    fully_qualified_name.push_back(mod_name.to_string());
-    if (parser.accept({Token_Id::Colon}))
-    {
-        while (true)
-        {
-            CHECK_OR_FAIL(parser.expect(mod_name, Token_Id::Identifier));
-            fully_qualified_name.push_back(mod_name.to_string());
-            if (parser.accept({Token_Id::Colon}))
-            {
-                continue;
-            }
-            break;
-        }
-    }
+    auto qual_name = parse_qualified_name(parser);
+    CHECK_OR_FAIL(qual_name);
+    auto fully_qualified_name = qual_name->qualifiers();
+    fully_qualified_name.push_back(qual_name->local_name());
+    CHECK_OR_FAIL(parser.expect(Token_Id::StmtTerminator));
 
     auto mod = parser.modules->get(fully_qualified_name);
     return std::make_unique<Import_Node>(import.src_loc(), mod);

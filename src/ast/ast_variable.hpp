@@ -5,14 +5,23 @@
 
 struct Variable_Node : public Ast_LValue
 {
+    using Name_Qualifiers = std::vector<std::string>;
     ~Variable_Node();
-    Variable_Node(const Source_Location &src_loc, const std::string &name)
+    Variable_Node(const Source_Location &src_loc, const std::string &name, const Name_Qualifiers &qualifiers)
         : Ast_LValue(src_loc)
-        , name(name)
+        , m_name(name)
+        , m_qualifiers(qualifiers)
     {}
     AST_NODE_OVERRIDES;
 
-    std::string name;
+    const std::string &local_name() const { return m_name; }
+    const Name_Qualifiers &qualifiers() const { return m_qualifiers; }
+    const std::string &name();
+private:
+    std::string m_name;
+    std::string m_full_name;
+    Name_Qualifiers m_qualifiers;
+    
 };
 
 #endif /* MALANG_AST_AST_VARIABLE_HPP */

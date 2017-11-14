@@ -56,6 +56,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Character);
         SET_TK_TYPE_MAP(Equals);
         SET_TK_TYPE_MAP(Colon);
+        SET_TK_TYPE_MAP(Dollar);
         SET_TK_TYPE_MAP(StmtTerminator);
         SET_TK_TYPE_MAP(Open_Paren);
         SET_TK_TYPE_MAP(Close_Paren);
@@ -415,6 +416,7 @@ continue; \
         PUSH_TOKEN_1C("%", Mod);
         PUSH_TOKEN_1C("=", Equals);
         PUSH_TOKEN_1C(":", Colon);
+        PUSH_TOKEN_1C("$", Dollar);
         PUSH_TOKEN_1C(";", StmtTerminator);
         PUSH_TOKEN_1C("(", Open_Paren);
         PUSH_TOKEN_1C(")", Close_Paren);
@@ -433,6 +435,7 @@ continue; \
         src->report_at_src_loc("error", src->curr_src_loc(), "Unexpected character '%c' (%x)\n", src->peek(), (int)src->peek());
         return false;
     }
+    tokens.push_back(Token(Token_Id::StmtTerminator, ";", src->curr_src_loc()));
     return true;
 }
 

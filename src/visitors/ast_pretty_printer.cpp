@@ -93,7 +93,7 @@ void Ast_Pretty_Printer::visit(Import_Node &n)
 }
 void Ast_Pretty_Printer::visit(Variable_Node &n)
 {
-    str << n.name;
+    str << n.name();
 }
 void Ast_Pretty_Printer::visit(Assign_Node &n)
 {
