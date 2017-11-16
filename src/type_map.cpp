@@ -1,6 +1,7 @@
 #include <cassert>
 #include <sstream>
 #include "type_map.hpp"
+#include "module_map.hpp"
 
 Type_Map::~Type_Map()
 {
@@ -14,6 +15,7 @@ Type_Map::~Type_Map()
 
 Type_Map::Type_Map()
 {
+    m_module = nullptr;
     constexpr bool builtin = true;
     constexpr bool managed = true;
     constexpr bool not_managed = false;
@@ -61,7 +63,6 @@ Type_Info *Type_Map::get_buffer() const
     assert(m_buffer);
     return m_buffer;
 }
-
 Type_Info *Type_Map::get_or_declare_type(const std::string &name)
 {
     auto existing = get_type(name);
@@ -71,13 +72,32 @@ Type_Info *Type_Map::get_or_declare_type(const std::string &name)
     }
     return declare_type(name, nullptr);
 }
+Module *Type_Map::module() const
+{
+    return m_module;
+}
+void Type_Map::module(Module *mod)
+{
+    m_module = mod;
+}
+
+static
+std::string qualify_name(Module *mod, const std::string &name)
+{
+    if (!mod || name.find('$') != std::string::npos)
+    {
+        return name;
+    }
+    return mod->name() + "$" + name;
+}
 
 Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent, bool is_builtin, bool is_gc_managed)
 {
     assert(!name.empty());
     assert(get_type(name) == nullptr);
 
-    auto type = new Type_Info(parent, m_types_fast.size(), name);
+    auto qualified_name = qualify_name(m_module, name);
+    auto type = new Type_Info(parent, m_types_fast.size(), qualified_name);
     type->m_is_builtin = is_builtin;
     type->m_is_gc_managed = is_gc_managed;
     m_types[type->name()] = type;
@@ -170,6 +190,12 @@ Type_Info *Type_Map::get_type(const std::string &name)
     {
         return it->second;
     }
+    auto qualified_name = qualify_name(m_module, name);
+    it = m_types.find(qualified_name);
+    if (it != m_types.end())
+    {
+        return it->second;
+    }
     return nullptr;
 }
 
@@ -179,4 +205,13 @@ Type_Info *Type_Map::get_type(Type_Token type_token)
     auto idx = static_cast<decltype(size)>(type_token);
     assert(idx < size);
     return m_types_fast[idx];
+}
+
+void Type_Map::dump() const
+{
+    printf(">>>>>>>>>>>>TYPE DUMP<<<<<<<<<<\n");
+    for (auto t : m_types_fast)
+    {
+        t->dump();
+    }
 }

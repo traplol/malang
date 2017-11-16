@@ -4,10 +4,11 @@
 #include <vector>
 #include "../ast/ast_visitor.hpp"
 #include "../ast/ast.hpp"
+#include "../vm/runtime/primitive_types.hpp"
+#include "../module_map.hpp"
 #include "ir.hpp"
 #include "symbol_map.hpp"
 #include "bound_function_map.hpp"
-#include "../vm/runtime/primitive_types.hpp"
 #include "scope_lookup.hpp"
 
 struct Ast_To_IR : Ast_Visitor
@@ -63,9 +64,11 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Array_Literal_Node&n) override;
     virtual void visit(struct New_Array_Node&n) override;
 
-    void convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vector<String_Constant> *strings);
+    void convert(Ast &ast, Malang_IR *ir, Module_Map *mod_map, Scope_Lookup *global, std::vector<String_Constant> *strings);
 
 private:
+    Module *cur_module;
+    Module_Map *mod_map;
     Type_Info *is_extending;
     struct Fn_Node *cur_fn;
     IR_Label *cur_fn_ep;
@@ -79,6 +82,7 @@ private:
     Symbol_Scope cur_symbol_scope;
     uint16_t cur_locals_count;
 
+    void convert_intern(Ast &ast);
     IR_Symbol *find_symbol(const std::string &name);
     void convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, struct IR_Value **last_node_as_value = nullptr);
     bool symbol_already_declared_here(const std::string &name);

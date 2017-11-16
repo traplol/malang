@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <string>
 #include <sstream>
-#include <fstream>
 #include <streambuf>
 #include <vector>
 #include <iostream>
@@ -470,25 +469,13 @@ void parse_tests()
     printf(" %d/%d\n", total_run-errors, total_run);
 }
 
-bool read_file(const std::string &filename, std::string &contents)
+int parse_to_code(Args *args)
 {
-    std::ifstream inf(filename);
-    if (inf)
-    {
-        contents.assign(std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>());
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void parse_to_code(Args *args)
-{
+    int res = 0;
     std::vector<String_Constant> string_constants;
     Type_Map types;
     Module_Map modules;
+
     Malang_IR ir{&types};
     Scope_Lookup global_scope{&ir};
     
@@ -498,7 +485,7 @@ void parse_to_code(Args *args)
     {
         printf("Input source:\n%s\n", args->code.c_str());
     }
-    auto src = new Source_Code{args->filename, args->code};
+    auto src = new Source_Code{args->filename};
     auto ast = parser.parse(src);
 
     if (args->noisy)
@@ -510,23 +497,19 @@ void parse_to_code(Args *args)
         {
             printf("%s\n", s.c_str());
         }
-        //for (auto &&n : ast.roots)
-        //{
-        //    Ast_Pretty_Printer pp;
-        //    printf("%s\n", pp.to_string(*n).c_str());
-        //}
         printf("\n");
     }
 
     if (parser.errors)
     {
         printf("there were parsing errors...\n");
+        res = -1;
     }
     else
     {
         Malang_Runtime::init_builtins(global_scope.current().bound_functions(), types);
         Ast_To_IR ast_to_ir;
-        ast_to_ir.convert(ast, &ir, &global_scope, &string_constants);
+        ast_to_ir.convert(ast, &ir, &modules, &global_scope, &string_constants);
         IR_To_Code ir_to_code;
         auto cg = ir_to_code.convert(ir);
         if (args->noisy)
@@ -548,6 +531,7 @@ void parse_to_code(Args *args)
         delete cg;
     }
     delete src;
+    return res;
 }
 
 int main(int argc, char **argv)
@@ -575,10 +559,9 @@ int main(int argc, char **argv)
     }
 
     
-    if (!args.filename.empty() && read_file(args.filename, args.code))
+    if (!args.filename.empty())
     {
-        parse_to_code(&args);
-        return 0;
+        return parse_to_code(&args);
     }
     else
     {

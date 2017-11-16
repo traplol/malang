@@ -1197,7 +1197,7 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
     ACCEPT_OR_FAIL(type_tk, {Token_Id::K_type});
     Token type_name_tk;
     CHECK_OR_FAIL(parser.expect(type_name_tk, Token_Id::Identifier));
-    auto type = parser.types->declare_type(type_name_tk.to_string(), nullptr);
+    auto type = parser.types->get_or_declare_type(type_name_tk.to_string());
     auto old_extending = parser.is_extending;
     parser.is_extending = type;
     CHECK_OR_FAIL(parser.expect(Token_Id::Equals));

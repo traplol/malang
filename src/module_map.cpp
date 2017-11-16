@@ -1,6 +1,6 @@
 #include <cassert>
 #include <sstream>
-#include <unistd.h> // getcwd: @FixMe: move this to OS agnostic utility
+#include <unistd.h> /* getcwd: @FixMe: move this to OS agnostic utility */
 #include "module_map.hpp"
 
 const std::string &Module::name() const
@@ -33,6 +33,16 @@ void Module::add_child(Module *module)
     }
     module->m_parent = this;
     m_children[module->m_name] = module;
+}
+bool Module::loaded() const
+{
+    return m_is_loaded;
+}
+void Module::loaded(bool v)
+{
+    // Set true only once.
+    assert(!m_is_loaded);
+    m_is_loaded = v;
 }
 
 Module *Module::find_child(name_itr &beg, name_itr &end)
@@ -72,6 +82,11 @@ const std::string &Module::filepath()
 
     m_filepath = build_name("/") + ".ma";
     return m_filepath;
+}
+
+const std::string &Module::abspath()
+{
+    return m_abspath;
 }
 
 const std::string &Module::fully_qualified_name()
@@ -147,6 +162,7 @@ Module *Module_Map::make_mod(const std::string &name)
 {
     auto mod = new Module(name);
     mod->m_mod_map = this;
+    mod->m_is_loaded = false;
     m_all_modules.push_back(mod);
     return mod;
 }
@@ -173,4 +189,44 @@ Module_Map::Module_Map()
     {
         m_search_directories.push_back("");
     }
+}
+
+void Module_Map::add_search_directory(const std::string &dir)
+{
+    m_search_directories.push_back(dir);
+}
+
+bool Module_Map::find_file_rel(const std::string &rel_path, Module *module, std::string &filename)
+{
+    auto path = rel_path + "/" + module->filepath();
+    //printf("R: %s\n", path.c_str());
+    auto abs = realpath(path.c_str(), NULL);
+    //printf("A: %s\n", abs);
+    if (abs)
+    {
+        module->m_abspath = abs;
+        filename = abs;
+        free(abs);
+        return true;
+    }
+    return false;
+}
+
+bool Module_Map::find_file(Module *module, std::string &filename)
+{
+    assert(module);
+    auto abspath = module->abspath();
+    if (!abspath.empty())
+    {
+        filename = abspath;
+        return true;
+    }
+    for (auto &&dir : m_search_directories)
+    {
+        if (find_file_rel(dir, module, filename))
+        {
+            return true;
+        }
+    }
+    return false;
 }

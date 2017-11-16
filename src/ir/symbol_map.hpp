@@ -9,6 +9,7 @@
 struct Malang_IR;
 struct IR_Symbol;
 struct Type_Info;
+struct Module;
 
 struct Symbol_Map
 {

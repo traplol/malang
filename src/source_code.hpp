@@ -21,18 +21,19 @@ class Source_Code
 {
 public:
     Source_Code() 
-        : m_code("")
-        , m_filename("")
+        : m_good(false)
         , m_cur_line(1)
         , m_cur_line_char(1)
         , m_idx(0)
     {}
+    Source_Code(const std::string &filename);
     Source_Code(const std::string &filename, const std::string &code)
-        : m_code(code)
-        , m_filename(filename)
+        : m_good(true)
         , m_cur_line(1)
         , m_cur_line_char(1)
         , m_idx(0)
+        , m_filename(filename)
+        , m_code(code)
     {}
 
     static constexpr int end_of_file = -1;
@@ -48,17 +49,19 @@ public:
     char &operator[](size_t i);
     auto begin();
     auto end();
+    bool good() const;
     const std::string &code() const;
     const std::string &filename() const;
     void report_at_src_loc(const char *type, const Source_Location &src_loc, const char *fmt, ...) const;
     void vreport_at_src_loc(const char *type, const Source_Location &src_loc, const char *fmt, va_list vargs) const;
     Source_Location curr_src_loc() const;
 private:
-    std::string m_code;
-    std::string m_filename;
+    bool m_good;
     int m_cur_line;
     int m_cur_line_char;
     size_t m_idx;
+    std::string m_filename;
+    std::string m_code;
 };
 
 

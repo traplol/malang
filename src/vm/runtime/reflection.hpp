@@ -236,6 +236,8 @@ struct Type_Info
         , m_init(nullptr)
         {}
 
+    void dump() const;
+
     Type_Info *get_parent() const;
     void set_parent(Type_Info *parent);
 

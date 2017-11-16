@@ -1,8 +1,10 @@
 #include <sstream>
 #include "ast_to_ir.hpp"
+#include "../parser.hpp"
 #include "../ast/nodes.hpp"
 #include "../vm/runtime/reflection.hpp"
 #include "nodes.hpp"
+#include "../visitors/ast_pretty_printer.hpp"
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
 
@@ -32,9 +34,104 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
+static
+std::string qualify_name(Module *mod, const std::string &name)
+{
+    if (!mod)
+    {
+        //printf("Qualifying(%p) %s => %s\n", mod, name.c_str(), name.c_str());
+        return name;
+    }
+    auto qual = mod->name() + "$" + name;
+    //printf("Qualifying(%p) %s => %s\n", mod, name.c_str(), qual.c_str());
+    return qual;
+}
+
+static
+std::string get_directory(const std::string &path)
+{
+    if (path.empty())
+    {
+        return "";
+    }
+    size_t found;
+    found = path.find_last_of("/\\");
+    return path.substr(0, found);
+}
+
 void Ast_To_IR::visit(Import_Node &n)
 {
-    NOT_IMPL;
+    /*
+     * Imports/modules are a mess. 
+     */
+
+
+    assert(n.mod_info);
+    if (n.mod_info->loaded())
+    {
+        // nothing to do, already loaded.
+        _return(nullptr);
+    }
+
+    // Save everything
+    auto old_cur_module = cur_module;
+    auto old_is_extending = is_extending;
+    auto old_cur_fn = cur_fn;
+    auto old_cur_fn_ep = cur_fn_ep;
+    auto old_cur_true_label = cur_true_label;
+    auto old_cur_false_label = cur_false_label;
+    auto old_cur_continue_label = cur_continue_label;
+    auto old_cur_break_label = cur_break_label;
+    auto old_locality = locality;
+    auto old_cur_symbol_scope = cur_symbol_scope;
+
+    std::string filename, rel_path;
+    auto this_source_file = realpath(n.src_loc.filename.c_str(), NULL);
+    auto this_source_dir = get_directory(this_source_file);
+    free(this_source_file);
+
+    if (!mod_map->find_file_rel(this_source_dir, n.mod_info, filename))
+    {
+        if (!mod_map->find_file(n.mod_info, filename))
+        {
+            n.src_loc.report("error", "Cannot find file to import.");
+            abort();
+        }
+    }
+    //printf("importing %s\n", filename.c_str());
+    cur_module = n.mod_info;
+    ir->types->module(n.mod_info);
+    Parser parser(ir->types, mod_map);
+    auto src = new Source_Code(filename); // @Leak
+    auto ast = parser.parse(src);
+    if (parser.errors)
+    {
+        n.src_loc.report("error", "error parsing module.");
+        abort();
+    }
+    //Ast_Pretty_Printer pp;
+    //auto x = pp.to_strings(ast);
+    //for (auto &&s : x) {
+    //    printf("%s\n", s.c_str());
+    //}
+    convert_intern(ast);
+    //ir->types->dump();
+    n.mod_info->loaded(true);
+
+    
+    // Restore everything
+    cur_symbol_scope = old_cur_symbol_scope;
+    locality = old_locality;
+    cur_break_label = old_cur_break_label;
+    cur_continue_label = old_cur_continue_label;
+    cur_false_label = old_cur_false_label;
+    cur_true_label = old_cur_true_label;
+    cur_fn_ep = old_cur_fn_ep;
+    cur_fn = old_cur_fn;
+    is_extending = old_is_extending;
+    cur_module = old_cur_module;
+
+    _return(nullptr); // necessary?
 }
 
 void Ast_To_IR::visit(Variable_Node &n)
@@ -46,6 +143,7 @@ void Ast_To_IR::visit(Variable_Node &n)
         auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep, cur_fn->fn_type);
         _return(callable);
     }
+    //locality->current().bound_functions().dump();
     auto bound_fn = locality->current().find_bound_function(n.name(), *cur_call_arg_types);
     if (bound_fn.is_valid())
     {
@@ -350,10 +448,13 @@ void Ast_To_IR::visit(Fn_Node &n)
 
     if (n.is_bound())
     {
-        if (!locality->current().bound_functions().add(n.bound_name, n.fn_type, fn_body))
+        auto qualified = is_extending
+            ? n.bound_name
+            : qualify_name(cur_module, n.bound_name);
+        if (!locality->current().bound_functions().add(qualified, n.fn_type, fn_body))
         {
             n.src_loc.report("error", "Cannot bind %s to `%s' because it already exists",
-                             n.fn_type->name().c_str(), n.bound_name.c_str());
+                             n.fn_type->name().c_str(), qualified.c_str());
             abort();
         }
     }
@@ -812,7 +913,6 @@ void Ast_To_IR::visit(Constructor_Node &n)
     const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
     assert(is_void_return); // constructor must be void return.
     assert(is_extending);
-
     locality->push(true);
     auto ctor_body =
         ir->labels->make_named_block(label_name_gen(), label_name_gen(), n.src_loc);
@@ -1502,21 +1602,32 @@ void Ast_To_IR::visit(struct New_Array_Node &n)
     _return(new_array);
 }
 
-void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Scope_Lookup *global, std::vector<String_Constant> *strings)
+void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Module_Map *mod_map, Scope_Lookup *global, std::vector<String_Constant> *strings)
 {
+    assert(ir);
+    assert(mod_map);
+    assert(global);
+    assert(strings);
+
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
+    cur_module = nullptr;
     cur_fn = nullptr;
-    cur_fn_ep = nullptr;
     is_extending = nullptr;
+    cur_fn_ep = nullptr;
     cur_true_label = cur_false_label = nullptr;
+    cur_continue_label = cur_break_label = nullptr;
+    this->mod_map = mod_map;
     this->ir = ir;
     this->locality = global;
     this->strings = strings;
-
+    convert_intern(ast);
+}
+void Ast_To_IR::convert_intern(Ast &ast)
+{
     for (auto imp : ast.imports)
     {
-        ir->first.push_back(get(*imp));
+        get(*imp);
     }
     for (auto type : ast.type_defs)
     {

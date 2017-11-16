@@ -10,11 +10,14 @@ struct Module
 {
     const std::string &name() const;
     const std::string &filepath();
+    const std::string &abspath();
     const std::string &fully_qualified_name();
     Module_Map *module_map();
     Module *parent();
     Module *find_child(const std::vector<std::string> &name);
     void add_child(Module *mod);
+    bool loaded() const;
+    void loaded(bool v);
 private:
     friend Module_Map;
     Module(const std::string &name)
@@ -23,11 +26,13 @@ private:
         {}
     std::string build_name(const std::string &sep) const;
     using name_itr = std::vector<std::string>::const_iterator;
+    bool m_is_loaded;
     Module *find_child(name_itr &beg, name_itr &end);
     Module_Map *m_mod_map;
     Module *m_parent;
     std::string m_name;
     std::string m_filepath;
+    std::string m_abspath;
     std::string m_fully_qualified_name;
     std::map<std::string, Module*> m_children;
 };
@@ -37,6 +42,9 @@ struct Module_Map
     ~Module_Map();
     Module_Map();
     Module *get(const std::vector<std::string> &name);
+    bool find_file(Module *module, std::string &filename);
+    bool find_file_rel(const std::string &rel_path, Module *module, std::string &filename);
+    void add_search_directory(const std::string &dir);
 private:
     Module *make_mod(const std::string &name);
     std::vector<Module*> m_all_modules;

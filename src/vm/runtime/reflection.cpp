@@ -261,6 +261,11 @@ void Type_Info::init(Constructor_Info *init)
     m_init = init;
 }
 
+const Constructors &Type_Info::constructors() const
+{
+    return m_constructors;
+}
+
 Constructor_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
 {
     for (auto &&c : m_constructors)
@@ -486,4 +491,42 @@ bool Function_Type_Info::is_native() const
 Type_Info *Array_Type_Info::of_type() const
 {
     return m_of_type;
+}
+
+void Type_Info::dump() const
+{
+    printf("%s\n", name().c_str());
+    printf("  Fields:\n");
+    for (auto &&f : all_fields())
+    {
+        printf("    %s: %s", f->name().c_str(), f->type()->name().c_str());
+        if (f->is_readonly())
+        {
+            printf(" (readonly)");
+        }
+        printf("\n");
+    }
+    printf("  Ctors:\n");
+    for (auto &&c : constructors())
+    {
+        printf("    new %s", c->parameter_types().to_string().c_str());
+        if (c->is_native())
+        {
+            printf(" (native)");
+        }
+        printf("\n");
+    }
+    printf("  Methods:\n");
+    for (auto &&m : all_methods())
+    {
+        printf("    fn %s %s -> %s",
+               m->name().c_str(),
+               m->parameter_types().to_string().c_str(),
+               m->return_type()->name().c_str());
+        if (m->is_native())
+        {
+            printf(" (native)");
+        }
+        printf("\n");
+    }
 }

@@ -1,5 +1,31 @@
 #include <sstream>
+#include <fstream>
 #include "source_code.hpp"
+
+bool read_file(const std::string &filename, std::string &contents)
+{
+    std::ifstream inf(filename);
+    if (inf)
+    {
+        contents.assign(std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+Source_Code::Source_Code(const std::string &filename)
+    : m_cur_line(1)
+    , m_cur_line_char(1)
+    , m_idx(0)
+    , m_filename(filename)
+{
+    m_good = read_file(filename, m_code);
+}
+
+bool Source_Code::good() const { return m_good; }
 
 std::string Source_Location::to_string() const
 {

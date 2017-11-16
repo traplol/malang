@@ -5,6 +5,7 @@
 
 #include "vm/runtime/reflection.hpp"
 
+struct Module;
 struct Type_Map
 {
     ~Type_Map();
@@ -24,12 +25,17 @@ struct Type_Map
     Type_Info *get_string() const;
     Type_Info *get_bool() const;
     Type_Info *get_buffer() const;
+    Module *module() const;
+    void module(Module *mod);
+
+    void dump() const;
 private:
+    Type_Info *declare_type(const std::string &name, struct Type_Info *parent, bool is_builtin, bool is_gc_managed);
     std::map<std::string, Type_Info*> m_types;
     std::map<std::string, Trait_Definition*> m_traits;
     std::vector<Type_Info*> m_types_fast;
-    Type_Info *declare_type(const std::string &name, struct Type_Info *parent, bool is_builtin, bool is_gc_managed);
 
+    Module *m_module;
     Type_Info *m_void;
     Type_Info *m_int;
     Type_Info *m_char;
