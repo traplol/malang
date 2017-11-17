@@ -93,7 +93,7 @@ while i < n {
 ```
 
 For loops expect the thing being iterated to implement ```fn current() -> T``` and ```fn move_next() -> bool```
-see [for.ma](examples/tests/for.ma) for a trivial Range implementation
+see [range.ma](lib/range.ma) for a trivial Range implementation
 ```
 for Range(0, 10) {
   println(it) # `it'erator is implied
@@ -105,6 +105,8 @@ for Range(0, 10) {
 Functions can be defined and bound to a name, assigned to a variable, or used as a value in an expression. The 
 main difference between binding to a name and to a variable is a function bound to a name can share that name
 with other bound functions if their parameter types differ.
+
+See [BUILTINS](BUILTINS.md) for a list of builtin and always availble functions.
 
 ```
 # Binds to 'hello' with with no parameters
