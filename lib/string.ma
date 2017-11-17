@@ -168,7 +168,7 @@ type Iterator = {
     }
 
     fn move_next() -> bool {
-        cur += 1
+        _cur += 1
         return _cur < _s.length
     }
 }
