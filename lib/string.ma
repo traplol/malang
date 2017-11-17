@@ -1,4 +1,3 @@
-## helloworld
 
 extend string {
 
@@ -147,7 +146,30 @@ type StringBuilder = {
         return self
     }
 
+    fn << (val: char) -> StringBuilder {
+        append(val)
+        return self
+    }
+
     fn to_s() -> string {
         return string(_data, _size)
     }
 }
+
+type Iterator = {
+    _cur := -1
+    _s := ""
+    new (str: string) {
+        _s = str
+    }
+
+    fn current() -> char {
+        return _s[_cur]
+    }
+
+    fn move_next() -> bool {
+        cur += 1
+        return _cur < _s.length
+    }
+}
+
