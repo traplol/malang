@@ -1,3 +1,5 @@
+## helloworld
+
 extend string {
 
     fn * (n: int) -> string {
@@ -94,8 +96,8 @@ extend int {
             i += 1
         }
         if negative {
-           tmp[i] = ?-
-           i += 1
+            tmp[i] = ?-
+            i += 1
         }
         return string(tmp, i).reverse()
     }

@@ -520,3 +520,11 @@ Nov 13, 2017:
 
 Nov 14, 2017:
     ??
+
+Nov 15, 2017:
+    + Modules load relative to CWD
+
+Nov 16, 2017:
+    + Modules first try to load relative to the file containing the import
+    + updated some tests to use imports + lib
+    

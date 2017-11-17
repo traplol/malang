@@ -1,6 +1,9 @@
 #include <string>
 #include <sstream>
+#include <iostream>
+
 #include "builtins.hpp"
+#include "string.hpp"
 #include "../../type_map.hpp"
 #include "../vm.hpp"
 #include "../runtime.hpp"
@@ -179,6 +182,19 @@ void cast_int_to_double(Malang_VM &vm)
     vm.push_data(static_cast<Double>(top));
 }
 
+static
+void get_char(Malang_VM &vm)
+{
+    vm.push_data(static_cast<Fixnum>(getchar()));
+}
+
+static
+void get_line(Malang_VM &vm)
+{
+    std::string line;
+    std::getline(std::cin, line);
+    Malang_Runtime::string_alloc_push(vm, line);
+}
 
 void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, Native_Code native_code, const std::vector<Type_Info*> &param_types, Type_Info *return_type)
 {
@@ -190,6 +206,11 @@ void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, N
 
 void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
 {
+    // fn get_char() -> char
+    make_builtin(b, t, "get_char", get_char,   {},    t.get_char());
+    // fn get_line() -> string
+    make_builtin(b, t, "get_line", get_line,   {},    t.get_string());
+
     // fn char(int) -> char
     make_builtin(b, t, "char",   cast_int_to_char,   {t.get_int()},    t.get_char());
     // fn int(char) -> int

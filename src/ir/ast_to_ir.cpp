@@ -1,9 +1,10 @@
 #include <sstream>
 #include "ast_to_ir.hpp"
+#include "nodes.hpp"
+#include "../platform.hpp"
 #include "../parser.hpp"
 #include "../ast/nodes.hpp"
 #include "../vm/runtime/reflection.hpp"
-#include "nodes.hpp"
 #include "../visitors/ast_pretty_printer.hpp"
 
 #define NOT_IMPL {printf("Ast_To_IR visitor for %s not implemented: %s:%d\n", n.type_name().c_str(), __FILE__, __LINE__); abort();}
@@ -47,18 +48,6 @@ std::string qualify_name(Module *mod, const std::string &name)
     return qual;
 }
 
-static
-std::string get_directory(const std::string &path)
-{
-    if (path.empty())
-    {
-        return "";
-    }
-    size_t found;
-    found = path.find_last_of("/\\");
-    return path.substr(0, found);
-}
-
 void Ast_To_IR::visit(Import_Node &n)
 {
     /*
@@ -87,7 +76,7 @@ void Ast_To_IR::visit(Import_Node &n)
 
     std::string filename, rel_path;
     auto this_source_file = realpath(n.src_loc.filename.c_str(), NULL);
-    auto this_source_dir = get_directory(this_source_file);
+    auto this_source_dir = plat::get_directory(this_source_file);
     free(this_source_file);
 
     if (!mod_map->find_file_rel(this_source_dir, n.mod_info, filename))
@@ -98,7 +87,10 @@ void Ast_To_IR::visit(Import_Node &n)
             abort();
         }
     }
-    //printf("importing %s\n", filename.c_str());
+    if (noisy)
+    {
+        printf("importing %s\n", filename.c_str());
+    }
     cur_module = n.mod_info;
     ir->types->module(n.mod_info);
     Parser parser(ir->types, mod_map);
@@ -109,15 +101,16 @@ void Ast_To_IR::visit(Import_Node &n)
         n.src_loc.report("error", "error parsing module.");
         abort();
     }
-    //Ast_Pretty_Printer pp;
-    //auto x = pp.to_strings(ast);
-    //for (auto &&s : x) {
-    //    printf("%s\n", s.c_str());
-    //}
+    if (noisy)
+    {
+        Ast_Pretty_Printer pp;
+        auto x = pp.to_strings(ast);
+        for (auto &&s : x) {
+            printf("%s\n", s.c_str());
+        }
+    }
     convert_intern(ast);
-    //ir->types->dump();
     n.mod_info->loaded(true);
-
     
     // Restore everything
     cur_symbol_scope = old_cur_symbol_scope;

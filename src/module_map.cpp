@@ -1,7 +1,7 @@
 #include <cassert>
 #include <sstream>
-#include <unistd.h> /* getcwd: @FixMe: move this to OS agnostic utility */
 #include "module_map.hpp"
+#include "platform.hpp"
 
 const std::string &Module::name() const
 {
@@ -180,15 +180,7 @@ Module_Map::~Module_Map()
 
 Module_Map::Module_Map()
 {
-    char buf[2048]{};
-    if (getcwd(buf, 2048))
-    {
-        m_search_directories.push_back(buf);
-    }
-    else
-    {
-        m_search_directories.push_back("");
-    }
+    m_search_directories.push_back(plat::get_cwd());
 }
 
 void Module_Map::add_search_directory(const std::string &dir)
@@ -199,14 +191,11 @@ void Module_Map::add_search_directory(const std::string &dir)
 bool Module_Map::find_file_rel(const std::string &rel_path, Module *module, std::string &filename)
 {
     auto path = rel_path + "/" + module->filepath();
-    //printf("R: %s\n", path.c_str());
-    auto abs = realpath(path.c_str(), NULL);
-    //printf("A: %s\n", abs);
-    if (abs)
+    auto abs = plat::get_abs_path(path);
+    if (!abs.empty())
     {
         module->m_abspath = abs;
         filename = abs;
-        free(abs);
         return true;
     }
     return false;

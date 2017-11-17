@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "system_args.hpp"
+#include "platform.hpp"
 #include "parser.hpp"
 #include "visitors/ast_pretty_printer.hpp"
 #include "vm/vm.hpp"
@@ -475,6 +476,17 @@ int parse_to_code(Args *args)
     std::vector<String_Constant> string_constants;
     Type_Map types;
     Module_Map modules;
+    // Search order:
+    //  0. Relative to source file containing the import
+    //  1. Relative to CWD
+    //  2. Relative to mal_exe
+    //  3. Relative to mal_exe/lib
+    auto exe = plat::get_mal_exe_path();
+    auto exe_dir = plat::get_directory(exe);
+
+    modules.add_search_directory(plat::get_cwd());
+    modules.add_search_directory(exe_dir);
+    modules.add_search_directory(exe_dir + "/lib");
 
     Malang_IR ir{&types};
     Scope_Lookup global_scope{&ir};
@@ -509,6 +521,7 @@ int parse_to_code(Args *args)
     {
         Malang_Runtime::init_builtins(global_scope.current().bound_functions(), types);
         Ast_To_IR ast_to_ir;
+        ast_to_ir.is_noisy(args->noisy);
         ast_to_ir.convert(ast, &ir, &modules, &global_scope, &string_constants);
         IR_To_Code ir_to_code;
         auto cg = ir_to_code.convert(ir);
@@ -533,6 +546,7 @@ int parse_to_code(Args *args)
     delete src;
     return res;
 }
+
 
 int main(int argc, char **argv)
 {

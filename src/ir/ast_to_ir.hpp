@@ -13,6 +13,7 @@
 
 struct Ast_To_IR : Ast_Visitor
 {
+    Ast_To_IR() : noisy(false) {}
     virtual void visit(struct Import_Node&n) override;
     virtual void visit(struct Variable_Node&n) override;
     virtual void visit(struct Assign_Node&n) override;
@@ -66,7 +67,11 @@ struct Ast_To_IR : Ast_Visitor
 
     void convert(Ast &ast, Malang_IR *ir, Module_Map *mod_map, Scope_Lookup *global, std::vector<String_Constant> *strings);
 
+    void is_noisy(bool value) { noisy = value; }
+    bool is_noisy() const { return noisy; }
 private:
+    bool noisy;
+    uint16_t cur_locals_count;
     Module *cur_module;
     Module_Map *mod_map;
     Type_Info *is_extending;
@@ -80,7 +85,6 @@ private:
     std::vector<IR_Return*> *all_returns_this_fn;
     Scope_Lookup *locality;
     Symbol_Scope cur_symbol_scope;
-    uint16_t cur_locals_count;
 
     void convert_intern(Ast &ast);
     IR_Symbol *find_symbol(const std::string &name);

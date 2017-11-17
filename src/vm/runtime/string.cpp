@@ -39,6 +39,21 @@ void Malang_Runtime::string_construct_intern(Malang_Object *place, const String_
     string_construct_intern(place, string_constant.size(), string_constant.data_copy());
 }
 
+void Malang_Runtime::string_alloc_push(Malang_VM &vm, const String_Constant &string)
+{
+    // GC probably does not need to be paused here because we only allocate once and
+    // we don't pop anything off the stack.
+    //auto old_paused = vm.gc->paused();
+    //vm.gc->paused(true);
+
+    auto s = vm.gc->allocate_object(string_type_token);
+    string_construct_intern(s, string);
+    vm.push_data(s);
+
+    // restore the original state
+    //vm.gc->paused(old_paused);
+}
+
 // string(buf: buffer)
 static
 void string_buffer_new(Malang_VM &vm)
