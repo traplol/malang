@@ -8,6 +8,9 @@
 struct Module_Map;
 struct Module
 {
+    constexpr static int white = 0;
+    constexpr static int grey = 1;
+    constexpr static int black = 2;
     const std::string &name() const;
     const std::string &filepath();
     const std::string &abspath();
@@ -16,8 +19,8 @@ struct Module
     Module *parent();
     Module *find_child(const std::vector<std::string> &name);
     void add_child(Module *mod);
-    bool loaded() const;
-    void loaded(bool v);
+    int color() const;
+    void color(int c);
 private:
     friend Module_Map;
     Module(const std::string &name)
@@ -26,7 +29,7 @@ private:
         {}
     std::string build_name(const std::string &sep) const;
     using name_itr = std::vector<std::string>::const_iterator;
-    bool m_is_loaded;
+    int m_color;
     Module *find_child(name_itr &beg, name_itr &end);
     Module_Map *m_mod_map;
     Module *m_parent;

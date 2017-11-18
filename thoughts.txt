@@ -526,5 +526,6 @@ Nov 15, 2017:
 
 Nov 16, 2017:
     + Modules first try to load relative to the file containing the import
-    + updated some tests to use imports + lib
-    
+    + Updated some tests to use imports + lib
+    + Example bf_2_c transpiler in examples/bf_2_c.ma
+    + Documentation for builtins

@@ -7,9 +7,8 @@ std::string plat::get_directory(const std::string &path)
     {
         return "";
     }
-    size_t found;
-    found = path.find_last_of("/\\");
-    return path.substr(0, found);
+    auto idx = path.find_last_of("/\\");
+    return path.substr(0, idx);
 }
 
 std::string plat::get_abs_path(const std::string &path)
@@ -26,7 +25,7 @@ std::string plat::get_abs_path(const std::string &path)
 
 std::string plat::get_cwd()
 {
-    char buf[2048];
+    char buf[2048]{0};
     return getcwd(buf, sizeof(buf))
         ? buf
         : std::string();
@@ -34,7 +33,9 @@ std::string plat::get_cwd()
 
 std::string plat::get_mal_exe_path()
 {
-    char buf[2048];
-    readlink("/proc/self/exe", buf, sizeof(buf));
+    char buf[2048]{0};
+    if (-1 == readlink("/proc/self/exe", buf, sizeof(buf))) {
+        return std::string();
+    }
     return buf;
 }

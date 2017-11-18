@@ -1087,8 +1087,9 @@ static void *parse_fn_shared(Parser &parser, std::vector<Decl_Node*> &params, Ty
     Token arrow_tk;
     if (parser.accept(arrow_tk, {Token_Id::Right_Arrow}))
     {
-        *ret_ty = parse_type(parser).release();
-        CHECK_OR_ERROR(ret_ty, arrow_tk, "Expected type signature for function's return type");
+        auto ty = parse_type(parser);
+        CHECK_OR_ERROR(ty, arrow_tk, "Expected type signature for function's return type");
+        *ret_ty = ty.release();
     }
     else
     {

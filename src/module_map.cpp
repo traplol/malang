@@ -34,15 +34,14 @@ void Module::add_child(Module *module)
     module->m_parent = this;
     m_children[module->m_name] = module;
 }
-bool Module::loaded() const
+
+int Module::color() const
 {
-    return m_is_loaded;
+    return m_color;
 }
-void Module::loaded(bool v)
+void Module::color(int c)
 {
-    // Set true only once.
-    assert(!m_is_loaded);
-    m_is_loaded = v;
+    m_color = c;
 }
 
 Module *Module::find_child(name_itr &beg, name_itr &end)
@@ -162,7 +161,7 @@ Module *Module_Map::make_mod(const std::string &name)
 {
     auto mod = new Module(name);
     mod->m_mod_map = this;
-    mod->m_is_loaded = false;
+    mod->color(mod->white);
     m_all_modules.push_back(mod);
     return mod;
 }

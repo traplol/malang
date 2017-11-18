@@ -56,7 +56,7 @@ void Ast_To_IR::visit(Import_Node &n)
 
 
     assert(n.mod_info);
-    if (n.mod_info->loaded())
+    if (n.mod_info->color() != n.mod_info->white)
     {
         // nothing to do, already loaded.
         _return(nullptr);
@@ -74,6 +74,7 @@ void Ast_To_IR::visit(Import_Node &n)
     auto old_locality = locality;
     auto old_cur_symbol_scope = cur_symbol_scope;
 
+    n.mod_info->color(n.mod_info->grey);
     std::string filename, rel_path;
     auto this_source_file = realpath(n.src_loc.filename.c_str(), NULL);
     auto this_source_dir = plat::get_directory(this_source_file);
@@ -110,7 +111,7 @@ void Ast_To_IR::visit(Import_Node &n)
         }
     }
     convert_intern(ast);
-    n.mod_info->loaded(true);
+    n.mod_info->color(n.mod_info->black);
     
     // Restore everything
     cur_symbol_scope = old_cur_symbol_scope;
