@@ -2,6 +2,7 @@
 
 Bound_Function_Map::~Bound_Function_Map()
 {
+    // TODO: Need to free bound functions too
     for (auto &&fn : m_natives_to_free)
     {
         delete fn;
@@ -28,6 +29,22 @@ bool Bound_Function_Map::add_constructor(Type_Info *to_type, Function_Type_Info 
     return true;
 }
 
+bool Bound_Function_Map::declare_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type)
+{
+    assert(to_type);
+    assert(!name.empty());
+    assert(fn_type);
+
+    auto method = new Method_Info{name, fn_type};
+    if (!to_type->add_method(method))
+    {
+        printf("Couldn't add method %s to %s\n", name.c_str(), to_type->name().c_str());
+        delete method;
+        abort();
+        //return false;
+    }
+    return true;
+}
 bool Bound_Function_Map::add_method(Type_Info *to_type, const std::string &name, Function_Type_Info *fn_type, Native_Code native)
 {
     assert(to_type);
@@ -80,7 +97,7 @@ bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_typ
         // subsequent
         auto index = static_cast<Fixnum>(m_all_natives.size());
         auto pfn = new Native_Function{name, index, native, fn_type};
-        m_free_functions[name][fn_type->parameter_types()] = Bound_Function(pfn);
+        m_free_functions[name][fn_type->parameter_types()] = new Bound_Function(pfn);
         m_all_natives.push_back(native);
         m_natives_to_free.push_back(pfn);
     }
@@ -88,7 +105,7 @@ bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_typ
     {   // first
         auto index = static_cast<Fixnum>(m_all_natives.size());
         auto pfn = new Native_Function{name, index, native, fn_type};
-        m_free_functions[name] = {{fn_type->parameter_types(), Bound_Function(pfn)}};
+        m_free_functions[name] = {{fn_type->parameter_types(), new Bound_Function(pfn)}};
         m_all_natives.push_back(native);
         m_natives_to_free.push_back(pfn);
     }
@@ -109,16 +126,16 @@ bool Bound_Function_Map::add(const std::string &name, Function_Type_Info *fn_typ
             return false;
         }
         // subsequent
-        m_free_functions[name][fn_type->parameter_types()] = Bound_Function(fn_type, code);
+        m_free_functions[name][fn_type->parameter_types()] = new Bound_Function(fn_type, code);
     }
     else
     {   // first
-        m_free_functions[name] = {{fn_type->parameter_types(), Bound_Function(fn_type, code)}};
+        m_free_functions[name] = {{fn_type->parameter_types(), new Bound_Function(fn_type, code)}};
     }
     return true;
 }
 
-Bound_Function Bound_Function_Map::get(const std::string &name, const Function_Parameters &params) const
+Bound_Function *Bound_Function_Map::get(const std::string &name, const Function_Parameters &params) const
 {
     auto n2p = m_free_functions.find(name);
     if (n2p != m_free_functions.end())
@@ -129,7 +146,7 @@ Bound_Function Bound_Function_Map::get(const std::string &name, const Function_P
             return it->second;
         }
     }
-    return Bound_Function();
+    return nullptr;
 }
 
 Bound_Functions Bound_Function_Map::get(const std::string &name) const

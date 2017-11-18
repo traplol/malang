@@ -36,3 +36,15 @@ void Symbol_Map::index(size_t i)
 {
     m_local_index = i;
 }
+
+void Symbol_Map::dump() const
+{
+    for (auto &&kvp : m_symbols)
+    {
+        auto t = kvp.second->get_type();
+        printf("%s: %s @ %i\n",
+               kvp.first.c_str(),
+               t ? t->name().c_str() : "null",
+               (int)kvp.second->index);
+    }
+}

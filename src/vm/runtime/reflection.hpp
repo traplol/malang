@@ -161,21 +161,21 @@ struct Method_Info
     ~Method_Info();
 
     Method_Info(const std::string &name, Function_Type_Info *fn_type)
-        : m_name(name)
-        , m_fn_type(fn_type)
+        : m_fn_type(fn_type)
+        , m_name(name)
         {
             m_fn.code_ip = nullptr;
         }
     Method_Info(const std::string &name, Function_Type_Info *fn_type, Native_Function *prim)
-        : m_name(name)
-        , m_fn_type(fn_type)
+        : m_fn_type(fn_type)
+        , m_name(name)
         {
             set_function(prim);
         }
 
     Method_Info(const std::string &name, Function_Type_Info *fn_type, IR_Label *code_ip)
-        : m_name(name)
-        , m_fn_type(fn_type)
+        : m_fn_type(fn_type)
+        , m_name(name)
         {
             set_function(code_ip);
         }
@@ -193,13 +193,13 @@ struct Method_Info
     Native_Function *native_function() const;
 
 private:
-    std::string m_name;
-    Function_Type_Info *m_fn_type;
     bool m_is_native;
+    Function_Type_Info *m_fn_type;
     union {
         Native_Function *prim;
         IR_Label *code_ip;
     } m_fn;
+    std::string m_name;
 };
 
 struct Field_Info

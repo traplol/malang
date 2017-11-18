@@ -137,35 +137,36 @@ void Ast_To_IR::visit(Variable_Node &n)
         auto callable = ir->alloc<IR_Callable>(n.src_loc, cur_fn_ep, cur_fn->fn_type);
         _return(callable);
     }
-    //locality->current().bound_functions().dump();
-    auto bound_fn = locality->current().find_bound_function(n.name(), *cur_call_arg_types);
-    if (bound_fn.is_valid())
+    if (cur_call_arg_types)
     {
-        if (!cur_call_arg_types)
-        {
-            n.src_loc.report("error", "Cannot resolve ambiguous type for `%s'", n.name().c_str());
-            abort();
-        }
+        //printf("%s\n", n.name().c_str());
+        //locality->dump_symbols();
+        //printf("%s\n", n.bound_name.c_str());
+        auto qualified = qualify_name(cur_module, n.name());
+        //printf("%s\n", qualified.c_str());
         if (is_extending)
         {
-            if (auto method = is_extending->get_method(n.name(), bound_fn.fn_type()->parameter_types()))
+            if (auto method = is_extending->get_method(n.name(), *cur_call_arg_types))
             {
                 auto meth_call =
                     ir->alloc<IR_Call_Method>(n.src_loc, nullptr, method, std::vector<IR_Value*>());
                 _return(meth_call);
             }
         }
-        if (bound_fn.is_native())
+        if (auto bound_fn = locality->current().find_bound_function(n.name(), *cur_call_arg_types))
         {
-            auto callable =
-                ir->alloc<IR_Callable>(n.src_loc, bound_fn.native()->index, bound_fn.fn_type());
-            _return(callable);
-        }
-        else
-        {
-            auto callable =
-                ir->alloc<IR_Callable>(n.src_loc, bound_fn.code(), bound_fn.fn_type());
-            _return(callable);
+            if (bound_fn->is_native())
+            {
+                auto callable =
+                    ir->alloc<IR_Callable>(n.src_loc, bound_fn->native()->index, bound_fn->fn_type());
+                _return(callable);
+            }
+            else
+            {
+                auto callable =
+                    ir->alloc<IR_Callable>(n.src_loc, bound_fn->code(), bound_fn->fn_type());
+                _return(callable);
+            }
         }
     }
     if (auto type = ir->types->get_type(n.name()))
@@ -1019,11 +1020,9 @@ void Ast_To_IR::visit(Type_Def_Node &n)
       - ensure each constructor's signature is unique and translate into code and 
       link to the type
       
-      Methds:
+      Methods:
       - ensure each method's signature is unique and translate into code and link 
       to the type
-      
-      Methods:
      */
     
     assert(n.type);
@@ -1035,15 +1034,11 @@ void Ast_To_IR::visit(Type_Def_Node &n)
 
 
     for (auto &&method : n.methods)
-    {   // Declare methods so their ordering is agnostic
+    {   // Declare methods so ordering is agnostic
         assert(method->is_bound()); // parsing messed up if this fails...
-        auto meth_info = new Method_Info{method->bound_name, method->fn_type};
-        if (!is_extending->add_method(meth_info))
-        {
-            method->src_loc.report("error", "Method `%s' already defined for type `%s'",
-                                   method->bound_name.c_str(), is_extending->name().c_str());
-            abort();
-        }
+        locality->current().bound_functions().declare_method(is_extending,
+                                                             method->bound_name,
+                                                             method->fn_type);
     }
     if (n.constructors.empty())
     {

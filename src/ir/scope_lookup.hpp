@@ -16,7 +16,7 @@ struct Scope
     void hide_parent();
     bool any(const std::string &named) const;
     IR_Symbol *find_symbol(const std::string &name) const;
-    Bound_Function find_bound_function(const std::string &name, const Function_Parameters &param_types) const;
+    Bound_Function *find_bound_function(const std::string &name, const Function_Parameters &param_types) const;
 
     Bound_Function_Map &bound_functions();
     Symbol_Map &symbols();
@@ -36,6 +36,9 @@ struct Scope_Lookup
     void push(bool entering_new_frame, bool can_see_parent_scope = true);
     void pop();
     Scope &current();
+
+    void dump_symbols() const;
+    void dump_funcs() const;
 private:
     std::vector<bool> m_frame_stack;
     Malang_IR *m_alloc;

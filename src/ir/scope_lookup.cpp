@@ -34,19 +34,18 @@ IR_Symbol *Scope::find_symbol(const std::string &name) const
     return nullptr;
 }
 
-Bound_Function Scope::find_bound_function(const std::string &name, const Function_Parameters &param_types) const
+Bound_Function *Scope::find_bound_function(const std::string &name, const Function_Parameters &param_types) const
 {
     auto cur = this;
     while (cur)
     {
-        auto bound_fn = cur->m_bound_function_map.get(name, param_types);
-        if (bound_fn.is_valid())
+        if (auto bound_fn = cur->m_bound_function_map.get(name, param_types))
             return bound_fn;
         if (!cur->m_can_see_parent_scope)
             break;
         cur = cur->m_parent;
     }
-    return Bound_Function();
+    return nullptr;
 }
 
 bool Scope::any(const std::string &name) const
@@ -118,3 +117,27 @@ Scope &Scope_Lookup::current()
     return *m_current_scope;
 }
 
+
+void Scope_Lookup::dump_symbols() const
+{
+    auto cur = m_current_scope;
+    int i = 0;
+    while (cur)
+    {
+        printf("==== %i ====\n", i++);
+        cur->symbols().dump();
+        cur = cur->m_parent;
+    }
+}
+
+void Scope_Lookup::dump_funcs() const
+{
+    auto cur = m_current_scope;
+    int i = 0;
+    while (cur)
+    {
+        printf("==== %i ====\n", i++);
+        cur->bound_functions().dump();
+        cur = cur->m_parent;
+    }
+}

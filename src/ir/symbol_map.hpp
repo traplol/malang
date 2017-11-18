@@ -22,6 +22,7 @@ struct Symbol_Map
     bool any(const std::string &name) const;
     size_t index() const;
     void index(size_t i);
+    void dump() const;
     
 private:
     Malang_IR *m_alloc;
