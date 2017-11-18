@@ -18,27 +18,32 @@ Ast::~Ast()
     }
     imports.clear();
 
-    for (auto &&n : type_defs)
-    {
-        delete n;
-    }
-    type_defs.clear();
+    //for (auto &&n : type_defs)
+    //{
+    //    delete n;
+    //}
+    //type_defs.clear();
 
-    for (auto &&n : extensions)
-    {
-        delete n;
-    }
-    extensions.clear();
+    //for (auto &&n : extensions)
+    //{
+    //    delete n;
+    //}
+    //extensions.clear();
 
-    for (auto &&n : bound_funcs)
-    {
-        delete n;
-    }
-    bound_funcs.clear();
+    //for (auto &&n : bound_funcs)
+    //{
+    //    delete n;
+    //}
+    //bound_funcs.clear();
 
-    for (auto &&n : stmts)
+    for (auto &&n : first)
     {
         delete n;
     }
-    stmts.clear();
+    first.clear();
+    for (auto &&n : second)
+    {
+        delete n;
+    }
+    second.clear();
 }

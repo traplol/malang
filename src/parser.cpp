@@ -1382,22 +1382,22 @@ void build_ast(Parser &parser, Ast &ast)
         is_allowed_to_import = false;
         if (auto type_def = parse_type_definition(parser))
         {
-            ast.type_defs.push_back(type_def.release());
+            ast.first.push_back(type_def.release());
             continue;
         }
         if (auto extend = parse_extend(parser))
         {
-            ast.extensions.push_back(extend.release());
+            ast.first.push_back(extend.release());
             continue;
         }
         if (auto bound_fn = parse_bound_fn(parser))
         {
-            ast.bound_funcs.push_back(bound_fn.release());
+            ast.first.push_back(bound_fn.release());
             continue;
         }
         if (auto stmt = parse_statement(parser))
         {
-            ast.stmts.push_back(stmt.release());
+            ast.second.push_back(stmt.release());
             continue;
         }
         break;

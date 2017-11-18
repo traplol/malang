@@ -38,10 +38,11 @@ struct Ast
 {
     ~Ast();
     std::vector<struct Import_Node*> imports;
-    std::vector<struct Type_Def_Node*> type_defs;
-    std::vector<struct Extend_Node*> extensions;
-    std::vector<struct Fn_Node*> bound_funcs;
-    std::vector<Ast_Node*> stmts;
+    //std::vector<struct Type_Def_Node*> type_defs;
+    //std::vector<struct Extend_Node*> extensions;
+    //std::vector<struct Fn_Node*> bound_funcs;
+    std::vector<Ast_Node*> first;
+    std::vector<Ast_Node*> second;
 };
 
 

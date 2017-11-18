@@ -730,6 +730,7 @@ void Ast_To_IR::visit(Call_Node &n)
         }
         else if (!thing_ty->get_field(member->member_name))
         {
+            thing_ty->dump();
             n.src_loc.report("error", "Method `fn %s%s' not implemented for type `%s'",
                              member->member_name.c_str(), 
                              fp.to_string().c_str(),
@@ -1618,19 +1619,15 @@ void Ast_To_IR::convert_intern(Ast &ast)
     {
         get(*imp);
     }
-    for (auto type : ast.type_defs)
-    {
-        ir->first.push_back(get(*type));
-    }
-    for (auto ext : ast.extensions)
-    {
-        ir->first.push_back(get(*ext));
-    }
-    for (auto fn : ast.bound_funcs)
-    {
-        ir->first.push_back(get(*fn));
-    }
-    convert_body(ast.stmts, ir->second);
+    // @Design: Maybe declare everything in first, then define everything in second and then
+    // come back and define everything in first. This allows global variables to be referenced
+    // in named functions. It also allows free-code to reference any types, extensions, and
+    // named functions
+
+    // Extensions, Type definitions, Named functions in their source order
+    convert_body(ast.first, ir->first);
+    // Free statements and expressions.
+    convert_body(ast.second, ir->second);
 }
 
 IR_Symbol *Ast_To_IR::find_symbol(const std::string &name)

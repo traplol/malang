@@ -19,27 +19,15 @@ std::vector<std::string> Ast_Pretty_Printer::to_strings(Ast &ast)
         res.push_back(str.str());
         reset();
     }
-    for (auto type : ast.type_defs)
+    for (auto n : ast.first)
     {
-        to_string(*type);
+        to_string(*n);
         res.push_back(str.str());
         reset();
     }
-    for (auto extend : ast.extensions)
+    for (auto n : ast.second)
     {
-        to_string(*extend);
-        res.push_back(str.str());
-        reset();
-    }
-    for (auto bound_fn : ast.bound_funcs)
-    {
-        to_string(*bound_fn);
-        res.push_back(str.str());
-        reset();
-    }
-    for (auto stmt : ast.stmts)
-    {
-        to_string(*stmt);
+        to_string(*n);
         res.push_back(str.str());
         reset();
     }
