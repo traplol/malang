@@ -27,12 +27,11 @@ extend string {
 
 type Vector = {
     _length := 0
-    _capacity := 8
-    _array := [_capacity]int
+    _array := [8]int
 
     fn push_back(item: int) {
-        if _length + 1 >= _capacity {
-            resize(_capacity * 2)
+        if _length + 1 >= _array.length {
+            resize(_array.length * 2)
         }
         _array[_length] = item
         _length += 1
@@ -54,7 +53,6 @@ type Vector = {
         for Range(0, n)
             tmp[it] = _array[it]
         _array = tmp
-        _capacity = new_size
     }
     fn peek() -> int {
         return _array[_length-1]
