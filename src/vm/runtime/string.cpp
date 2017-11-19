@@ -29,6 +29,7 @@ Char *data(Malang_Object_Body *str)
 
 void Malang_Runtime::string_construct_intern(Malang_Object *place, Fixnum size, Char *buffer)
 {
+    assert(place);
     auto str = cast(place);
     str->fields[length_idx] = size;
     str->fields[intern_data_idx] = buffer;
@@ -36,25 +37,30 @@ void Malang_Runtime::string_construct_intern(Malang_Object *place, Fixnum size, 
 
 void Malang_Runtime::string_construct_intern(Malang_Object *place, const String_Constant &string_constant)
 {
+    assert(place);
     string_construct_intern(place, string_constant.size(), string_constant.data_copy());
+}
+
+void Malang_Runtime::string_construct_move_buf(Malang_Object *place, Malang_Buffer *move)
+{
+    assert(place);
+    assert(move);
+    string_construct_intern(place, move->size, reinterpret_cast<Char*>(move->data));
+    move->size = 0;
+    move->data = nullptr;
 }
 
 void Malang_Runtime::string_alloc_push(Malang_VM &vm, const String_Constant &string)
 {
     // GC probably does not need to be paused here because we only allocate once and
     // we don't pop anything off the stack.
-    //auto old_paused = vm.gc->paused();
-    //vm.gc->paused(true);
-
     auto s = vm.gc->allocate_object(string_type_token);
     string_construct_intern(s, string);
     vm.push_data(s);
-
-    // restore the original state
-    //vm.gc->paused(old_paused);
 }
 
 // string(buf: buffer)
+// move buffer into string, i.e. construct a readonly buffer.
 static
 void string_buffer_new(Malang_VM &vm)
 {
@@ -64,22 +70,7 @@ void string_buffer_new(Malang_VM &vm)
     auto arg_0 = vm.pop_data().as_object();
     auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
     assert(str_ref->header.type->type_token() == string_type_token);
-
-    Fixnum size;
-    for (size = 0; size < buffer->size; ++size)
-    {
-        if (buffer->data[size] == 0)
-        {
-            break;
-        }
-    }
-    auto copy = new Char[size];
-    for (Fixnum i = 0; i < size; ++i)
-    {
-        copy[i] = buffer->data[i];
-    }
-    copy[size] = buffer->data[size];
-    string_construct_intern(arg_0, size, copy);
+    string_construct_move_buf(arg_0, buffer);
 }
 
 // string(buf: buffer, num_chars: int)
@@ -94,14 +85,11 @@ void string_buffer_int_new(Malang_VM &vm)
     auto self_str = reinterpret_cast<Malang_Object_Body*>(self);
     assert(self_str->header.type->type_token() == string_type_token);
 
-    Fixnum size = 0;
     auto copy = new Char[num_chars];
-    for (size = 0; size < num_chars && buffer->size; ++size)
+    auto n = std::min(num_chars, buffer->size);
+    Fixnum size = 0;
+    for (size = 0; size < n; ++size)
     {
-        if (buffer->data[size] == 0)
-        {
-            break;
-        }
         copy[size] = buffer->data[size];
     }
     string_construct_intern(self, size, copy);
