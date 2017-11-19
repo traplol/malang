@@ -123,7 +123,6 @@ Module *Module_Map::get(const std::vector<std::string> &name)
         if (!child)
         {
             auto mod = make_mod(name[1]);
-            m_all_modules.push_back(mod);
             it->second->add_child(mod);
             child = mod;
         }
