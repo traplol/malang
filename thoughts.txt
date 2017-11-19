@@ -529,3 +529,23 @@ Nov 16, 2017:
     + Updated some tests to use imports + lib
     + Example bf_2_c transpiler in examples/bf_2_c.ma
     + Documentation for builtins
+    + Initial version of emacs mal-mode
+
+Nov 17, 2017:
+    --
+
+Nov 18, 2017:
+    + Fixed parsing functions with malformed return type
+    + Fixed order dependency for methods: methods can be in any order.
+    + Some top-level things need their order to be dependent with the current AST->IR phase
+
+Nov 19, 2017:
+    + Fixed some critial bugs related to saving state across recursive IR generation and
+    included some regression tests for this as part of the test suite
+    + Fixed a double free in the module map
+    + Changed string construction behaviour: `string(buffer)` now does a "move" for the buffer
+    into the string.
+    + Included a brainfuck interpreter written in malang, it's horribly slow ;P
+    + Added colors to the malang test-runner
+    + Added mostly correct auto-indent for mal-mode
+    + Added license to malang-mode.el
