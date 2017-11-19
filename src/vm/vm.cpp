@@ -119,8 +119,12 @@ std::string to_string(const Malang_Value &value)
             auto str = reinterpret_cast<Malang_Object_Body*>(obj);
             ss << "<" << obj->type->name() << "#" << obj << "> \"";
             std::string s((char*)(str->fields[1].as_pointer()), str->fields[0].as_fixnum());
-            ss << s;
-            ss << '"';
+            auto sub = s.substr(0, 100);
+            ss << sub << '"';
+            if (s.size() > 100)
+            {
+                ss << "...(+" << s.size() - sub.size() << " more)";
+            }
         }
         else {
             ss << "<" << obj->type->name() << "#" << obj << ">";

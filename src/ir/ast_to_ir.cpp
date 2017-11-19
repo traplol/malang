@@ -1,6 +1,7 @@
 #include <sstream>
 #include "ast_to_ir.hpp"
 #include "nodes.hpp"
+#include "../defer.hpp"
 #include "../platform.hpp"
 #include "../parser.hpp"
 #include "../ast/nodes.hpp"
@@ -73,6 +74,16 @@ void Ast_To_IR::visit(Import_Node &n)
     auto old_cur_break_label = cur_break_label;
     auto old_locality = locality;
     auto old_cur_symbol_scope = cur_symbol_scope;
+    defer({cur_module = old_cur_module;
+            is_extending = old_is_extending;
+            cur_fn = old_cur_fn;
+            cur_fn_ep = old_cur_fn_ep;
+            cur_true_label = old_cur_true_label;
+            cur_false_label = old_cur_false_label;
+            cur_continue_label = old_cur_continue_label;
+            cur_break_label = old_cur_break_label;
+            locality = old_locality;
+            cur_symbol_scope = old_cur_symbol_scope;});
 
     n.mod_info->color(n.mod_info->grey);
     std::string filename, rel_path;
@@ -113,18 +124,6 @@ void Ast_To_IR::visit(Import_Node &n)
     convert_intern(ast);
     n.mod_info->color(n.mod_info->black);
     
-    // Restore everything
-    cur_symbol_scope = old_cur_symbol_scope;
-    locality = old_locality;
-    cur_break_label = old_cur_break_label;
-    cur_continue_label = old_cur_continue_label;
-    cur_false_label = old_cur_false_label;
-    cur_true_label = old_cur_true_label;
-    cur_fn_ep = old_cur_fn_ep;
-    cur_fn = old_cur_fn;
-    is_extending = old_is_extending;
-    cur_module = old_cur_module;
-
     _return(nullptr); // necessary?
 }
 
@@ -139,7 +138,6 @@ void Ast_To_IR::visit(Variable_Node &n)
     }
     if (cur_call_arg_types)
     {
-        //printf("%s\n", n.name().c_str());
         //locality->dump_symbols();
         //printf("%s\n", n.bound_name.c_str());
         auto qualified = qualify_name(cur_module, n.name());
@@ -168,11 +166,11 @@ void Ast_To_IR::visit(Variable_Node &n)
                 _return(callable);
             }
         }
-    }
-    if (auto type = ir->types->get_type(n.name()))
-    {   // Calling constructor
-        auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
-        _return(alloc);
+        if (auto type = ir->types->get_type(n.name()))
+        {   // Calling constructor
+            auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
+            _return(alloc);
+        }
     }
     auto symbol = find_symbol(n.name());
     if (!symbol)
@@ -313,6 +311,11 @@ void Ast_To_IR::visit(Fn_Node &n)
     auto old_fn = cur_fn;
     auto old_fn_ep = cur_fn_ep;
     auto old_returns = all_returns_this_fn;
+    defer({cur_symbol_scope = old_scope;
+            cur_locals_count = old_locals_count;
+            cur_fn = old_fn;
+            cur_fn_ep = old_fn_ep;
+            all_returns_this_fn = old_returns;});
     cur_fn = &n;
 
     if (n.is_bound())
@@ -454,12 +457,6 @@ void Ast_To_IR::visit(Fn_Node &n)
         }
     }
 
-    // Restore the saved state
-    cur_symbol_scope = old_scope;
-    cur_locals_count = old_locals_count;
-    cur_fn = old_fn;
-    cur_fn_ep = old_fn_ep;
-    all_returns_this_fn = old_returns;
     auto callable = ir->alloc<IR_Callable>(n.src_loc, fn_body, n.fn_type, n.is_bound());
     _return(callable)
 }
@@ -542,8 +539,8 @@ void Ast_To_IR::visit(Logical_Or_Node &n)
 
 void Ast_To_IR::visit(Logical_And_Node &n)
 {
-    auto true_label = ir->labels->make_label(label_name_gen(), n.lhs->src_loc);
     auto old_true_label = cur_true_label;
+    auto true_label = ir->labels->make_label(label_name_gen(), n.lhs->src_loc);
     cur_true_label = true_label;
     std::vector<IR_Node*> block;
     auto lhs = get<IR_Value*>(*n.lhs);
@@ -692,6 +689,8 @@ void Ast_To_IR::visit(Call_Node &n)
         }
     }
     auto old_cur_call_arg_types = cur_call_arg_types;
+    defer1(cur_call_arg_types = old_cur_call_arg_types);
+
     Function_Parameters fp(args_types);
     cur_call_arg_types = &fp;
 
@@ -758,7 +757,6 @@ void Ast_To_IR::visit(Call_Node &n)
         }
     }
     auto call = ir->alloc<IR_Call>(n.src_loc, callee, args);
-    cur_call_arg_types = old_cur_call_arg_types;
     _return(call);
 }
 
@@ -901,6 +899,8 @@ void Ast_To_IR::visit(Constructor_Node &n)
     // Use the stack to save state becaue functions can be nested
     auto old_scope = cur_symbol_scope;
     auto old_locals_count = cur_locals_count;
+    defer({cur_symbol_scope = old_scope;
+            cur_locals_count = old_locals_count;});
 
     // we need some way to store all returns created during this function definition so we can
     // decide whether or not we use the Return_Fast instruction
@@ -990,9 +990,6 @@ void Ast_To_IR::visit(Constructor_Node &n)
 
     locality->pop();
 
-    // Restore the saved state
-    cur_symbol_scope = old_scope;
-    cur_locals_count = old_locals_count;
     auto ctor = ir->alloc<IR_Block>(n.src_loc, ctor_block, ir->types->get_void());
     _return(ctor)
 }
@@ -1029,6 +1026,8 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     assert(n.type);
     auto old_type = is_extending;
     auto old_scope = cur_symbol_scope;
+    defer({is_extending = old_type;
+            cur_symbol_scope = old_scope;});
 
     locality->push(true);
     is_extending = n.type;
@@ -1138,8 +1137,6 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     }
 
     locality->pop();
-    is_extending = old_type;
-    cur_symbol_scope = old_scope;
     auto ret = ir->alloc<IR_Block>(n.src_loc, type_definition, ir->types->get_void());
     _return(ret);
 }
@@ -1151,6 +1148,7 @@ void Ast_To_IR::visit(struct Extend_Node&n)
     assert(n.for_type->type);
 
     auto old_is_extending = is_extending;
+    defer1(is_extending = old_is_extending);
     locality->push(true);
     is_extending = n.for_type->type;
     for (auto &&fn : n.body)
@@ -1162,7 +1160,6 @@ void Ast_To_IR::visit(struct Extend_Node&n)
     }
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
     locality->pop();
-    is_extending = old_is_extending;
     _return(ret);
 }
 
@@ -1294,6 +1291,10 @@ void Ast_To_IR::visit(While_Node &n)
     auto old_cur_true_label = cur_true_label;
     auto old_continue_label = cur_continue_label;
     auto old_break_label = cur_break_label;
+    defer({cur_false_label = old_cur_false_label;
+            cur_true_label = old_cur_true_label;
+            cur_continue_label = old_continue_label;
+            cur_break_label = old_break_label;});
     cur_false_label = loop_block->end();
     cur_true_label = loop_block;
     cur_break_label = loop_block->end();
@@ -1325,10 +1326,6 @@ void Ast_To_IR::visit(While_Node &n)
 
     block.push_back(loop_block);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
-    cur_false_label = old_cur_false_label;
-    cur_true_label = old_cur_true_label;
-    cur_break_label = old_break_label;
-    cur_continue_label = old_continue_label;
     _return(ret);
 }
 
@@ -1370,6 +1367,10 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     auto old_cur_true_label = cur_true_label;
     auto old_continue_label = cur_continue_label;
     auto old_break_label = cur_break_label;
+    defer({cur_false_label = old_cur_false_label;
+            cur_true_label = old_cur_true_label;
+            cur_continue_label = old_continue_label;
+            cur_break_label = old_break_label;});
     cur_false_label = loop_block->end();
     cur_true_label = loop_block;
     cur_break_label = loop_block->end();
@@ -1378,6 +1379,8 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     // This allows us to create the iterator in the first step of the for loop and continue using it
     locality->push(false);
     auto itr_sym = locality->current().symbols().make_symbol(".itr", itr_ty, itr->src_loc, cur_symbol_scope);
+    // @FIXME: this should be automatic
+    cur_locals_count++;
     itr_sym->is_readonly = true;
     auto assign_itr = ir->alloc<IR_Assignment>(itr->src_loc, itr_sym, itr, cur_symbol_scope);
     block.push_back(assign_itr);
@@ -1389,6 +1392,7 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     block.push_back(branch_if_cond_false);
     {
         auto it_sym = locality->current().symbols().make_symbol("it", current->return_type(), itr->src_loc, cur_symbol_scope);
+        cur_locals_count++;
         it_sym->is_readonly = true;
         auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, current, std::vector<IR_Value*>());
         auto assign_it = ir->alloc<IR_Assignment>(itr->src_loc, it_sym, call_current, cur_symbol_scope);
@@ -1401,10 +1405,6 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
 
     block.push_back(loop_block);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
-    cur_false_label = old_cur_false_label;
-    cur_true_label = old_cur_true_label;
-    cur_continue_label = old_continue_label;
-    cur_break_label = old_break_label;
     _return(ret);
 }
 
@@ -1460,6 +1460,8 @@ void Ast_To_IR::visit(If_Else_Node &n)
 {
     auto old_cur_false_label = cur_false_label;
     auto old_cur_true_label = cur_true_label;
+    defer({cur_false_label = old_cur_false_label;
+            cur_true_label = old_cur_true_label;});
     auto alt_begin_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     auto cons_begin_label = ir->labels->make_label(label_name_gen(), n.src_loc);
     assert(alt_begin_label);
@@ -1503,8 +1505,6 @@ void Ast_To_IR::visit(If_Else_Node &n)
 
     auto if_else_type = deduce_type(ir->types->get_void(), last_conseq, last_altern);
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, if_else_type);
-    cur_false_label = old_cur_false_label;
-    cur_true_label = old_cur_true_label;
     _return(ret);
 }
 
@@ -1599,6 +1599,7 @@ void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Module_Map *mod_map, Scope_Look
     assert(global);
     assert(strings);
 
+    cur_call_arg_types = nullptr;
     cur_symbol_scope = Symbol_Scope::Global;
     cur_locals_count = 0;
     cur_module = nullptr;

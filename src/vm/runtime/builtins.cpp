@@ -30,7 +30,11 @@ void print_buffer(Malang_VM &vm)
     auto top = vm.pop_data().as_object();
     assert(top->object_tag == Buffer);
     auto buffer = reinterpret_cast<Malang_Buffer*>(top);
-    printf("%.*s", buffer->size, buffer->data);
+    for (Fixnum i = 0; i < buffer->size; ++i)
+    {
+        printf("%2x ", buffer->data[i]);
+    }
+    //printf("%.*s", buffer->size, buffer->data);
 }
 
 static

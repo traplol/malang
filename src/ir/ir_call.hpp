@@ -138,6 +138,7 @@ struct IR_Allocate_Object : IR_RValue
     IR_Allocate_Object(const Source_Location &src_loc, Type_Info *for_type)
         : IR_RValue(src_loc)
         , for_type(for_type)
+        , which_ctor(nullptr)
         {}
 
     IR_NODE_OVERRIDES;

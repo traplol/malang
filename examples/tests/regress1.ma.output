@@ -1,0 +1,6 @@
+error: examples/tests/regress1.ma:2:9
+
+	Use of undeclared symbol `buffer'
+	println(buffer.length)
+	 
+

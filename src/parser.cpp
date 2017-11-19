@@ -800,13 +800,13 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
             case Token_Id::Open_Paren:
             {
                 auto args = parse_expression_list(parser, tok.src_loc());
-                CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Paren));
+                CHECK_OR_FAIL(parser.expect(Token_Id::Close_Paren));
                 expr = uptr<Ast_Value>(new Call_Node(tok.src_loc(), expr.release(), args.release()));
             } break;
             case Token_Id::Open_Square:
             {
                 auto index = parse_expression_list(parser, tok.src_loc());
-                CHECK_OR_FAIL(parser.expect(tok, Token_Id::Close_Square));
+                CHECK_OR_FAIL(parser.expect(Token_Id::Close_Square));
                 expr = uptr<Ast_Value>(new Index_Node(tok.src_loc(), expr.release(), index.release()));
             } break;
             case Token_Id::Dot:
