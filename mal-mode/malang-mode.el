@@ -1,8 +1,32 @@
+;;; malang-mode-el -- Major mode for editing malang source code
+
+;; Author: Max Mickey
+;; Keywords: malang major-mode
+
+;; Copyright (C) 2017 Max Mickey
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of
+;; the License, or (at your option) any later version.
+
+;; This program is distributed in the hope that it will be
+;; useful, but WITHOUT ANY WARRANTY; without even the implied
+;; warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+;; PURPOSE.  See the GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public
+;; License along with this program; if not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+;; MA 02111-1307 USA
+
+;;; Commentary:
+;; 
+;; This mode is meant for editing malang source files.
+;; It is heavily based on https://www.emacswiki.org/emacs/wpdl-mode.el
+
 (require 'generic-x)
 (require 'font-lock)
-
-;; Heavily based on
-;; https://www.emacswiki.org/emacs/wpdl-mode.el
 
 ;;;###autoload
 (let ()
@@ -59,7 +83,7 @@
           (save-excursion
             (while not-indented ; Iterate backwards until we find an indentation hint
               (forward-line -1)
-              (if (looking-at ".*?}") ; This hint indicates that we need to indent at the level of the END_ token
+              (if (looking-at ".*?}") ; This hint indicates that we need to indent at the level of the } token
                   (progn
                     (setq cur-indent (current-indentation))
                     (setq not-indented nil))
