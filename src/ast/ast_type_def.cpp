@@ -35,5 +35,10 @@ Type_Def_Node::~Type_Def_Node()
         delete field;
     }
     fields.clear();
+    PRINT_DTOR;
 }
-
+AST_NODE_OVERRIDES_IMPL(Type_Alias_Node);
+Type_Alias_Node::~Type_Alias_Node()
+{
+    PRINT_DTOR;
+}

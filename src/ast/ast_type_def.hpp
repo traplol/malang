@@ -40,5 +40,17 @@ struct Type_Def_Node : public Ast_Node
     std::vector<struct Fn_Node*> methods;
 };
 
+struct Type_Alias_Node : public Ast_Node
+{
+    virtual ~Type_Alias_Node();
+    Type_Alias_Node(const Source_Location &src_loc, Type_Info *alias)
+        : Ast_Node(src_loc)
+        , alias(alias)
+        {}
+    AST_NODE_OVERRIDES;
+
+    Type_Info *alias;
+};
+
 
 #endif /* MALANG_AST_AST_TYPE_DEF_HPP */

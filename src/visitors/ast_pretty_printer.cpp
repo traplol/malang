@@ -352,6 +352,13 @@ void Ast_Pretty_Printer::visit(Type_Def_Node &n)
     dedent();
     str << "}";
 }
+void Ast_Pretty_Printer::visit(Type_Alias_Node &n)
+{
+    assert(n.alias);
+    auto to = n.alias->aliased_to();
+    assert(to);
+    str << "type alias " << n.alias->name() << " = " << to->name();
+}
 void Ast_Pretty_Printer::visit(Extend_Node &n)
 {
     assert(n.for_type);

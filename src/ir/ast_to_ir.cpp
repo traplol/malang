@@ -1141,6 +1141,12 @@ void Ast_To_IR::visit(Type_Def_Node &n)
     _return(ret);
 }
 
+void Ast_To_IR::visit(Type_Alias_Node &n)
+{
+    // the aliasing happens in the parse phase.
+    _return(nullptr);
+}
+
 void Ast_To_IR::visit(struct Extend_Node&n)
 {
     std::vector<IR_Node*> block;
@@ -1259,7 +1265,11 @@ void Ast_To_IR::convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_N
         const bool is_last_iter = i+1 >= src.size();
         auto ast_node = src[i];
         last_node = get(*ast_node);
-        assert(last_node);
+        // some things like type alias and import returns nullptr.
+        if (!last_node)
+        {
+            continue;
+        }
         dst.push_back(last_node);
         if (auto val = dynamic_cast<IR_Value*>(last_node))
         {

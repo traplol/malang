@@ -1191,6 +1191,24 @@ static uptr<Constructor_Node> parse_ctor(Parser &parser)
     return uptr<Constructor_Node>(
         new Constructor_Node(tk_new.src_loc(), params, body, fn_ty));
 }
+static uptr<Type_Alias_Node> parse_type_alias(Parser &parser)
+{
+    SAVE;
+    Token type_tk;
+    ACCEPT_OR_FAIL(type_tk, {Token_Id::K_type});
+    ACCEPT_OR_FAIL({Token_Id::K_alias});
+    auto alias_name = parse_qualified_name(parser);
+    CHECK_OR_ERROR(alias_name, type_tk, "Type alias expected identifier.");
+    CHECK_OR_FAIL(parser.expect(Token_Id::Equals));
+    auto alias_to = parse_qualified_name(parser);
+    CHECK_OR_ERROR(alias_to, type_tk, "Type alias expected identifier.");
+
+    auto to = parser.types->get_or_declare_type(alias_to->name());
+    auto alias = parser.types->get_or_declare_type(alias_name->name());
+    alias->aliased_to(to);
+
+    return std::make_unique<Type_Alias_Node>(type_tk.src_loc(), alias);
+}
 static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
 {
     SAVE;
@@ -1380,6 +1398,16 @@ void build_ast(Parser &parser, Ast &ast)
             continue;
         }
         is_allowed_to_import = false;
+        if (auto type_alias = parse_type_alias(parser))
+        {
+            ast.first.push_back(type_alias.release());
+            continue;
+        }
+        if (auto type_def = parse_type_definition(parser))
+        {
+            ast.first.push_back(type_def.release());
+            continue;
+        }
         if (auto type_def = parse_type_definition(parser))
         {
             ast.first.push_back(type_def.release());

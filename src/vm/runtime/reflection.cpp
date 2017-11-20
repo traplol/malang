@@ -202,16 +202,35 @@ Type_Info::~Type_Info()
     m_methods.clear();
 }
 
-Type_Info *Type_Info::get_parent() const
+void Type_Info::aliased_to(Type_Info *type)
 {
-    return m_parent;
+    assert(type);
+    if (type == this)
+    {
+        printf("cannot alias %s itself\n", m_name.c_str());
+        abort();
+    }
+    if (m_aliased_to)
+    {
+        printf("cannot alias %s to %s because it is already aliased to %s\n",
+               m_name.c_str(), m_aliased_to->m_name.c_str(), type->m_name.c_str());
+        abort();
+    }
+    m_aliased_to = type;
+    m_type_token = type->m_type_token;
 }
-
-void Type_Info::set_parent(Type_Info *parent)
+Type_Info *Type_Info::aliased_to()
 {
-    assert(m_parent == nullptr);
-    m_parent = parent;
-    m_parent->m_subtypes.push_back(this);
+    return m_aliased_to ? m_aliased_to : this;
+}
+Type_Info *Type_Info::aliased_to_top()
+{
+    auto cur = this;
+    while (cur->m_aliased_to)
+    {
+        cur = cur->m_aliased_to;
+    }
+    return cur;
 }
 
 Type_Token Type_Info::type_token() const
@@ -290,11 +309,6 @@ bool Type_Info::add_constructor(Constructor_Info *ctor)
 Method_Info *Type_Info::find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
-    if (m_parent)
-    {
-        if (auto meth = m_parent->find_method(name, param_types, index))
-            return meth;
-    }
     for (auto &&m : m_methods)
     {
         if (m->name() == name)
@@ -303,6 +317,11 @@ Method_Info *Type_Info::find_method(const std::string &name, const Function_Para
                 return m;
         }
         ++index;
+    }
+    if (m_aliased_to)
+    {
+        if (auto meth = m_aliased_to->find_method(name, param_types, index))
+            return meth;
     }
     return nullptr;
 }
@@ -317,12 +336,12 @@ bool Type_Info::has_method(Method_Info *method) const
 Field_Info *Type_Info::find_field(const std::string &name, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
-    if (m_parent)
+    auto cur = this;
+    while (cur->m_aliased_to)
     {
-        if (auto field = m_parent->find_field(name, index))
-            return field;
+        cur = cur->m_aliased_to;
     }
-    for (auto &&f : m_fields)
+    for (auto &&f : cur->m_fields)
     {
         if (f->name() == name)
         {
@@ -359,20 +378,21 @@ const Methods &Type_Info::methods() const
 
 void Type_Info::fill_methods(Methods &v) const
 {
-    if (m_parent)
+    if (m_aliased_to)
     {
-        m_parent->fill_methods(v);
+        m_aliased_to->fill_methods(v);
     }
     v.insert(v.end(), m_methods.begin(), m_methods.end());
 }
 
 void Type_Info::fill_fields(Fields &v) const
 {
-    if (m_parent)
+    auto cur = this;
+    while (cur->m_aliased_to)
     {
-        m_parent->fill_fields(v);
+        cur = cur->m_aliased_to;
     }
-    v.insert(v.end(), m_fields.begin(), m_fields.end());
+    v.insert(v.end(), cur->m_fields.begin(), cur->m_fields.end());
 }
 
 Methods Type_Info::all_methods() const
@@ -407,8 +427,7 @@ bool Type_Info::is_assignable_to(Type_Info *other) const
     {
         return true;
     }
-    assert(m_type_token != other->m_type_token);
-    if (is_subtype_of(other))
+    if (is_alias_to(other))
     {
         return true;
     }
@@ -456,20 +475,20 @@ bool Type_Info::get_field_index(const std::string &name, Num_Fields_Limit &index
     return false;
 }
 
-bool Type_Info::is_subtype_of(Type_Info *other) const
+bool Type_Info::is_alias_to(Type_Info *other) const
 {
     if (this == other)
     {
-        return false;
+        return true;
     }
-    auto p = m_parent;
+    auto p = m_aliased_to;
     while (p)
     {
         if (p == other)
         {
             return true;
         }
-        p = p->m_parent;
+        p = p->m_aliased_to;
     }
     return false;
 }

@@ -228,8 +228,8 @@ private:
 struct Type_Info
 {
     virtual ~Type_Info();
-    Type_Info(Type_Info *parent, Type_Token type_token, const std::string &name)
-        : m_parent(parent)
+    Type_Info(Type_Info *aliased_to, Type_Token type_token, const std::string &name)
+        : m_aliased_to(aliased_to)
         , m_is_gc_managed(true)
         , m_type_token(type_token)
         , m_name(name)
@@ -238,8 +238,13 @@ struct Type_Info
 
     void dump() const;
 
-    Type_Info *get_parent() const;
-    void set_parent(Type_Info *parent);
+
+    // if the this is already aliased or type is this, it will throw an error.
+    void aliased_to(Type_Info *type);
+    // The type immediately aliased to or itself
+    Type_Info *aliased_to();
+    // The top concrete type aliased by this or itself
+    Type_Info *aliased_to_top();
 
     Type_Token type_token() const;
 
@@ -261,7 +266,7 @@ struct Type_Info
     bool has_no_init() const;
     bool is_builtin() const;
     bool is_gc_managed() const;
-    bool is_subtype_of(Type_Info *other) const;
+    bool is_alias_to(Type_Info *other) const;
     bool is_assignable_to(Type_Info *other) const;
     bool implemented_trait(Trait_Definition *trait) const;
 
@@ -279,7 +284,7 @@ private:
     bool has_field(const std::string &name) const;
     Method_Info *find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const;
     Field_Info *find_field(const std::string &name, Num_Fields_Limit &index) const;
-    Type_Info *m_parent;
+    Type_Info *m_aliased_to;
     bool m_is_gc_managed;
     bool m_is_builtin;
     Type_Token m_type_token;
@@ -288,7 +293,6 @@ private:
     Constructors m_constructors;
     Fields m_fields;
     Methods m_methods;
-    Types m_subtypes;
 };
 
 struct Function_Type_Info : Type_Info
