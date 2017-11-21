@@ -1,12 +1,12 @@
+42
+43
+44
 Thing:do_stuff
 ThingUtil:print_name: thingy
 Thing:do_stuff
 45
 9999
 $45
-42
-43
-44
 1
 Thing:baz
 2

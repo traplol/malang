@@ -1,5 +1,18 @@
 # Strong type alias can be used to make psuedo-"subtypes" with no implicit runtime overhead
 
+type alias A = int
+type alias B = A
+type alias C = B
+
+a : A = 42
+b : B = a+1
+c : C = b+1
+# `unalias' works by "casting" an instance to its top type, in this case `unalias' turns
+# the values' types into `int'
+println(unalias a)
+println(unalias b)
+println(unalias c)
+
 type Thing = {
     name := "thingy"
     data := [10]int
@@ -67,17 +80,6 @@ fn println(dollars: dollars) {
     println()
 }
 println(money) # $45
-
-type alias A = int
-type alias B = A
-type alias C = B
-
-a : A = 42
-b : B = a+1
-c : C = b+1
-println(unalias a)
-println(unalias b)
-println(unalias c)
 
 extend Thing {
     fn baz() {
