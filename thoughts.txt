@@ -1,7 +1,6 @@
 ==============================================================================================
 TODO:
     + Types need a trivial recursion check 
-    + Type aliasing
     + Option type (Some(42) | None)
     + Uninitialized type properties are only allowed to be Option<Thing>
     + Type properties are allowed to be anonymous functions and currently they attempt to
@@ -133,136 +132,6 @@ VM Calling Convention:
         Drop_1              ; drop 3
         Store_Local_0       ; store 2 in 'x
         Drop_3              ; drop args(3,2,1)
-
-==============================================================================================
-Type and alias syntax:
-
-    # Strong type alias can be used to make psuedo-"subtypes" with no runtime overhead
-    # There probably needs to be an "unalias" keyword to bring an instance of an aliased type
-    # back to its original type
-
-    type Thing = {
-        name: string
-        data: [10]int
-
-        fn do_stuff() { ... }
-    }
-
-    type alias ThingUtil = Thing
-
-    extend ThingUtil {
-        fn print_name() {
-            println(self.name)
-        }
-    }
-
-    t := Thing()
-    t.print_name()     # compile error, no method `print_name' exists for type `Thing'
-    t.do_stuff()       # ok
-    tu := ThingUtil()
-    tu.print_name()    # ok  ThingUtil:print_name()
-    tu.do_stuff()      # ok  Thing:do_stuff()
-
-    type alias cents   = int
-    type alias dollars = int
-    type alias time_ms = int
-
-    # `fn cents(int) -> cents'
-    # `fn dollars(int) -> dollars'
-    # `fn time_ms(int) -> time_ms'
-    # could all be implicitly recognized as a type conversion that results into a NOOP 
-
-    fn cents(d: dollars) -> cents {
-        return cents(unalias(d) * 100)
-    }
-    fn dollars(c: cents) -> dollars {
-        return dollars(unalias(c) / 100)
-    }
-
-    money    := dollars(45)    # ok: 45
-    pennies  := cents(dollars) # ok: 450
-    duration := time_ms(2750)  # ok: 2750
-
-    bad := cents(duration)     # compile error, no conversion exists
-    bad := dollars(duration)   # compile error, no conversion exists
-    ok  := dollars(45)         # 45 is an int which is the aliased type
-    ok  := cents(9999)         # 9999 is an int which is the aliased type
-    bad := cents(42.69)        # 42.69 is not an int
-
-    # the above creates an interesting scenario because something like:
-    #   `fn print(dollars) -> void'
-    #   `fn println(dollars) -> void'
-    # doesn't exist, however `fn print(int) -> void' does exist. This is reasonable because
-    # printing dollars in the same format as printing an integer doesn't really make sense.
-    # One implementation of `print' and `println' for dollars might look like:
-    fn print(dollars: dollars) {
-        # $123
-        print(?$)
-        # notice you can print it using the `int' version by using unalias
-        print(unalias(dollars))
-    }
-    fn println(dollars: dollars) {
-        print(dollars)
-        println()
-    }
-
-    # how will aliasing an aliased type be handled and does it even make sense to be legal?
-    type alias A = int
-    type alias B = A
-    type alias C = B
-
-    # are these legal?
-    a := A(42)          # this is always ok
-    b := B(123)         # B is not aliased to int
-    b := B(A(123))      # this is ok, but very verbose for a NOOP
-    c := C(123)         # following B, this isn't legal
-    c := C(B(123))      # this isn't legal because B(123) isn't legal
-    c := C(B(A(123)))   # this is ok, but again, it's very verbose for a NOOP
-
-    # what would the types of these be?
-    unalias(b) # `A' or `int'?
-    unalias(c) # `B' or `int'?
-
-    # extensions are the only place this makes sense, using the above `Thing' and `ThingUtil'
-
-    extend Thing {
-        fn baz() {
-            println("baz")
-        }
-    }
-
-    extend ThingUtil {
-        fn bar() {
-            println("bar")
-            self.baz()     # Thing:baz
-        }
-    }
-
-    type alias ThingWithMoreUtil = ThingUtil
-    extend ThingWithMoreUtil {
-        fn foo() {
-            println("foo")
-            self.bar()     # ThingUtil:bar
-        }
-    }
-
-
-    t := Thing()
-    t.baz()      # Thing:baz
-    t.bar()      # compile error
-    t.foo()      # compile error
-
-    tu := ThingWithUtil(t)
-    tu.baz()     # Thing:baz
-    tu.bar()     # ThingUtil:bar
-    tu.foo()     # compile error
-
-    tmu := ThingWithMoreUtil(tu)
-    tmu.baz()    # Thing:baz
-    tmu.bar()    # ThingUtil:bar
-    tmu.foo()    # ThingWithMoreUtil:foo
-
-
 
 ==============================================================================================
 Block as values:
@@ -549,3 +418,12 @@ Nov 19, 2017:
     + Added colors to the malang test-runner
     + Added mostly correct auto-indent for mal-mode
     + Added license to malang-mode.el
+
+Nov 20, 2017:
+    + Parsing `type alias'
+    + Parsing `unalias'
+    + Implemented strong type aliasing which allows 0 implicit overhead for making types
+    with the same layout effectively incompatible.
+    + Implemented `unalias' to bring an aliased type up to the top type.
+    + Included type alias examples
+    + Fixed some things to allow 32-bit compilation
