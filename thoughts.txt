@@ -427,3 +427,4 @@ Nov 20, 2017:
     + Implemented `unalias' to bring an aliased type up to the top type.
     + Included type alias examples
     + Fixed some things to allow 32-bit compilation
+    + Compiles, runs, and passes execution tests on a Raspberry Pi Zero W
