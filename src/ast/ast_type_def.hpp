@@ -1,8 +1,9 @@
 #ifndef MALANG_AST_AST_TYPE_DEF_HPP
 #define MALANG_AST_AST_TYPE_DEF_HPP
 
-#include "ast.hpp"
 #include "../type_map.hpp"
+#include "ast.hpp"
+#include "ast_value.hpp"
 
 struct Constructor_Node : public Ast_Node
 {
@@ -47,9 +48,23 @@ struct Type_Alias_Node : public Ast_Node
         : Ast_Node(src_loc)
         , alias(alias)
         {}
+
     AST_NODE_OVERRIDES;
 
     Type_Info *alias;
+};
+
+struct Unalias_Node : public Ast_RValue
+{
+    virtual ~Unalias_Node();
+    Unalias_Node(const Source_Location &src_loc, Ast_Value *value)
+        : Ast_RValue(src_loc)
+        , value(value)
+        {}
+
+    AST_NODE_OVERRIDES;
+
+    Ast_Value *value;
 };
 
 

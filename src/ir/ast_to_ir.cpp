@@ -265,6 +265,13 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     {
         n.decl->type = new Type_Node{n.src_loc, val_ty};
     }
+    else if (!val_ty->is_assignable_to(n.decl->type->type))
+    {
+        n.src_loc.report("error", "Cannot assign type `%s' to type `%s'",
+                         val_ty->name().c_str(),
+                         n.decl->type->type->name().c_str());
+        abort();
+    }
     auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
     variable->is_readonly = false;
@@ -1138,6 +1145,23 @@ void Ast_To_IR::visit(Type_Def_Node &n)
 
     locality->pop();
     auto ret = ir->alloc<IR_Block>(n.src_loc, type_definition, ir->types->get_void());
+    _return(ret);
+}
+
+void Ast_To_IR::visit(Unalias_Node &n)
+{
+    assert(n.value);
+    auto val = get<IR_Value*>(*n.value);
+    assert(val);
+    auto alias = val->get_type();
+    auto top = alias->aliased_to_top();
+    if (alias == top)
+    {
+        _return(val);
+    }
+    std::vector<IR_Node*> unalias;
+    unalias.push_back(val);
+    auto ret = ir->alloc<IR_Block>(n.src_loc, unalias, top);
     _return(ret);
 }
 

@@ -42,3 +42,10 @@ Type_Alias_Node::~Type_Alias_Node()
 {
     PRINT_DTOR;
 }
+
+AST_NODE_OVERRIDES_IMPL(Unalias_Node);
+Unalias_Node::~Unalias_Node()
+{
+    delete value;
+    PRINT_DTOR;
+}

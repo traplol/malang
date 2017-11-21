@@ -77,6 +77,7 @@ enum class Token_Id : size_t
     K_extend,           // extend
     K_type,             // type
     K_alias,            // alias
+    K_unalias,          // unalias
     K_break,            // break
     K_continue,         // continue
     K_module,           // module

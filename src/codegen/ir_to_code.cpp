@@ -536,7 +536,7 @@ void IR_To_Code::binary_op_helper(IR_Binary_Operation &bop)
 void IR_To_Code::visit(IR_B_Add &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -551,7 +551,7 @@ void IR_To_Code::visit(IR_B_Add &n)
 void IR_To_Code::visit(IR_B_Subtract &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -566,7 +566,7 @@ void IR_To_Code::visit(IR_B_Subtract &n)
 void IR_To_Code::visit(IR_B_Multiply &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -581,7 +581,7 @@ void IR_To_Code::visit(IR_B_Multiply &n)
 void IR_To_Code::visit(IR_B_Divide &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -596,7 +596,7 @@ void IR_To_Code::visit(IR_B_Divide &n)
 void IR_To_Code::visit(IR_B_Modulo &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -611,7 +611,7 @@ void IR_To_Code::visit(IR_B_Modulo &n)
 void IR_To_Code::visit(IR_B_And &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -626,7 +626,7 @@ void IR_To_Code::visit(IR_B_And &n)
 void IR_To_Code::visit(IR_B_Or &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -641,7 +641,7 @@ void IR_To_Code::visit(IR_B_Or &n)
 void IR_To_Code::visit(IR_B_Xor &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -656,7 +656,7 @@ void IR_To_Code::visit(IR_B_Xor &n)
 void IR_To_Code::visit(IR_B_Left_Shift &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -671,7 +671,7 @@ void IR_To_Code::visit(IR_B_Left_Shift &n)
 void IR_To_Code::visit(IR_B_Right_Shift &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -686,7 +686,7 @@ void IR_To_Code::visit(IR_B_Right_Shift &n)
 void IR_To_Code::visit(IR_B_Less_Than &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -701,7 +701,7 @@ void IR_To_Code::visit(IR_B_Less_Than &n)
 void IR_To_Code::visit(IR_B_Less_Than_Equals &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -716,7 +716,7 @@ void IR_To_Code::visit(IR_B_Less_Than_Equals &n)
 void IR_To_Code::visit(IR_B_Greater_Than &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -731,7 +731,7 @@ void IR_To_Code::visit(IR_B_Greater_Than &n)
 void IR_To_Code::visit(IR_B_Greater_Than_Equals &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -746,7 +746,7 @@ void IR_To_Code::visit(IR_B_Greater_Than_Equals &n)
 void IR_To_Code::visit(IR_B_Equals &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -761,7 +761,7 @@ void IR_To_Code::visit(IR_B_Equals &n)
 void IR_To_Code::visit(IR_B_Not_Equals &n)
 {
     auto _int = ir->types->get_int();
-    if (n.lhs->get_type() == _int && n.rhs->get_type() == _int)
+    if (n.lhs->get_type()->is_alias_to(_int) && n.rhs->get_type()->is_alias_to(_int))
     {
         convert_one(*n.lhs);
         convert_one(*n.rhs);
@@ -801,7 +801,7 @@ void IR_To_Code::visit(IR_U_Not &n)
 void IR_To_Code::visit(IR_U_Invert &n)
 {
     auto _int = ir->types->get_int();
-    if (n.operand->get_type() == _int)
+    if (n.operand->get_type()->is_alias_to(_int))
     {
         convert_one(*n.operand);
         cg->push_back_fixnum_invert();
@@ -815,7 +815,7 @@ void IR_To_Code::visit(IR_U_Invert &n)
 void IR_To_Code::visit(IR_U_Negate &n)
 {
     auto _int = ir->types->get_int();
-    if (n.operand->get_type() == _int)
+    if (n.operand->get_type()->is_alias_to(_int))
     {
         convert_one(*n.operand);
         cg->push_back_fixnum_negate();
@@ -829,7 +829,7 @@ void IR_To_Code::visit(IR_U_Negate &n)
 void IR_To_Code::visit(IR_U_Positive &n)
 {
     auto _int = ir->types->get_int();
-    if (n.operand->get_type() == _int)
+    if (n.operand->get_type()->is_alias_to(_int))
     {
         convert_one(*n.operand);
         // noop

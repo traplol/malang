@@ -359,6 +359,11 @@ void Ast_Pretty_Printer::visit(Type_Alias_Node &n)
     assert(to);
     str << "type alias " << n.alias->name() << " = " << to->name();
 }
+void Ast_Pretty_Printer::visit(Unalias_Node &n)
+{
+    assert(n.value);
+    str << "unalias "; to_string(*n.value);
+}
 void Ast_Pretty_Printer::visit(Extend_Node &n)
 {
     assert(n.for_type);

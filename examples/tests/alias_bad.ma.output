@@ -1,0 +1,6 @@
+error: examples/tests/alias_bad.ma:7:1
+
+	Cannot assign type `B' to type `A'
+	aa : A = b
+	 -
+

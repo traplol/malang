@@ -115,6 +115,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_extend);
         SET_TK_TYPE_MAP(K_type);
         SET_TK_TYPE_MAP(K_alias);
+        SET_TK_TYPE_MAP(K_unalias);
         SET_TK_TYPE_MAP(K_break);
         SET_TK_TYPE_MAP(K_continue);
         SET_TK_TYPE_MAP(K_module);
@@ -353,6 +354,7 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("return", K_return);
         PUSH_KEY_IDENT("true", K_true);
         PUSH_KEY_IDENT("type", K_type);
+        PUSH_KEY_IDENT("unalias", K_unalias);
         PUSH_KEY_IDENT("while", K_while);
 
         if (is_ident_start_char(src->peek()))

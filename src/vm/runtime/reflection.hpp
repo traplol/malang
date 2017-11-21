@@ -229,8 +229,9 @@ struct Type_Info
 {
     virtual ~Type_Info();
     Type_Info(Type_Info *aliased_to, Type_Token type_token, const std::string &name)
-        : m_aliased_to(aliased_to)
+        : m_cycle(false)
         , m_is_gc_managed(true)
+        , m_aliased_to(aliased_to)
         , m_type_token(type_token)
         , m_name(name)
         , m_init(nullptr)
@@ -266,9 +267,9 @@ struct Type_Info
     bool has_no_init() const;
     bool is_builtin() const;
     bool is_gc_managed() const;
-    bool is_alias_to(Type_Info *other) const;
-    bool is_assignable_to(Type_Info *other) const;
-    bool implemented_trait(Trait_Definition *trait) const;
+    bool is_alias_to(const Type_Info *other) const;
+    bool is_assignable_to(const Type_Info *other) const;
+    bool implemented_trait(const Trait_Definition *trait) const;
 
     Constructor_Info *get_constructor(const Function_Parameters &param_types) const;
     Method_Info *get_method(const std::string &name, const Function_Parameters &param_types) const;
@@ -278,15 +279,17 @@ struct Type_Info
 
 private:
     friend struct Type_Map;
+    const Type_Info *const_aliased_to_top() const;
     void fill_methods(Methods &v) const;
     void fill_fields(Fields &v) const;
     bool has_method(Method_Info *method) const;
     bool has_field(const std::string &name) const;
     Method_Info *find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const;
     Field_Info *find_field(const std::string &name, Num_Fields_Limit &index) const;
-    Type_Info *m_aliased_to;
+    bool m_cycle;
     bool m_is_gc_managed;
     bool m_is_builtin;
+    Type_Info *m_aliased_to;
     Type_Token m_type_token;
     std::string m_name;
     Constructor_Info *m_init;

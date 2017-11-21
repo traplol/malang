@@ -216,14 +216,37 @@ void Type_Info::aliased_to(Type_Info *type)
                m_name.c_str(), m_aliased_to->m_name.c_str(), type->m_name.c_str());
         abort();
     }
+
     m_aliased_to = type;
+    auto t = m_aliased_to;
+    while (t)
+    {   // Check for cycles
+        if (t->m_cycle)
+        {
+            printf("Cyclic type alias detected for %s and %s\n",
+                   name().c_str(),
+                   type->name().c_str());
+            abort();
+        }
+        t->m_cycle = true;
+        t = t->m_aliased_to;
+    }
+
+    t = m_aliased_to;
+    while (t)
+    {   // undo check
+        t->m_cycle = false;
+        t = t->m_aliased_to;
+    }
+
     m_type_token = type->m_type_token;
 }
 Type_Info *Type_Info::aliased_to()
 {
     return m_aliased_to ? m_aliased_to : this;
 }
-Type_Info *Type_Info::aliased_to_top()
+
+const Type_Info *Type_Info::const_aliased_to_top() const
 {
     auto cur = this;
     while (cur->m_aliased_to)
@@ -231,6 +254,12 @@ Type_Info *Type_Info::aliased_to_top()
         cur = cur->m_aliased_to;
     }
     return cur;
+}
+
+Type_Info *Type_Info::aliased_to_top()
+{
+    // ehh
+    return const_cast<Type_Info*>(const_aliased_to_top());
 }
 
 Type_Token Type_Info::type_token() const
@@ -267,17 +296,20 @@ bool Type_Info::add_field(Field_Info *field)
 
 const Fields &Type_Info::fields() const
 {
-    return m_fields;
+    auto top = const_aliased_to_top();
+    return top->m_fields;
 }
 
 Constructor_Info *Type_Info::init()
 {
-    return m_init;
+    auto top = aliased_to_top();
+    return top->m_init;
 }
 void Type_Info::init(Constructor_Info *init)
 {
-    assert(m_init == nullptr);
-    m_init = init;
+    auto top = aliased_to_top();
+    assert(top->m_init == nullptr);
+    top->m_init = init;
 }
 
 const Constructors &Type_Info::constructors() const
@@ -287,7 +319,9 @@ const Constructors &Type_Info::constructors() const
 
 Constructor_Info *Type_Info::get_constructor(const Function_Parameters &param_types) const
 {
-    for (auto &&c : m_constructors)
+    auto top = const_aliased_to_top();
+
+    for (auto &&c : top->m_constructors)
     {
         if (c->parameter_types() == param_types)
             return c;
@@ -309,19 +343,20 @@ bool Type_Info::add_constructor(Constructor_Info *ctor)
 Method_Info *Type_Info::find_method(const std::string &name, const Function_Parameters &param_types, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
-    for (auto &&m : m_methods)
+
+    auto cur = this;
+    while (cur)
     {
-        if (m->name() == name)
+        for (auto &&m : cur->m_methods)
         {
-            if (m->parameter_types() == param_types)
-                return m;
+            if (m->name() == name)
+            {
+                if (m->parameter_types() == param_types)
+                    return m;
+            }
+            ++index;
         }
-        ++index;
-    }
-    if (m_aliased_to)
-    {
-        if (auto meth = m_aliased_to->find_method(name, param_types, index))
-            return meth;
+        cur = cur->m_aliased_to;
     }
     return nullptr;
 }
@@ -336,12 +371,8 @@ bool Type_Info::has_method(Method_Info *method) const
 Field_Info *Type_Info::find_field(const std::string &name, Num_Fields_Limit &index) const
 {
     assert(!name.empty());
-    auto cur = this;
-    while (cur->m_aliased_to)
-    {
-        cur = cur->m_aliased_to;
-    }
-    for (auto &&f : cur->m_fields)
+    auto top = const_aliased_to_top();
+    for (auto &&f : top->m_fields)
     {
         if (f->name() == name)
         {
@@ -387,12 +418,8 @@ void Type_Info::fill_methods(Methods &v) const
 
 void Type_Info::fill_fields(Fields &v) const
 {
-    auto cur = this;
-    while (cur->m_aliased_to)
-    {
-        cur = cur->m_aliased_to;
-    }
-    v.insert(v.end(), cur->m_fields.begin(), cur->m_fields.end());
+    auto top = const_aliased_to_top();
+    v.insert(v.end(), top->m_fields.begin(), top->m_fields.end());
 }
 
 Methods Type_Info::all_methods() const
@@ -415,26 +442,22 @@ bool Type_Info::has_no_init() const
 }
 bool Type_Info::is_builtin() const
 {
-    return m_is_builtin;
+    return const_aliased_to_top()->m_is_builtin;
 }
 bool Type_Info::is_gc_managed() const
 {
     return m_is_gc_managed;
 }
-bool Type_Info::is_assignable_to(Type_Info *other) const
+bool Type_Info::is_assignable_to(const Type_Info *other) const
 {
     if (this == other)
     {
         return true;
     }
-    if (is_alias_to(other))
-    {
-        return true;
-    }
-    return false;
+    return other->is_alias_to(this);
 }
 
-bool Type_Info::implemented_trait(Trait_Definition *trait) const
+bool Type_Info::implemented_trait(const Trait_Definition *trait) const
 {
     return trait->is_implemented_by(this);
 }
@@ -475,8 +498,9 @@ bool Type_Info::get_field_index(const std::string &name, Num_Fields_Limit &index
     return false;
 }
 
-bool Type_Info::is_alias_to(Type_Info *other) const
+bool Type_Info::is_alias_to(const Type_Info *other) const
 {
+    assert(other);
     if (this == other)
     {
         return true;

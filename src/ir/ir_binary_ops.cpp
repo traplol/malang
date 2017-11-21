@@ -48,13 +48,6 @@ Method_Info *get_bin_method(const std::string &name, const Source_Location &src_
         rhs->src_loc.report("error", "Could not deduce type!");
         abort();
     }
-    /* Debugging code, dump methods for LHS type.
-    auto methods = lhs_type->get_methods(name);
-    for (auto &&m : methods)
-    {
-        printf(">>>>>> %s %s\n", m->name().c_str(), m->type()->name().c_str());
-    }
-    */
     auto method = lhs_type->get_method(name, {rhs_type});
     if (!method)
     {

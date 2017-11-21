@@ -1,0 +1,22 @@
+Thing:do_stuff
+ThingUtil:print_name: thingy
+Thing:do_stuff
+45
+9999
+$45
+42
+43
+44
+1
+Thing:baz
+2
+Thing:baz
+ThingWithUtil:bar
+Thing:baz
+3
+Thing:baz
+ThingWithUtil:bar
+Thing:baz
+ThingWithMoreUtil:foo
+ThingWithUtil:bar
+Thing:baz
