@@ -1,4 +1,8 @@
 # malang
+
+First an foremost, this is just a place for me to try things and to learn about how one might implement a
+programming language.
+
 malang is a general purpose, statically and strongly typed, structured programming language. It is early 
 in development but already it features:
 
