@@ -1,4 +1,8 @@
 # malang
+
+First and foremost, this is just a place for me to try things and to learn about how one might implement 
+a programming language.
+
 malang is a general purpose, statically and strongly typed, structured programming language. It is early 
 in development but already it features:
 
@@ -10,18 +14,18 @@ in development but already it features:
 + bound/named functions that support parameter overloading
 + extend any type with operators and methods
 + user-defined structures
++ strong type aliasing
++ a (buggy) module system
 
 Planned features:
 
-+ strong type aliasing
 + multiple return values
-+ a module system
 + string interpolation
 + closures
 + zero overhead generics
 + traits
++ exceptions
 + optimized ahead of time compiliation that can be saved to disk and run at a later time.
-
 
 malang is compiled into a fairly low-level stack-based bytecode which is then interpreted by the malangVM. 
 
@@ -232,6 +236,39 @@ println(c.x) # 1000.5
 println(c.y) # 2.3
 println(c.z) # 3.14
 
+```
+
+### Strong type aliasing
+Type aliasing is a way to distinguish types which have the same internal representation from each
+other without unnecessary runtime overhead. Type aliasing also allows you to write extensions for
+an aliased type separate from higher types and separate from any neighboring type aliases while
+allowing these methods to be available to any sub-aliases.
+See [alias.ma](examples/tests/alias.ma) for a more comprehensive example.
+
+```
+type alias cents   = int
+type alias dollars = int
+type alias time_ms = int
+
+fn cents(d: dollars) -> cents {
+  # `unalias' converts to the top type of an alias hierarchy: in this case `unalias(d)' is an `int'
+  c : cents = unalias(d) * 100
+  return c
+}
+fn dollars(c: cents) -> dollars {
+  d : dollars = unalias(c) / 100
+  return d
+}
+
+money    : dollars = 45     # ok: 45
+pennies  := cents(money)    # ok: 450
+duration : time_ms = 2750   # ok: 2750
+
+#bad1 : cents = duration    # compile error, no conversion exists
+#bad2 : dollars = duration  # compile error, no conversion exists
+ok1  : dollars = 45         # 45 is an int which is the aliased type
+ok2  : cents = 9999         # 9999 is an int which is the aliased type
+#bad3 : cents = 42.69       # compile error, 42.69 is not an int
 ```
 
 ### Extensions
