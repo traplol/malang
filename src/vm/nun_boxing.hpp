@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <cassert>
 
+#define CHAR_BIT 8
+
 static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t not same size");
 
 /*
@@ -128,12 +130,25 @@ struct Value
     template<typename T, uint64_t tag>
     inline void set(T thing)
     {
-        static_assert(sizeof(T) == sizeof(uint64_t), "sizeof T must be 8 bytes!");
-        auto thing_ptr = reinterpret_cast<uint64_t*>(&thing);
-        auto thing_bytes = *thing_ptr;
+        uint64_t thing_bytes = 0;
+        if (sizeof(T) == sizeof(uint64_t))
+        {
+            auto thing_ptr = reinterpret_cast<uint64_t*>(&thing);
+            thing_bytes = *thing_ptr;
+        }
+        else if (sizeof(T) < sizeof(uint64_t))
+        {
+            auto thing_ptr = reinterpret_cast<uint64_t*>(&thing);
+            auto tmp = *thing_ptr;
+            uint64_t mask = (1ull << sizeof(T) * CHAR_BIT) - 1;
+            thing_bytes = tmp & mask;
+        }
+        else
+        {
+            assert(0 && "sizeof T must be <= 8");
+        }
         // ensure thing fits
         assert((thing_bytes & tag) == 0);
-
         v.as_bits = thing_bytes | tag;
     }
 

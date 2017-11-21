@@ -54,10 +54,4 @@ struct Malang_Buffer
     void gc_mark();
 };
 
-static_assert(sizeof(Malang_Object)      == 24, "");
-static_assert(sizeof(Malang_Object_Body) == 32, "");
-static_assert(sizeof(Malang_Array)       == 40, "");
-static_assert(sizeof(Malang_Buffer)      == 40, "");
-
-
 #endif /* MALANG_VM_OBJECT_HPP */

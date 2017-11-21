@@ -191,8 +191,8 @@ void Malang_VM::stack_trace() const
 
 void Malang_VM::trace(uintptr_t ip) const
 {
-    auto x = std::min(64ul, ip);
-    auto y = std::min(64ul, code.size() - ip);
+    auto x = std::min(static_cast<uintptr_t>(64ul), ip);
+    auto y = std::min(static_cast<uintptr_t>(64ul), code.size() - ip);
 
     auto start = ip - x;
     auto end = ip + y;
