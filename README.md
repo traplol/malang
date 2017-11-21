@@ -73,13 +73,13 @@ c := if true "yep" else "nope"
 An if/else block may be used as a value if the last expression for both legs is not ```void```
 ```
 if one
-  println("hello world")
+    println("hello world")
 else if two or three
-  println("wat")
+    println("wat")
 else if four or five
-  println("woo!")
+    println("woo!")
 else
-  println("hmm")
+    println("hmm")
 
 x := if get_condition() "yes!" else "nope"
 
@@ -91,8 +91,8 @@ While loop
 # poor man's for loop
 i := 0
 while i < n {
-  do_thing(i)
-  i += 1
+    do_thing(i)
+    i += 1
 }
 ```
 
@@ -100,7 +100,7 @@ For loops expect the thing being iterated to implement ```fn current() -> T``` a
 see [range.ma](lib/range.ma) for a trivial Range implementation
 ```
 for Range(0, 10) {
-  println(it) # `it'erator is implied
+    println(it) # `it'erator is implied
 }
 ```
 
@@ -115,32 +115,32 @@ See [BUILTINS](BUILTINS.md) for a list of builtin and always availble functions.
 ```
 # Binds to 'hello' with with no parameters
 fn hello() -> void {
-  println("hello world")
+    println("hello world")
 }
 
 # Binds to 'hello' with 1 parameter (int)
 # notice the void return type has been ommitted/implied
 fn hello(a: int) {
-  hello()
-  println(a)
+    hello()
+    println(a)
 }
 
 min := fn(a: double, b: double) -> double {
-  if a < b
-    return a
-  else
-    return b
+    if a < b
+        return a
+    else
+        return b
 }
 
 fib := fn(n: int) -> int {
-  if n < 3 {
-    return 1
-  }
-  else {
-    # notice the use of 'recurse' because otherwise 'fib' could be redefined to another 
-    # function with the same function signature and that one would get called instead.
-    return recurse(n-1) + recurse(n-2)
-  }
+   if n < 3 {
+       return 1
+   }
+   else {
+       # notice the use of 'recurse' because otherwise 'fib' could be redefined to another 
+       # function with the same function signature and that one would get called instead.
+       return recurse(n-1) + recurse(n-2)
+   }
 }
 
 ```
@@ -193,39 +193,39 @@ println(a.b.c.d.e)
 
 
 type Vec3 = {
-  x := 0.0
-  y := 0.0
-  z := 0.0
+    x := 0.0
+    y := 0.0
+    z := 0.0
 
-  # default, only necessary because we define another constructor
-  new () {}  
+    # default, only necessary because we define another constructor
+    new () {}  
 
-  new (x: double, y: double, z: double) {
-    self.x = x
-    self.y = y
-    self.z = z
-  }
+    new (x: double, y: double, z: double) {
+        self.x = x
+        self.y = y
+        self.z = z
+    }
 
-  fn * (scalar: double) -> Vec3 {
-    # note the implicit resolution of x,y,z 
-    return Vec3(x*scalar, y*scalar, z*scalar)
-  }
+    fn * (scalar: double) -> Vec3 {
+        # note the implicit resolution of x,y,z 
+        return Vec3(x*scalar, y*scalar, z*scalar)
+    }
 
-  fn + (other: Vec3) -> Vec3 {
-    # and here we can shadow fields of the same name but still access them with
-    # the implicit "self" reference
-    x := self.x + other.x
-    y := self.y + other.y
-    z := self.z + other.z
-    return Vec3(x, y, z)
-  }
+    fn + (other: Vec3) -> Vec3 {
+        # and here we can shadow fields of the same name but still access them with
+        # the implicit "self" reference
+        x := self.x + other.x
+        y := self.y + other.y
+        z := self.z + other.z
+        return Vec3(x, y, z)
+    }
 
-  fn - (other: Vec3) -> Vec3 {
-    x := self.x - other.x
-    y := self.y - other.y
-    z := self.z - other.z
-    return Vec3(x, y, z)
-  }
+    fn - (other: Vec3) -> Vec3 {
+        x := self.x - other.x
+        y := self.y - other.y
+        z := self.z - other.z
+        return Vec3(x, y, z)
+    }
 }
 
 a := Vec3() # creates a Vec3 with the default constructor
@@ -251,13 +251,11 @@ type alias dollars = int
 type alias time_ms = int
 
 fn cents(d: dollars) -> cents {
-  # `unalias' converts to the top type of an alias hierarchy: in this case `unalias(d)' is an `int'
-  c : cents = unalias(d) * 100
-  return c
+    # `unalias' converts to the top type of an alias hierarchy: in this case `unalias(d)' is an `int'
+    return unalias(d) * 100
 }
 fn dollars(c: cents) -> dollars {
-  d : dollars = unalias(c) / 100
-  return d
+    return unalias(c) / 100
 }
 
 money    : dollars = 45     # ok: 45
@@ -266,8 +264,8 @@ duration : time_ms = 2750   # ok: 2750
 
 #bad1 : cents = duration    # compile error, no conversion exists
 #bad2 : dollars = duration  # compile error, no conversion exists
-ok1  : dollars = 45         # 45 is an int which is the aliased type
-ok2  : cents = 9999         # 9999 is an int which is the aliased type
+ok1   : dollars = 45         # 45 is an int which is the aliased type
+ok2   : cents = 9999         # 9999 is an int which is the aliased type
 #bad3 : cents = 42.69       # compile error, 42.69 is not an int
 ```
 
