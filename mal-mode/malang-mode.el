@@ -41,7 +41,7 @@
 
   ;; define several category of keywords
   (setq my-mal-keywords '("break" "continue" "else" "for" "if" "return" "fn" "while"
-                          "type" "extend"))
+                          "type" "alias" "unalias" "extend"))
   (setq my-mal-implicits '("new" "self" "recurse" "it" "true" "false"))
   (setq my-mal-dragons '("breakpoint" "stack_trace" "gc_pause" "gc_resume" "gc_run"))
   ;; generate regex string for each category of keywords
