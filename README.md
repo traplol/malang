@@ -10,18 +10,18 @@ in development but already it features:
 + bound/named functions that support parameter overloading
 + extend any type with operators and methods
 + user-defined structures
++ strong type aliasing
++ a (buggy) module system
 
 Planned features:
 
-+ strong type aliasing
 + multiple return values
-+ a module system
 + string interpolation
 + closures
 + zero overhead generics
 + traits
++ exceptions
 + optimized ahead of time compiliation that can be saved to disk and run at a later time.
-
 
 malang is compiled into a fairly low-level stack-based bytecode which is then interpreted by the malangVM. 
 
