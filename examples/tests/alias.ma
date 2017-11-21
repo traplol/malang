@@ -42,17 +42,18 @@ type alias dollars = int
 type alias time_ms = int
 
 fn cents(d: dollars) -> cents {
-    x : cents = unalias(d) * 100
-    return x
+    return unalias(d) * 100
 }
 fn dollars(c: cents) -> dollars {
-    x : dollars = unalias(c) / 100
-    return x
+    return unalias(c) / 100
 }
 
 money    : dollars = 45    # ok: 45
 pennies  := cents(money)   # ok: 450
 duration : time_ms = 2750  # ok: 2750
+println(unalias(money))
+println(unalias(pennies))
+println(unalias(duration))
 
 #bad1 : cents = duration    # compile error, no conversion exists
 #bad2 : dollars = duration  # compile error, no conversion exists
