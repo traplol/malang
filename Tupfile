@@ -1,9 +1,15 @@
 .gitignore
 
 CC = clang++
+
+# 32-bt
+#CFLAGS += -m32 -Wall -D "DEBUG_MODE=1" -D "DEBUG" -D "USE_COMPUTED_GOTO=0" -g -O0 -std=c++1z
+#LDFLAGS = -m32
+
+# 64-bt
+CFLAGS += -Wall -D "DEBUG_MODE=1" -D "DEBUG" -D "USE_COMPUTED_GOTO=0" -g -O0 -std=c++1z
 #CFLAGS += -Wall -D "DEBUG_MODE=0" -D "NDEBUG" -D "USE_COMPUTED_GOTO=1" -O3 -std=c++1z
-CFLAGS += -m32 -Wall -D "DEBUG_MODE=1" -D "DEBUG" -D "USE_COMPUTED_GOTO=0" -g -O0 -std=c++1z
-LDFLAGS = -m32
+LDFLAGS =
 
 srcs = src/*.cpp
 srcs += src/ast/*.cpp
