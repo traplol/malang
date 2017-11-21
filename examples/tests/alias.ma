@@ -49,7 +49,7 @@ fn dollars(c: cents) -> dollars {
 }
 
 money    : dollars = 45    # ok: 45
-pennies  := cents(money)   # ok: 450
+pennies  := cents(money)   # ok: 4500
 duration : time_ms = 2750  # ok: 2750
 println(unalias(money))
 println(unalias(pennies))
