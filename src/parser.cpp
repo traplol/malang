@@ -134,7 +134,6 @@ static uptr<Fn_Node> parse_fn(Parser &parser);
 static uptr<Constructor_Node> parse_ctor(Parser &parser);
 static uptr<Extend_Node> parse_extend(Parser &parser);
 static uptr<Type_Def_Node> parse_type_definition(Parser &parser);
-static uptr<Unalias_Node> parse_unalias(Parser &parser);
 static uptr<Type_Alias_Node> parse_type_alias(Parser &parser);
 
 #define SAVE                                        \
@@ -752,9 +751,14 @@ static uptr<Ast_Value> parse_unary_exp(Parser &parser)
     RESTORE;
     Token tok;
     if (parser.accept(tok, {Token_Id::Minus, Token_Id::Plus,
-                    Token_Id::Invert, Token_Id::Not}))
+                    Token_Id::Invert, Token_Id::Not, Token_Id::K_unalias}))
     {
         auto unary = parse_unary_exp(parser);
+        if (tok.id() == Token_Id::K_unalias)
+        {
+            DPRINT(tok, "Unalias");
+            return uptr<Ast_Value>(new Unalias_Node(tok.src_loc(), unary.release()));
+        }
         if (tok.id() == Token_Id::Minus)
         {
             DPRINT(tok, "Negate");
@@ -948,10 +952,6 @@ static uptr<Ast_Value> parse_expression(Parser &parser)
     if (!tk)
     {
         return nullptr;
-    }
-    if (auto unalias = parse_unalias(parser))
-    {
-        return unalias;
     }
     if (tk->id() == Token_Id::K_if)
     {
@@ -1196,15 +1196,6 @@ static uptr<Constructor_Node> parse_ctor(Parser &parser)
     delete ret_ty; // Return type is unused but the shared code still parses for it
     return uptr<Constructor_Node>(
         new Constructor_Node(tk_new.src_loc(), params, body, fn_ty));
-}
-static uptr<Unalias_Node> parse_unalias(Parser &parser)
-{
-    SAVE;
-    Token unalias_tk;
-    ACCEPT_OR_FAIL(unalias_tk, {Token_Id::K_unalias});
-    auto val = parse_expression(parser);
-    CHECK_OR_ERROR(val, unalias_tk, "Unalias expected an expression");
-    return std::make_unique<Unalias_Node>(unalias_tk.src_loc(), val.release());
 }
 static uptr<Type_Alias_Node> parse_type_alias(Parser &parser)
 {

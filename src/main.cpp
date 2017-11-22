@@ -438,7 +438,7 @@ void parse_tests()
 
         {"unalias x", "unalias x"},
         {"unalias(x)", "unalias x"},
-        {"unalias 1 + 2", "unalias (1 + 2)"},
+        {"unalias (1 + 2)", "unalias (1 + 2)"},
 
          
     };
