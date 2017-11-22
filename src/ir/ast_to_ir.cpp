@@ -171,14 +171,26 @@ void Ast_To_IR::visit(Variable_Node &n)
             auto alloc = ir->alloc<IR_Allocate_Object>(n.src_loc, type);
             _return(alloc);
         }
+
     }
     auto symbol = find_symbol(n.name());
-    if (!symbol)
+    if (symbol)
+    {
+        _return(symbol);
+    }
+    // Any correct paths have "_returned" by this point so it's an error...
+    if (cur_call_arg_types)
+    {
+
+        n.src_loc.report("error", "No function matches `fn %s%s'",
+                         n.name().c_str(), cur_call_arg_types->to_string().c_str());
+        abort();
+    }
+    else
     {
         n.src_loc.report("error", "Use of undeclared symbol `%s'", n.name().c_str());
         abort();
     }
-    _return(symbol);
 }
 
 void Ast_To_IR::visit(Assign_Node &n)
