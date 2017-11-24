@@ -8,7 +8,7 @@ in development but already it features:
 
 + a tracing garbage collector
 + type inference
-+ primitive types such as ```string```, ```int```, ```bool```, ```double```, ```buffer```s, and arrays.
++ primitive types such as `string`, `int`, `bool`, `double`, `buffer`s, and arrays.
 + first class function expressions
 + block expressions
 + bound/named functions that support parameter overloading
@@ -96,11 +96,19 @@ while i < n {
 }
 ```
 
-For loops expect the thing being iterated to implement ```fn current() -> T``` and ```fn move_next() -> bool```
-see [range.ma](lib/range.ma) for a trivial Range implementation
+For loops expect the thing being iterated to implement `fn current() -> T` and `fn move_next() -> bool` where 
+`fn move_next() -> bool` returns `false` when there are no more iterations left. See [range.ma](lib/range.ma) 
+for a trivial Range implementation
 ```
 for Range(0, 10) {
-    println(it) # `it'erator is implied
+    println(it) # `it'em is implied
+}
+
+# You may also name the item with the `for ident in ...` syntax
+for i in Range(0, 10) {
+    for j in Range(10, 20) {
+        println(i * j)
+    }
 }
 ```
 
@@ -146,8 +154,8 @@ fib := fn(n: int) -> int {
 ```
 
 ### Arrays and buffers
-Arrays consist of values/references and ```buffer```s are blocks of memory with byte-index ganularity.
-Both are special because their ```length```, ```[]``` and ```[]=``` properties are optimized into their
+Arrays consist of values/references and `buffer`s are blocks of memory with byte-index ganularity.
+Both are special because their `length`, `[]` and `[]=` properties are optimized into their
 own respective malangVM instructions. Both are bounds checked but unchecked instructions do exist for
 when the compiler can be certain an index cannot possibly be out of range.
 ```
