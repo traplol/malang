@@ -12,9 +12,9 @@ const Token *Parser::peek(int n) const
     }
     if (lex_idx + n < 0)
     {
-        return 0;
+        return nullptr;
     }
-    return &lexer.tokens[lex_idx];
+    return &lexer.tokens[lex_idx+n];
 }
 
 Token_Id Parser::peek_id(int n) const
@@ -36,7 +36,7 @@ bool Parser::accept(Token &out, const std::vector<Token_Id> &ids)
     }
     for (auto &&id : ids)
     {
-        if (id == peek_id())//lexer.tokens[lex_idx].id())
+        if (id == peek_id())
         {
             out = lexer.tokens[lex_idx];
             ++lex_idx;
@@ -345,9 +345,19 @@ static uptr<While_Node> parse_while(Parser &parser)
 static uptr<For_Node> parse_for(Parser &parser)
 {   // for :=
     //     for expression { body }
+    //     for ident in expression { body }
     SAVE;
     Token for_tk;
     ACCEPT_OR_FAIL(for_tk, { Token_Id::K_for});
+    std::string it("it");
+    if (parser.peek_id(0) == Token_Id::Identifier &&
+        parser.peek_id(1) == Token_Id::K_in)
+    {
+        Token it_tk;
+        parser.expect(it_tk, Token_Id::Identifier);
+        it = it_tk.to_string();
+        parser.expect(Token_Id::K_in);
+    }
     auto iterable = parse_expression(parser);
     std::vector<Ast_Node*> body;
     if (parser.peek_id() == Token_Id::Open_Curly)
@@ -360,7 +370,7 @@ static uptr<For_Node> parse_for(Parser &parser)
         CHECK_OR_FAIL(single);
         body.push_back(single.release());
     }
-    return uptr<For_Node>(new For_Node{for_tk.src_loc(), iterable.release(), body});
+    return std::make_unique<For_Node>(for_tk.src_loc(), it, iterable.release(), body);
 }
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
 {   // decl :=

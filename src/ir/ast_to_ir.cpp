@@ -1437,7 +1437,7 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     auto branch_if_cond_false = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, loop_block->end());
     block.push_back(branch_if_cond_false);
     {
-        auto it_sym = locality->current().symbols().make_symbol("it", current->return_type(), itr->src_loc, cur_symbol_scope);
+        auto it_sym = locality->current().symbols().make_symbol(n.it, current->return_type(), itr->src_loc, cur_symbol_scope);
         cur_locals_count++;
         it_sym->is_readonly = true;
         auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, current, std::vector<IR_Value*>());

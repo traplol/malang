@@ -393,18 +393,22 @@ void parse_tests()
         {"return 1,2,3", "return 1, 2, 3"},
 
         {"for thing { }",
-         "for thing {\n"
+         "for it in thing {\n"
          "}"},
 
         {"for thing { println(it) }",
-         "for thing {\n"
+         "for it in thing {\n"
          "    println(it)\n"
          "}"},
 
         {"for thing { println(it) break }",
-         "for thing {\n"
+         "for it in thing {\n"
          "    println(it)\n"
          "    break\n"
+         "}"},
+         
+        {"for i in Range(0, 10) { }",
+         "for i in Range(0, 10) {\n"
          "}"},
 
         {"import x",
@@ -441,7 +445,6 @@ void parse_tests()
         {"unalias (1 + 2)", "unalias (1 + 2)"},
         {"unalias 1 + 2", "(unalias 1 + 2)"},
 
-         
     };
     int total_run = 0;
     int errors = 0;

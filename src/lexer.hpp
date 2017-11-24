@@ -35,6 +35,8 @@ enum class Token_Id : size_t
     Greater,            // >
     Greater_Equals,     // >=
     Identifier,
+    DotDotDot,          // ...
+    DotDot,             // ..
     Dot,                // .
     Mod,                // %
     L_Shift,            // <<
@@ -69,6 +71,7 @@ enum class Token_Id : size_t
     K_while,            // while
     K_return,           // return
     K_if,               // if
+    K_in,               // in
     K_else,             // else
     K_fn,               // fn
     K_match,            // match

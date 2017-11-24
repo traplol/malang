@@ -431,7 +431,7 @@ void Ast_Pretty_Printer::visit(struct While_Node &n)
 void Ast_Pretty_Printer::visit(struct For_Node &n)
 {
     assert(n.iterable);
-    str << "for "; to_string(*n.iterable); do_body(n.body);
+    str << "for " << n.it << " in "; to_string(*n.iterable); do_body(n.body);
 }
 void Ast_Pretty_Printer::visit(struct If_Else_Node &n)
 {

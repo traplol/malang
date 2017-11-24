@@ -76,6 +76,8 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(Greater);
         SET_TK_TYPE_MAP(Greater_Equals);
         SET_TK_TYPE_MAP(Identifier);
+        SET_TK_TYPE_MAP(DotDotDot);
+        SET_TK_TYPE_MAP(DotDot);
         SET_TK_TYPE_MAP(Dot);
         SET_TK_TYPE_MAP(Mod);
         SET_TK_TYPE_MAP(Right_Arrow);
@@ -107,6 +109,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(K_while);
         SET_TK_TYPE_MAP(K_return);
         SET_TK_TYPE_MAP(K_if);
+        SET_TK_TYPE_MAP(K_in);
         SET_TK_TYPE_MAP(K_else);
         SET_TK_TYPE_MAP(K_fn);
         SET_TK_TYPE_MAP(K_match);
@@ -347,6 +350,7 @@ bool Lexer::lex(Source_Code *src)
         PUSH_KEY_IDENT("for", K_for);
         PUSH_KEY_IDENT("fn", K_fn);
         PUSH_KEY_IDENT("if", K_if);
+        PUSH_KEY_IDENT("in", K_in);
         PUSH_KEY_IDENT("import", K_import);
         PUSH_KEY_IDENT("match", K_match);
         PUSH_KEY_IDENT("module", K_module);

@@ -1,5 +1,14 @@
 ==============================================================================================
 TODO:
+    + named `for` iterator:
+      `it` should still be the default iterator name if `i in` is ommited
+      `for i in Range(0, 10) { println(i) }`
+    + builtin integer range with
+      `start..end`(n >= start to n < end)
+      `start...end`(n >= start to n <= end)
+   
+
+
     + Types need a trivial recursion check 
     + Option type (Some(42) | None)
     + Uninitialized type properties are only allowed to be Option<Thing>
@@ -87,7 +96,7 @@ VM Calling Convention:
     Store_Local_0 'a
 
     Local variables:
-    + Local variables use a separate `locals' stack and allocating/freeing space on this stack
+    + Local variables use a separate `locals` stack and allocating/freeing space on this stack
     is controlled by the callee itself.
 
     Instance Method calls:
@@ -300,7 +309,7 @@ Oct 27, 2017:
     + String constants get automatically copied into buffers
       ? Maybe implement some kind of copy-on-write for string constants so they aren't copied
       over and over again when used in a loop.
-      ? Maybe `string' type is a purely immutable primitive
+      ? Maybe `string` type is a purely immutable primitive
 
 Oct 28, 2017:
     + Implemented hard-binding functions, which means a function can be literally named and
@@ -336,7 +345,7 @@ Oct 30, 2017:
     + Implemented Load/Store_Fields in the VM
     + Implemented println(string)
     + Implemented readonly/constness for variables
-    + Implemented readonly/constness for `self' instance
+    + Implemented readonly/constness for `self` instance
 
 Oct 31, 2017:
     + Implemented default empty constructor
@@ -347,13 +356,13 @@ Oct 31, 2017:
 
 Nov 1, 2017:
     + Improved lexing/parsing by contextually inserting semicolons into the token list.
-    Expressions should end on line break and a `\' before a line break should allow the
+    Expressions should end on line break and a `\` before a line break should allow the
     expression to continue on to the next line.
-    + Implemented a very basic interactive debugger for the `switch' dispatch variant of
+    + Implemented a very basic interactive debugger for the `switch` dispatch variant of
     the VM. It provides some useful tools like disassembling instructions, stepping through
     code, continuing until return, continuing until the next breakpoint, and inspecting the
     stack
-    + Hooked up a builtin `pfn breakpoint() -> void' to trigger breakpoints in code.
+    + Hooked up a builtin `pfn breakpoint() -> void` to trigger breakpoints in code.
 
 Nov 2, 2017:
     + Calling methods without self now correctly resolves and implicitly passes it.
@@ -362,16 +371,16 @@ Nov 2, 2017:
     output.
     + break, continue, and for parsing
     + implemented basic iterator traits which wants the thing to implement:
-        `fn move_next() -> bool' and fn current() -> T' where T is not void
+        `fn move_next() -> bool` and `fn current() -> T` where T is not void
 
 Nov 10, 2017:
     + Fixed some bugs in the GC and string concat builtin
-    + Added some interesting extensions to `examples/tests/string.ma'
+    + Added some interesting extensions to `examples/tests/string.ma`
 
 Nov 11, 2017:
     + Fixed scoping bug in extensions where an extension method would be visible in global
     scope and reserve that variable name. Also added some regression tests for this
-    + Added `char' type and updated strings and buffers to be composed of them
+    + Added `char` type and updated strings and buffers to be composed of them
     + Added character literal syntax: ?a ?b ?c ?\t ?\n ?# etc.
 
 Nov 12, 2017:
@@ -420,11 +429,11 @@ Nov 19, 2017:
     + Added license to malang-mode.el
 
 Nov 20, 2017:
-    + Parsing `type alias'
-    + Parsing `unalias'
+    + Parsing `type alias`
+    + Parsing `unalias`
     + Implemented strong type aliasing which allows 0 implicit overhead for making types
     with the same layout effectively incompatible.
-    + Implemented `unalias' to bring an aliased type up to the top type.
+    + Implemented `unalias` to bring an aliased type up to the top type.
     + Included type alias examples
     + Fixed some things to allow 32-bit compilation
     + Compiles, runs, and passes execution tests on a Raspberry Pi Zero W
