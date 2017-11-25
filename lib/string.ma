@@ -1,6 +1,20 @@
 
 extend string {
 
+    fn == (other: string) -> bool {
+        if self.length != other.length {
+            return false
+        }
+        i := 0
+        while i < self.length {
+            if self[i] != other[i] {
+                return false
+            }
+            i += 1
+        }
+        return true
+    }
+
     fn * (n: int) -> string {
 
         # edge case
@@ -26,6 +40,9 @@ extend string {
     }
 
     fn substr(s: int, e: int) -> string {
+        if e-s < 0 {
+            return ""
+        }
         tmp := buffer(e-s)
         i := 0
         while s < e {
@@ -104,7 +121,15 @@ extend int {
 
 type StringBuilder = {
     _size := 0
-    _data := buffer(8)
+    _data := buffer(0)
+
+    new () {
+        _data = buffer(8)
+    }
+
+    new (n: int) {
+        _data = buffer(n)
+    }
 
     fn size() -> int {
         return _size;
@@ -136,13 +161,16 @@ type StringBuilder = {
         _size += 1
     }
 
-
-    fn << (val: string) -> StringBuilder {
+    fn append(val: string) {
         n := 0
         while n < val.length {
             append(val[n])
             n += 1
         }
+    }
+
+    fn << (val: string) -> StringBuilder {
+        append(val)
         return self
     }
 

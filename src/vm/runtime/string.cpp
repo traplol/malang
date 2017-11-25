@@ -7,9 +7,12 @@
 
 using namespace Malang_Runtime;
 
+
 static Type_Token string_type_token;
 static Num_Fields_Limit length_idx;
 static Num_Fields_Limit intern_data_idx;
+
+#define IS_STR(s) assert((s)->header.type->type_token() == string_type_token)
 
 inline static
 Malang_Object_Body *cast(Malang_Object *obj)
@@ -19,11 +22,13 @@ Malang_Object_Body *cast(Malang_Object *obj)
 inline static
 Fixnum length(Malang_Object_Body *str)
 {
+    IS_STR(str);
     return str->fields[length_idx].as_fixnum();
 }
 inline static
 Char *data(Malang_Object_Body *str)
 {
+    IS_STR(str);
     return reinterpret_cast<Char*>(str->fields[intern_data_idx].as_pointer());
 }
 
@@ -57,6 +62,30 @@ void Malang_Runtime::string_alloc_push(Malang_VM &vm, const String_Constant &str
     auto s = vm.gc->allocate_object(string_type_token);
     string_construct_intern(s, string);
     vm.push_data(s);
+}
+
+char *Malang_Runtime::string_alloc_c_str(Malang_Object_Body *str)
+{
+    assert(str);
+    IS_STR(str);
+    auto d = data(str);
+    auto l = length(str);
+    auto buf = new char[l+1];
+    for (Fixnum i = 0; i < l; ++i)
+    {
+        buf[i] = d[i];
+    }
+    buf[l] = 0;
+    return buf;
+}
+Fixnum Malang_Runtime::string_length(Malang_Object_Body *str)
+{
+    return length(str);
+}
+
+Char *Malang_Runtime::string_data(Malang_Object_Body *str)
+{
+    return data(str);
 }
 
 // string(buf: buffer)
@@ -143,7 +172,7 @@ void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)
 {
     auto _string = m.get_string();
     auto _int    = m.get_int();
-    auto _char    = m.get_char();
+    auto _char   = m.get_char();
     auto _buffer = m.get_buffer();
 
     string_type_token = _string->type_token();

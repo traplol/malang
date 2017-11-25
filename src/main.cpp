@@ -500,6 +500,9 @@ int parse_to_code(Args *args)
     Scope_Lookup global_scope{&ir};
     
     Malang_Runtime::init_types(global_scope.current().bound_functions(), types);
+    Malang_Runtime::init_builtins(global_scope.current().bound_functions(), types);
+    Malang_Runtime::init_modules(global_scope.current().bound_functions(), types, modules);
+
     Parser parser(&types, &modules);
     if (args->noisy)
     {
@@ -527,7 +530,6 @@ int parse_to_code(Args *args)
     }
     else
     {
-        Malang_Runtime::init_builtins(global_scope.current().bound_functions(), types);
         Ast_To_IR ast_to_ir;
         ast_to_ir.is_noisy(args->noisy);
         ast_to_ir.convert(ast, &ir, &modules, &global_scope, &string_constants);
@@ -541,7 +543,8 @@ int parse_to_code(Args *args)
         Malang_VM vm{args,
                      &types,
                      global_scope.current().bound_functions().natives(),
-                     string_constants};
+                     string_constants,
+                     500, 100000};
         vm.load_code(cg->code);
         vm.run();
         if (args->noisy)

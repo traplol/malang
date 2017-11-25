@@ -80,9 +80,9 @@ type BfMachine = {
     fn read(source: string) {
         jmp_stack := Vector()
         jmps := Vector()
-        code := string$StringBuilder()
+        code := lib$string$StringBuilder()
         i := 0
-        for string$Iterator(source) {
+        for lib$string$Iterator(source) {
             if "<>+-.,[]".contains(it) {
                 code.append(it)
                 jmps.push_back(0)

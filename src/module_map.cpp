@@ -27,7 +27,7 @@ void Module::add_child(Module *module)
     auto exists = m_children.find(module->m_name);
     if (exists != m_children.end())
     {
-        printf("module name conflict: `%s:%s' already exists\n",
+        printf("module name conflict: `%s$%s' already exists\n",
                fully_qualified_name().c_str(), module->name().c_str());
         abort();
     }
@@ -51,12 +51,11 @@ Module *Module::find_child(name_itr &beg, name_itr &end)
     {
         return nullptr;
     }
-
+    beg++;
     if (beg == end)
     {
         return it->second;
     }
-    beg++;
     return it->second->find_child(beg, end);
 }
 

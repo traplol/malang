@@ -1,12 +1,14 @@
 ==============================================================================================
 TODO:
-    + named `for` iterator:
-      `it` should still be the default iterator name if `i in` is ommited
-      `for i in Range(0, 10) { println(i) }`
-    + builtin integer range with
-      `start..end`(n >= start to n < end)
-      `start...end`(n >= start to n <= end)
+    ? builtin integer range with
+      `start..end`  (n >= start to n <  end)
+      `start...end` (n >= start to n <= end)
    
+    + Fix qualified name resolution:
+        import string
+        import range
+        Range(0, 10)    # finds range$Range
+        StringBuilder() # does not find it, expects string$StringBuilder()
 
 
     + Types need a trivial recursion check 
@@ -437,3 +439,16 @@ Nov 20, 2017:
     + Included type alias examples
     + Fixed some things to allow 32-bit compilation
     + Compiles, runs, and passes execution tests on a Raspberry Pi Zero W
+
+Nov 21, 2017:
+    + Fixed `unalias` to be a unary prefix operator.
+    + Better error message for calling unresolvable function
+
+Nov 22, 2017:
+    --
+
+Nov 23, 2017:
+    --
+
+Nov 24, 2017:
+    + Implemented named iterators: `for my_cool_item in Range(0, 10) { println(my_cool_item) }`

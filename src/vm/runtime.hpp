@@ -7,10 +7,12 @@
 #include "runtime/fixnum.hpp"
 #include "runtime/array_buffer.hpp"
 #include "../ir/bound_function_map.hpp"
+#include "../module_map.hpp"
 namespace Malang_Runtime
 {
     void init_types(Bound_Function_Map &b, Type_Map &types);
     void init_builtins(Bound_Function_Map &b, Type_Map &types);
+    void init_modules(Bound_Function_Map &b, Type_Map &types, Module_Map &modules);
 };
 
 #endif /* MALANG_VM_RUNTIME_RUNTIME_HPP */

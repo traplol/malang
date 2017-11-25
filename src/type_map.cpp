@@ -16,16 +16,15 @@ Type_Map::~Type_Map()
 Type_Map::Type_Map()
 {
     m_module = nullptr;
-    constexpr bool builtin = true;
     constexpr bool managed = true;
     constexpr bool not_managed = false;
-    m_void   = declare_type("void",   nullptr, builtin, not_managed);
-    m_buffer = declare_type("buffer", nullptr, builtin, managed);
-    m_int    = declare_type("int",    nullptr, builtin, not_managed);
-    m_char   = declare_type("char",   nullptr, builtin, not_managed);
-    m_double = declare_type("double", nullptr, builtin, not_managed);
-    m_bool   = declare_type("bool",   nullptr, builtin, not_managed);
-    m_string = declare_type("string", nullptr, builtin, managed);
+    m_void   = declare_builtin_type("void",   nullptr, not_managed);
+    m_buffer = declare_builtin_type("buffer", nullptr, managed);
+    m_int    = declare_builtin_type("int",    nullptr, not_managed);
+    m_char   = declare_builtin_type("char",   nullptr, not_managed);
+    m_double = declare_builtin_type("double", nullptr, not_managed);
+    m_bool   = declare_builtin_type("bool",   nullptr, not_managed);
+    m_string = declare_builtin_type("string", nullptr, managed);
 }
 
 Type_Info *Type_Map::get_void() const
@@ -88,7 +87,7 @@ std::string qualify_name(Module *mod, const std::string &name)
     {
         return name;
     }
-    return mod->name() + "$" + name;
+    return mod->fully_qualified_name() + "$" + name;
 }
 
 Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent, bool is_builtin, bool is_gc_managed)
@@ -110,6 +109,12 @@ Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent)
     constexpr bool is_builtin = false;
     constexpr bool is_gc_managed = true;
     return declare_type(name, parent, is_builtin, is_gc_managed);
+}
+
+Type_Info *Type_Map::declare_builtin_type(const std::string &name, Type_Info *parent, bool gc_managed)
+{
+    constexpr bool is_builtin = true;
+    return declare_type(name, parent, is_builtin, gc_managed);
 }
 
 static

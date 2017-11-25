@@ -12,6 +12,7 @@ struct Type_Map
     Type_Map();
     Type_Info *get_or_declare_type(const std::string &name);
     Type_Info *declare_type(const std::string &name, struct Type_Info *parent);
+    Type_Info *declare_builtin_type(const std::string &name, Type_Info *parent, bool gc_managed);
     Function_Type_Info *declare_function(const Types &parameter_types, Type_Info *return_type, bool is_native);
     Array_Type_Info *get_array_type(Type_Info *of_type);
 
