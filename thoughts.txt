@@ -452,3 +452,21 @@ Nov 23, 2017:
 
 Nov 24, 2017:
     + Implemented named iterators: `for my_cool_item in Range(0, 10) { println(my_cool_item) }`
+    + Implemented `File` builtin:
+      `fn File.open(access_flags: string) -> bool`
+          opens a file with the given access flags and return true on success, false otherwise
+          access_flags are the same syntax as the C stdlib `fopen`
+      `fn File.close() -> void`
+          closes an open file or does nothing to an already closed file
+      `fn File.read(buffer) -> int`
+          opens and closes the file if it wasn't already open and fills the given buffer
+          returns the number of `char`s read
+      `fn File.write(buffer) -> int`
+          opens and closes the file if it wasn't already open and ouputs the contents of
+          a buffer to a file; returns the number of `char`s written
+      `fn File.write(string) -> int`
+          opens and closes the file if it wasn't already open and ouputs the contents of
+          a string to a file; returns the number of `char`s written
+      `fn File.read_all() -> buffer`
+          opens and closes the file if it wasn't already open and reads the entire file into
+          a buffer; returns the buffer with the file contents

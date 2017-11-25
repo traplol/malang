@@ -40,7 +40,7 @@ void file_construct(Malang_Object *place, Malang_Object *path)
     file->fields[file_desc_idx] = (void*)nullptr;
 }
 
-// fn File.open(string) -> bool
+// fn File.open(access_flags: string) -> bool
 // returns true on success, false otherwise
 static
 void file_open(Malang_VM &vm)
@@ -77,7 +77,7 @@ void file_close(Malang_VM &vm)
     file->fields[file_desc_idx] = (void*)nullptr;
 }
 
-// fn File.read(buffer) -> int
+// fn File.read(out: buffer) -> int
 // fills the given buffer and returns the number of bytes read;
 // this may be less than the size of the buffer provided.
 static
@@ -91,7 +91,7 @@ void file_read(Malang_VM &vm)
     {
         ret = fread(buf->data, 1, buf->size, fp);
     }
-    else
+    else // file not open
     {
         auto p = path(file);
         auto p_str = Malang_Runtime::string_alloc_c_str(p);
@@ -107,7 +107,7 @@ void file_read(Malang_VM &vm)
     vm.push_data(ret);
 }
 
-// fn File.write(buffer) -> int
+// fn File.write(data: buffer) -> int
 // writes the contents of the buffer to a file and returns the number of bytes written
 static
 void file_write_buffer(Malang_VM &vm)
@@ -120,7 +120,7 @@ void file_write_buffer(Malang_VM &vm)
     {
         ret = fwrite(buf->data, 1, buf->size, fp);
     }
-    else
+    else // file not open
     {
         auto p = path(file);
         auto p_str = Malang_Runtime::string_alloc_c_str(p);
@@ -136,7 +136,7 @@ void file_write_buffer(Malang_VM &vm)
     vm.push_data(ret);
 }
 
-// fn File.write(string) -> int
+// fn File.write(data: string) -> int
 // writes the contents of the string to a file and returns the number of bytes written
 static
 void file_write_string(Malang_VM &vm)
@@ -151,7 +151,7 @@ void file_write_string(Malang_VM &vm)
         auto data = Malang_Runtime::string_data(str);
         ret = fwrite(data, 1, len, fp);
     }
-    else
+    else // file not open
     {
         auto p = path(file);
         auto p_str = Malang_Runtime::string_alloc_c_str(p);
@@ -186,7 +186,7 @@ void file_read_all(Malang_VM &vm)
         fread(buf->data, 1, size, fp);
         vm.push_data(reinterpret_cast<Malang_Object*>(buf));
     }
-    else
+    else // file not open
     {
         auto p = path(file);
         auto p_str = Malang_Runtime::string_alloc_c_str(p);
@@ -212,7 +212,7 @@ void file_read_all(Malang_VM &vm)
     }
 }
 
-// File(string)
+// File(path: string)
 // creates a new File instance but does not read the file.
 static
 void file_string_new(Malang_VM &vm)
