@@ -4,11 +4,18 @@ TODO:
       `start..end`  (n >= start to n <  end)
       `start...end` (n >= start to n <= end)
    
+    + Modules/Imports need some redesign:
+      - Sometimes qualified names resolve inconsistently
+      - Currently no way to have a proper builtin module
+        - They are visible with fully qualified names regardless of being imported
+      
     + Fix qualified name resolution:
+        ```
         import string
         import range
         Range(0, 10)    # finds range$Range
         StringBuilder() # does not find it, expects string$StringBuilder()
+        ```
 
 
     + Types need a trivial recursion check 
