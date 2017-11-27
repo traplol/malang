@@ -37,7 +37,7 @@ std::vector<std::string> get_parse_test_output(Parse_Test &test)
 {
     Bound_Function_Map builtins;
     Type_Map types;
-    Module_Map modules;
+    Module_Map modules{nullptr};
     Malang_Runtime::init_types(builtins, types);
     Parser parser(&types, &modules);
     try
@@ -483,7 +483,10 @@ int parse_to_code(Args *args)
     int res = 0;
     std::vector<String_Constant> string_constants;
     Type_Map types;
-    Module_Map modules;
+
+    Malang_IR ir{&types};
+    Scope_Lookup global_scope{&ir};
+    Module_Map modules{&ir};
     // Search order:
     //  0. Relative to source file containing the import
     //  1. Relative to CWD
@@ -495,9 +498,6 @@ int parse_to_code(Args *args)
     modules.add_search_directory(plat::get_cwd());
     modules.add_search_directory(exe_dir);
     modules.add_search_directory(exe_dir + "/lib");
-
-    Malang_IR ir{&types};
-    Scope_Lookup global_scope{&ir};
     
     Malang_Runtime::init_types(global_scope.current().bound_functions(), types);
     Malang_Runtime::init_builtins(global_scope.current().bound_functions(), types);

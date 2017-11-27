@@ -5,7 +5,7 @@ import lib$range
 
 extend string {
     fn index_of(c: char) -> int {
-        for Range(0, self.length) {
+        for lib$range$Range(0, self.length) {
             if self[it] == c {
                 return it
             }
@@ -18,7 +18,7 @@ extend string {
 
     fn to_b() -> buffer {
         b := buffer(self.length)
-        for Range(0, self.length) {
+        for lib$range$Range(0, self.length) {
             b[it] = self[it]
         }
         return b
@@ -50,7 +50,7 @@ type Vector = {
     fn resize(new_size: int) {
         tmp := [new_size]int
         n := if _length < new_size _length else new_size
-        for Range(0, n)
+        for lib$range$Range(0, n)
             tmp[it] = _array[it]
         _array = tmp
     }
@@ -72,7 +72,7 @@ type BfMachine = {
     good := true
 
     new () {
-        for Range(0, data.length) {
+        for lib$range$Range(0, data.length) {
             data[it] = char(0)
         }
     }

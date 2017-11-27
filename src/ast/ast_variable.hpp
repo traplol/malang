@@ -17,6 +17,7 @@ struct Variable_Node : public Ast_LValue
     const std::string &local_name() const { return m_name; }
     const Name_Qualifiers &qualifiers() const { return m_qualifiers; }
     const std::string &name();
+    bool is_qualified() const { return m_qualifiers.size() != 0; }
 private:
     std::string m_name;
     std::string m_full_name;

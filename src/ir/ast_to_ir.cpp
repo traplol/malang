@@ -36,19 +36,6 @@ bool type_check(const Source_Location &src_loc, const std::vector<IR_Value*> &va
     return true;
 }
 
-static
-std::string qualify_name(Module *mod, const std::string &name)
-{
-    if (!mod)
-    {
-        //printf("Qualifying(%p) %s => %s\n", mod, name.c_str(), name.c_str());
-        return name;
-    }
-    auto qual = mod->name() + "$" + name;
-    //printf("Qualifying(%p) %s => %s\n", mod, name.c_str(), qual.c_str());
-    return qual;
-}
-
 void Ast_To_IR::visit(Import_Node &n)
 {
     /*
@@ -83,14 +70,21 @@ void Ast_To_IR::visit(Import_Node &n)
             cur_continue_label = old_cur_continue_label;
             cur_break_label = old_cur_break_label;
             locality = old_locality;
-            cur_symbol_scope = old_cur_symbol_scope;});
+            cur_symbol_scope = old_cur_symbol_scope;
+            ir->types->module(old_cur_module);
+        });
 
     n.mod_info->color(n.mod_info->grey);
     std::string filename, rel_path;
+    // @TODO: move realpath to plat::
     auto this_source_file = realpath(n.src_loc.filename.c_str(), NULL);
     auto this_source_dir = plat::get_directory(this_source_file);
+    if (noisy)
+    {
+        printf("from: %s\n", this_source_file);
+        printf("dir: %s\n", this_source_dir.c_str());
+    }
     free(this_source_file);
-
     if (!mod_map->find_file_rel(this_source_dir, n.mod_info, filename))
     {
         if (!mod_map->find_file(n.mod_info, filename))
@@ -103,6 +97,14 @@ void Ast_To_IR::visit(Import_Node &n)
     {
         printf("importing %s\n", filename.c_str());
     }
+    if (n.mod_info->locality())
+    {
+        locality = n.mod_info->locality();
+    }
+    //else
+    //{
+    //    // ??
+    //}
     cur_module = n.mod_info;
     ir->types->module(n.mod_info);
     Parser parser(ir->types, mod_map);
@@ -127,8 +129,41 @@ void Ast_To_IR::visit(Import_Node &n)
     _return(nullptr); // necessary?
 }
 
+static
+IR_Callable *get_bound(Malang_IR *ir, Scope_Lookup *loc, const Source_Location &src_loc, const std::string &name, Function_Parameters *arg_types)
+{
+    if (auto bound_fn = loc->current().find_bound_function(name, *arg_types))
+    {
+        if (bound_fn->is_native())
+        {
+            auto callable =
+                ir->alloc<IR_Callable>(src_loc, bound_fn->native()->index, bound_fn->fn_type());
+            return(callable);
+        }
+        else
+        {
+            auto callable =
+                ir->alloc<IR_Callable>(src_loc, bound_fn->code(), bound_fn->fn_type());
+            return(callable);
+        }
+    }
+    return nullptr;
+}
+
 void Ast_To_IR::visit(Variable_Node &n)
 {
+    auto loc = locality;
+    if (n.is_qualified())
+    {
+        auto m = mod_map->get_existing(n.qualifiers());
+        if (!m)
+        {
+            n.src_loc.report("error", "No imported module matches for `%s'",
+                             n.name().c_str());
+            abort();
+        }
+        loc = m->locality();
+    }
 
     if (cur_fn && n.name() == "recurse")
     {
@@ -138,10 +173,6 @@ void Ast_To_IR::visit(Variable_Node &n)
     }
     if (cur_call_arg_types)
     {
-        //locality->dump_symbols();
-        //printf("%s\n", n.bound_name.c_str());
-        auto qualified = qualify_name(cur_module, n.name());
-        //printf("%s\n", qualified.c_str());
         if (is_extending)
         {
             if (auto method = is_extending->get_method(n.name(), *cur_call_arg_types))
@@ -151,20 +182,13 @@ void Ast_To_IR::visit(Variable_Node &n)
                 _return(meth_call);
             }
         }
-        if (auto bound_fn = locality->current().find_bound_function(n.name(), *cur_call_arg_types))
+        if (auto in_this_module = get_bound(ir, loc, n.src_loc, n.name(), cur_call_arg_types))
         {
-            if (bound_fn->is_native())
-            {
-                auto callable =
-                    ir->alloc<IR_Callable>(n.src_loc, bound_fn->native()->index, bound_fn->fn_type());
-                _return(callable);
-            }
-            else
-            {
-                auto callable =
-                    ir->alloc<IR_Callable>(n.src_loc, bound_fn->code(), bound_fn->fn_type());
-                _return(callable);
-            }
+            _return(in_this_module);
+        }
+        if (auto global_func = get_bound(ir, globals, n.src_loc, n.name(), cur_call_arg_types))
+        {
+            _return(global_func);
         }
         if (auto type = ir->types->get_type(n.name()))
         {   // Calling constructor
@@ -178,10 +202,9 @@ void Ast_To_IR::visit(Variable_Node &n)
     {
         _return(symbol);
     }
-    // Any correct paths have "_returned" by this point so it's an error...
+    // Any correct paths have "_return"ed by this point so it's an error...
     if (cur_call_arg_types)
     {
-
         n.src_loc.report("error", "No function matches `fn %s%s'",
                          n.name().c_str(), cur_call_arg_types->to_string().c_str());
         abort();
@@ -465,13 +488,10 @@ void Ast_To_IR::visit(Fn_Node &n)
 
     if (n.is_bound())
     {
-        auto qualified = is_extending
-            ? n.bound_name
-            : qualify_name(cur_module, n.bound_name);
-        if (!locality->current().bound_functions().add(qualified, n.fn_type, fn_body))
+        if (!locality->current().bound_functions().add(n.bound_name, n.fn_type, fn_body))
         {
             n.src_loc.report("error", "Cannot bind %s to `%s' because it already exists",
-                             n.fn_type->name().c_str(), qualified.c_str());
+                             n.fn_type->name().c_str(), n.bound_name.c_str());
             abort();
         }
     }
@@ -1657,6 +1677,7 @@ void Ast_To_IR::convert(Ast &ast, Malang_IR *ir, Module_Map *mod_map, Scope_Look
     this->mod_map = mod_map;
     this->ir = ir;
     this->locality = global;
+    this->globals = global;
     this->strings = strings;
     convert_intern(ast);
 }

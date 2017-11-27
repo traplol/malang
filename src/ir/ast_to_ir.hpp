@@ -86,6 +86,7 @@ private:
     std::vector<String_Constant> *strings;
     std::vector<IR_Return*> *all_returns_this_fn;
     Scope_Lookup *locality;
+    Scope_Lookup *globals;
     Symbol_Scope cur_symbol_scope;
 
     void convert_intern(Ast &ast);

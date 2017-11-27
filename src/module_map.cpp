@@ -2,6 +2,12 @@
 #include <sstream>
 #include "module_map.hpp"
 #include "platform.hpp"
+#include "ir/scope_lookup.hpp"
+
+Module::~Module()
+{
+    delete m_locality;
+}
 
 const std::string &Module::name() const
 {
@@ -43,6 +49,12 @@ void Module::color(int c)
 {
     m_color = c;
 }
+
+Scope_Lookup *Module::locality()
+{
+    return m_locality;
+}
+
 
 Module *Module::find_child(name_itr &beg, name_itr &end)
 {
@@ -107,7 +119,17 @@ std::string Module::build_name(const std::string &sep) const
     return m_name;
 }
 
+Module *Module_Map::get_existing(const std::vector<std::string> &name)
+{
+    return get_or_make_mod(name, false);
+}
+
 Module *Module_Map::get(const std::vector<std::string> &name)
+{
+    return get_or_make_mod(name, true);
+}
+
+Module *Module_Map::get_or_make_mod(const std::vector<std::string> &name, bool can_make)
 {
     assert(!name.empty());
     auto it = m_root_modules.find(name[0]);
@@ -121,6 +143,10 @@ Module *Module_Map::get(const std::vector<std::string> &name)
         auto child = it->second->find_child({name[1]});
         if (!child)
         {
+            if (!can_make)
+            {
+                return nullptr;
+            }
             auto mod = make_mod(name[1]);
             it->second->add_child(mod);
             child = mod;
@@ -133,6 +159,10 @@ Module *Module_Map::get(const std::vector<std::string> &name)
             }
             else
             {
+                if (!can_make)
+                {
+                    return nullptr;
+                }
                 auto mod = make_mod(name[i]);
                 child->add_child(mod);
                 child = mod;
@@ -142,6 +172,10 @@ Module *Module_Map::get(const std::vector<std::string> &name)
     }
     else
     {   // If the root node doesn't exist then none of the subnodes exist either
+        if (!can_make)
+        {
+            return nullptr;
+        }
         auto root = make_mod(name[0]);
         auto cur = root;
         for (size_t i = 1; i < name.size(); ++i)
@@ -159,6 +193,7 @@ Module *Module_Map::make_mod(const std::string &name)
 {
     auto mod = new Module(name);
     mod->m_mod_map = this;
+    mod->m_locality = new Scope_Lookup{m_alloc};
     mod->color(mod->white);
     m_all_modules.push_back(mod);
     return mod;
@@ -175,7 +210,8 @@ Module_Map::~Module_Map()
     m_search_directories.clear();
 }
 
-Module_Map::Module_Map()
+Module_Map::Module_Map(Malang_IR *alloc)
+    : m_alloc(alloc)
 {
     m_search_directories.push_back(plat::get_cwd());
 }
