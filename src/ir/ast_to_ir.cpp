@@ -49,6 +49,11 @@ void Ast_To_IR::visit(Import_Node &n)
         // nothing to do, already loaded.
         _return(nullptr);
     }
+    if (n.mod_info->builtin())
+    {   // builtin modules don't need anything processed to load.
+        n.mod_info->color(n.mod_info->black);
+        _return(nullptr);
+    }
 
     // Save everything
     auto old_cur_module = cur_module;
@@ -156,7 +161,7 @@ void Ast_To_IR::visit(Variable_Node &n)
     if (n.is_qualified())
     {
         auto m = mod_map->get_existing(n.qualifiers());
-        if (!m)
+        if (!m || !m->loaded())
         {
             n.src_loc.report("error", "No imported module matches for `%s'",
                              n.name().c_str());

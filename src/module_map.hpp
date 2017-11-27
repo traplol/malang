@@ -24,20 +24,28 @@ struct Module
     Module *parent();
     Module *find_child(const std::vector<std::string> &name);
     void add_child(Module *mod);
+    bool loaded() const;
+    bool builtin() const;
+    void builtin(bool value);
     int color() const;
     void color(int c);
     Scope_Lookup *locality();
 private:
     friend Module_Map;
     Module(const std::string &name)
-        : m_parent(nullptr)
+        : m_is_builtin(false)
+        , m_color(white)
+        , m_mod_map(nullptr)
+        , m_parent(nullptr)
         , m_locality(nullptr)
         , m_name(name)
         {}
     std::string build_name(const std::string &sep) const;
     using name_itr = std::vector<std::string>::const_iterator;
-    int m_color;
     Module *find_child(name_itr &beg, name_itr &end);
+
+    bool m_is_builtin;
+    int m_color;
     Module_Map *m_mod_map;
     Module *m_parent;
     Scope_Lookup *m_locality;

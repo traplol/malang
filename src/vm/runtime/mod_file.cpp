@@ -224,14 +224,14 @@ void file_string_new(Malang_VM &vm)
 
 void Malang_Runtime::runtime_mod_file_init(Bound_Function_Map &b, Type_Map &types, Module_Map &modules)
 {
-    //auto old_mod = types.module();
-    //defer1(types.module(old_mod));
+    auto old_mod = types.module();
+    defer1(types.module(old_mod));
 
-    //auto file_mod = modules.get({"std", "file"}); // std$file
-    //assert(file_mod);
-    //types.module(file_mod);
+    auto file_mod = modules.get({"std", "file"}); // std$file
+    assert(file_mod);
+    types.module(file_mod);
     // stop imports from attempting to load the module from disk
-    //file_mod->color(file_mod->black); 
+    file_mod->builtin(true);
 
     auto _file   = types.declare_builtin_type("File", nullptr, true);
     auto _string = types.get_string();

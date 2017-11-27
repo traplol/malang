@@ -41,6 +41,20 @@ void Module::add_child(Module *module)
     m_children[module->m_name] = module;
 }
 
+bool Module::loaded() const
+{
+    return m_color != white;
+}
+bool Module::builtin() const
+{
+    return m_is_builtin;
+}
+void Module::builtin(bool value)
+{
+    // don't allow a module flagged as builtin to change.
+    assert(m_is_builtin == false || m_is_builtin == value);
+    m_is_builtin = value;
+}
 int Module::color() const
 {
     return m_color;
