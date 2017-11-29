@@ -2,7 +2,7 @@ import string
 import range
 
 fn get_to_eof() -> string {
-    sb := string$StringBuilder()
+    sb := string::StringBuilder()
     while true {
         c := get_char();
         if int(c) == -1
@@ -13,7 +13,7 @@ fn get_to_eof() -> string {
 }
 
 fn indent(i: int) {
-    for Range(0, i*4) {
+    for range::Range(0, i*4) {
         print(? )
     }
 }
@@ -25,7 +25,7 @@ ind := 0
 # Named functions are compiled first and aren't able to see any global variables however,
 # we can allow a function to see them by lazily compiling this function only after the
 # global variable has at least been declared.
-out :: fn(s: string) {
+out := fn(s: string) {
     indent(ind)
     println(s)
 }
@@ -37,7 +37,7 @@ out("int main() {")
 ind += 1
 out("char *ptr = array;")
 
-for string$Iterator(src) {
+for string::Iterator(src) {
     if it == ?>
         out("++ptr;")
     else if it == ?<
