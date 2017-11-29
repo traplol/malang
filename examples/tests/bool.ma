@@ -1,16 +1,16 @@
-one :: fn() -> bool {
+fn one() -> bool {
     println(1)
     return true
 }
-two :: fn() -> bool {
+fn two() -> bool {
     println(2)
     return true
 }
-three :: fn() -> bool {
+fn three() -> bool {
     println(3)
     return true
 }
-four :: fn() -> bool {
+fn four() -> bool {
     println(4)
     return true
 }

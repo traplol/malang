@@ -1,0 +1,6 @@
+error: examples/tests/private.bad0.ma:21:2
+
+	`A._b' is not accessible here because it is marked as _private
+	a._b = 111
+	 ---
+

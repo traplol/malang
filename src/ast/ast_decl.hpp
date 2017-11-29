@@ -9,19 +9,22 @@
 struct Decl_Node : public Ast_LValue
 {
     virtual ~Decl_Node();
-    Decl_Node(const Source_Location &src_loc, const std::string &variable, Type_Node *type, bool is_readonly)
+    Decl_Node(const Source_Location &src_loc, const std::string &variable, Type_Node *type)
         : Ast_LValue(src_loc)
+        , is_readonly(false)
+        , is_private(false)
         , variable_name(variable)
         , type(type)
-        , is_readonly(is_readonly)
     {}
 
+    AST_NODE_OVERRIDES;
+
+    bool is_readonly;
+    bool is_private;
     std::string variable_name;
     Type_Node *type;
-    bool is_readonly;
 
     virtual Type_Info *get_type() final;
-    AST_NODE_OVERRIDES;
 };
 
 struct Decl_Assign_Node : Ast_Node
@@ -33,26 +36,11 @@ struct Decl_Assign_Node : Ast_Node
         , value(value)
         {}
 
-    Decl_Node *decl;
-    Ast_Value *value;
-
     AST_NODE_OVERRIDES;
-};
-
-struct Decl_Constant_Node : Ast_Node
-{
-    virtual ~Decl_Constant_Node();
-    Decl_Constant_Node(const Source_Location &src_loc, Decl_Node *decl, Ast_Value *value)
-        : Ast_Node(src_loc)
-        , decl(decl)
-        , value(value)
-        {}
 
     Decl_Node *decl;
     Ast_Value *value;
 
-    AST_NODE_OVERRIDES;
 };
-
 
 #endif /* MALANG_AST_AST_DECL_HPP */

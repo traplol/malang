@@ -1,7 +1,7 @@
-foo :: fn() {
+FOO := fn() {
     println("hello world")
 }
-foo()
+FOO()
 
 fn() {
     println("IIFE!")

@@ -177,8 +177,8 @@ void Malang_Runtime::runtime_string_init(Bound_Function_Map &b, Type_Map &m)
 
     string_type_token = _string->type_token();
 
-    length_idx = add_field(_string, "length", _int, true);
-    intern_data_idx = add_field(_string, ".intern_data", m.get_void(), true);
+    length_idx = add_field(_string, "length", _int, true, false);
+    intern_data_idx = add_field(_string, ".intern_data", m.get_void(), true, true);
 
     add_constructor(b, m, _string, {_buffer}, string_buffer_new);
     add_constructor(b, m, _string, {_buffer, _int}, string_buffer_int_new);

@@ -1,0 +1,6 @@
+error: examples/tests/private.bad2.ma:21:2
+
+	`A._private_func' is not accessible here because it is marked as _private
+	a._private_func()
+	 
+

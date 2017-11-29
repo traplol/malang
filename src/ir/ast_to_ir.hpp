@@ -57,7 +57,6 @@ struct Ast_To_IR : Ast_Visitor
     virtual void visit(struct Extend_Node&n) override;
     virtual void visit(struct Type_Node&n) override;
     virtual void visit(struct Decl_Assign_Node&n) override;
-    virtual void visit(struct Decl_Constant_Node&n) override;
     virtual void visit(struct Return_Node&n) override;
     virtual void visit(struct Continue_Node&n) override;
     virtual void visit(struct Break_Node&n) override;

@@ -146,6 +146,11 @@ void Method_Info::set_function(IR_Label *code_ip)
     m_fn.code_ip = code_ip;
 }
 
+bool Method_Info::is_private() const
+{
+    return m_is_private;
+}
+
 bool Method_Info::is_native() const
 {
     return m_is_native;
@@ -181,6 +186,11 @@ const std::string &Field_Info::name() const
 bool Field_Info::is_readonly() const
 {
     return m_is_readonly;
+}
+
+bool Field_Info::is_private() const
+{
+    return m_is_private;
 }
 
 Num_Fields_Limit Field_Info::index() const

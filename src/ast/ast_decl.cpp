@@ -30,13 +30,3 @@ Decl_Assign_Node::~Decl_Assign_Node()
     PRINT_DTOR;
 }
 AST_NODE_OVERRIDES_IMPL(Decl_Assign_Node);
-
-Decl_Constant_Node::~Decl_Constant_Node()
-{
-    delete decl;
-    decl = nullptr;
-    delete value;
-    value = nullptr;
-    PRINT_DTOR;
-}
-AST_NODE_OVERRIDES_IMPL(Decl_Constant_Node);

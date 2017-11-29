@@ -3,13 +3,13 @@
 #include "symbol_map.hpp"
 #include "ir.hpp"
 
-IR_Symbol *Symbol_Map::make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc, Symbol_Scope scope)
+IR_Symbol *Symbol_Map::make_symbol(const Source_Location &src_loc, const std::string &name, Type_Info *type, bool is_readonly, Symbol_Scope scope)
 {
     assert(!name.empty());
     assert(type != nullptr);
     assert(get_symbol(name) == nullptr);
 
-    auto sym = m_alloc->alloc<IR_Symbol>(src_loc, name, m_local_index++, type, scope, false);
+    auto sym = m_alloc->alloc<IR_Symbol>(src_loc, name, m_local_index++, type, is_readonly, false, scope, false);
     m_symbols[sym->symbol] = sym;
     return sym;
 }

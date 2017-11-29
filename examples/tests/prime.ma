@@ -1,5 +1,5 @@
 
-prime :: fn (n: int) -> bool {
+fn prime(n: int) -> bool {
     if n < 2
         return true
     i := 2

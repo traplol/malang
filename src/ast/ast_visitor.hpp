@@ -47,7 +47,6 @@ struct Ast_Visitor
     virtual void visit(struct Constructor_Node&) = 0;
     virtual void visit(struct Type_Node&) = 0;
     virtual void visit(struct Decl_Assign_Node&) = 0;
-    virtual void visit(struct Decl_Constant_Node&) = 0;
     virtual void visit(struct Return_Node&) = 0;
     virtual void visit(struct Break_Node&) = 0;
     virtual void visit(struct Continue_Node&) = 0;

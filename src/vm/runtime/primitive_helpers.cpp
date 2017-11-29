@@ -25,9 +25,9 @@ void Malang_Runtime::add_una_op_method(Bound_Function_Map &b, Type_Map &m, Type_
     add_method(b, m, t, oper, {}, ret_ty, code);
 }
 
-Num_Fields_Limit Malang_Runtime::add_field(Type_Info *to_type, const std::string &name, Type_Info *field_type, bool is_readonly)
+Num_Fields_Limit Malang_Runtime::add_field(Type_Info *to_type, const std::string &name, Type_Info *field_type, bool is_readonly, bool is_private)
 {
-    auto field = new Field_Info{name, field_type, is_readonly};
+    auto field = new Field_Info{name, field_type, is_readonly, is_private};
     if (!to_type->add_field(field))
     {
         printf("couldn't add field `%s' to type `%s'", name.c_str(), to_type->name().c_str());

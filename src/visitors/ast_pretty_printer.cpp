@@ -393,14 +393,6 @@ void Ast_Pretty_Printer::visit(Decl_Assign_Node &n)
     str << " = ";
     to_string(*n.value);
 }
-void Ast_Pretty_Printer::visit(Decl_Constant_Node &n)
-{
-    assert(n.decl);
-    assert(n.value);
-    to_string(*n.decl);
-    str << " : ";
-    to_string(*n.value);
-}
 void Ast_Pretty_Printer::visit(struct Return_Node &n)
 {
     str << "return";

@@ -17,7 +17,7 @@ fn foo(a: bool) {
 
 fn local_test() {
     x := 42
-    local_fn_2 :: fn() {
+    LOCAL_FN_2 := fn() {
         x := 99
         println(x)
         println("local2")
@@ -27,15 +27,15 @@ fn local_test() {
         println(x)
         println("local1")
     }
-    local_fn_3 :: fn() {
+    LOCAL_FN_3 := fn() {
         x := -1
         println(x)
         println("local3")
     }
     println(x)
     local_fn_1()
-    local_fn_2()
-    local_fn_3()
+    LOCAL_FN_2()
+    LOCAL_FN_3()
     println(x)
 }
 

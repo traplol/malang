@@ -6,5 +6,5 @@
 void Malang_Runtime::runtime_buffer_init(Bound_Function_Map&, Type_Map &m)
 {
     auto _buffer = m.get_buffer();
-    add_field(_buffer, "length", m.get_int(), true);
+    add_field(_buffer, "length", m.get_int(), true, false);
 }

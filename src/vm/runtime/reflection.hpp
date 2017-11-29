@@ -160,21 +160,26 @@ struct Method_Info
 {
     ~Method_Info();
 
-    Method_Info(const std::string &name, Function_Type_Info *fn_type)
-        : m_fn_type(fn_type)
+    // @Hack: setting m_is_private this way sucks...
+
+    Method_Info(const std::string &name,Function_Type_Info *fn_type)
+        : m_is_private(name[0] == '_')
+        , m_fn_type(fn_type)
         , m_name(name)
         {
             m_fn.code_ip = nullptr;
         }
     Method_Info(const std::string &name, Function_Type_Info *fn_type, Native_Function *prim)
-        : m_fn_type(fn_type)
+        : m_is_private(name[0] == '_')
+        , m_fn_type(fn_type)
         , m_name(name)
         {
             set_function(prim);
         }
 
     Method_Info(const std::string &name, Function_Type_Info *fn_type, IR_Label *code_ip)
-        : m_fn_type(fn_type)
+        : m_is_private(name[0] == '_')
+        , m_fn_type(fn_type)
         , m_name(name)
         {
             set_function(code_ip);
@@ -188,11 +193,13 @@ struct Method_Info
     bool is_waiting_for_definition() const;
     void set_function(Native_Function *prim);
     void set_function(IR_Label *code_ip);
+    bool is_private() const;
     bool is_native() const;
     IR_Label *code_function() const;
     Native_Function *native_function() const;
 
 private:
+    bool m_is_private;
     bool m_is_native;
     Function_Type_Info *m_fn_type;
     union {
@@ -204,24 +211,27 @@ private:
 
 struct Field_Info
 {
-    Field_Info(const std::string &name, Type_Info *type, bool is_readonly)
-        : m_index(-1)
+    Field_Info(const std::string &name, Type_Info *type, bool is_readonly, bool is_private)
+        : m_is_readonly(is_readonly)
+        , m_is_private(is_private)
+        , m_index(-1)
         , m_name(name)
         , m_type(type)
-        , m_is_readonly(is_readonly)
         {}
 
     Type_Info *type() const;
     const std::string &name() const;
     bool is_readonly() const;
+    bool is_private() const;
     Num_Fields_Limit index() const;
     
 private:
     friend struct Type_Info;
+    bool m_is_readonly;
+    bool m_is_private;
     Num_Fields_Limit m_index;
     std::string m_name;
     Type_Info *m_type;
-    bool m_is_readonly;
 };
 
 

@@ -242,8 +242,8 @@ void Malang_Runtime::runtime_mod_file_init(Bound_Function_Map &b, Type_Map &type
 
     assert(_file);
     file_type_token = _file->type_token();
-    path_idx = add_field(_file, "path", _string, true);
-    file_desc_idx = add_field(_file, ".file_desc", _void, true);
+    path_idx = add_field(_file, "path", _string, true, false);
+    file_desc_idx = add_field(_file, ".file_desc", _void, true, true);
 
     add_constructor(b, types, _file, {_string}, file_string_new);
 

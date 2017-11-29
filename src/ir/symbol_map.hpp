@@ -17,7 +17,7 @@ struct Symbol_Map
         : m_alloc(alloc)
         , m_local_index(index_start)
         {}
-    IR_Symbol *make_symbol(const std::string &name, Type_Info *type, const Source_Location &src_loc, Symbol_Scope scope);
+    IR_Symbol *make_symbol(const Source_Location &src_loc, const std::string &name, Type_Info *type, bool is_readonly, Symbol_Scope scope);
     IR_Symbol *get_symbol(const std::string &name) const;
     bool any(const std::string &name) const;
     size_t index() const;

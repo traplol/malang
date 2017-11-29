@@ -109,7 +109,6 @@ static uptr<Continue_Node> parse_continue(Parser &parser);
 static uptr<While_Node> parse_while(Parser &parser);
 static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required = true);
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser);
-static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser);
 static uptr<Array_Literal_Node> parse_array_literal(Parser &parser);
 static uptr<New_Array_Node> parse_new_array(Parser &parser);
 static uptr<Ast_Value> parse_logical_or_exp(Parser &parser);
@@ -381,30 +380,41 @@ static uptr<Decl_Node> parse_declaration(Parser &parser, bool type_required)
     ACCEPT_OR_FAIL(ident, { Token_Id::Identifier });
     Token colon;
     ACCEPT_OR_FAIL(colon, { Token_Id::Colon });
-    auto type = parse_type(parser);
-    // Normally I would opt to default this to true, however function parameters are parsed
-    // with this and don't want to be readonly.
-    constexpr bool is_readonly = false;
-    if (type)
+    bool is_private = parser.is_extending && ident.to_string()[0] == '_';
+    bool is_readonly = true;
+    for (auto c : ident.to_string())
     {
-        return uptr<Decl_Node>(
-            new Decl_Node(ident.src_loc(), ident.to_string(), type.release(), is_readonly));
+        if (c >= 'a' && c <= 'z')
+        {
+            is_readonly = false;
+            break;
+        }
+    }
+
+    if (auto type = parse_type(parser))
+    {
+        auto decl = std::make_unique<Decl_Node>(ident.src_loc(), ident.to_string(), type.release());
+        decl->is_readonly = is_readonly;
+        decl->is_private = is_private;
+        return decl;
     }
     if (type_required)
     {
         parser.report_error(colon, "Type specifier required here");
-        return nullptr;
+        PARSE_FAIL;
     }
-    return uptr<Decl_Node>(
-        new Decl_Node(ident.src_loc(), ident.to_string(), nullptr, is_readonly));
+    auto decl = std::make_unique<Decl_Node>(ident.src_loc(), ident.to_string(), nullptr);
+    decl->is_readonly = is_readonly;
+    decl->is_private = is_private;
+    return decl;
 }
+
 static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
 {   // decl_assign :=
     //     decl = value
     SAVE;
     auto decl = parse_declaration(parser, false);
     CHECK_OR_FAIL(decl);
-    decl->is_readonly = false;
     Token tk_equals;
     ACCEPT_OR_FAIL(tk_equals, {Token_Id::Equals});
     auto value = parse_expression(parser);
@@ -421,36 +431,9 @@ static uptr<Decl_Assign_Node> parse_decl_assign(Parser &parser)
             decl->type = new Type_Node(decl->src_loc, val_ty);
         }
     }
-    return uptr<Decl_Assign_Node>(
-        new Decl_Assign_Node(decl->src_loc, decl.release(), value.release()));
+    return std::make_unique<Decl_Assign_Node>(decl->src_loc, decl.release(), value.release());
 }
-static uptr<Decl_Constant_Node> parse_decl_constant(Parser &parser)
-{   // decl_constant :=
-    //     decl : value
-    SAVE;
-    auto decl = parse_declaration(parser, false);
-    CHECK_OR_FAIL(decl);
-    decl->is_readonly = true;
-    Token tk_colon;
-    ACCEPT_OR_FAIL(tk_colon, {Token_Id::Colon});
-    auto value = parse_expression(parser);
-    if (!value)
-    {
-        parser.report_error(tk_colon, "Expected expression on right hand side of constant assignment");
-        return nullptr;
-    }
-    if (!decl->type)
-    {
-        auto val_ty = value->get_type();
-        if (val_ty)
-        {
-            decl->type = new Type_Node(decl->src_loc, val_ty);
-        }
-    }
-    return uptr<Decl_Constant_Node>(new Decl_Constant_Node(decl->src_loc,
-                                                           decl.release(),
-                                                           value.release()));
-}
+
 static uptr<Array_Literal_Node> parse_array_literal(Parser &parser)
 {   // array_literal :=
     //     [ expression_list ]
@@ -1252,11 +1235,6 @@ static uptr<Type_Def_Node> parse_type_definition(Parser &parser)
             type_def->fields.push_back(field.release());
             continue;
         }
-        if (auto field = parse_decl_constant(parser))
-        {
-            type_def->fields.push_back(field.release());
-            continue;
-        }
         if (auto field = parse_declaration(parser))
         {
             type_def->fields.push_back(field.release());
@@ -1326,10 +1304,6 @@ static uptr<Ast_Node> parse_statement(Parser &parser)
         if (auto decl_ass = parse_decl_assign(parser))
         {
             return decl_ass;
-        }
-        if (auto decl_con = parse_decl_constant(parser))
-        {
-            return decl_con;
         }
         if (auto decl = parse_declaration(parser))
         {

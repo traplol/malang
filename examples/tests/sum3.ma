@@ -1,4 +1,4 @@
-sum3 :: fn(a: int, b: int, c: int) -> int {
+fn sum3(a: int, b: int, c: int) -> int {
     println("a is")
     println(a)
     println("b is")

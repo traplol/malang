@@ -124,7 +124,8 @@ void Ast_To_IR::visit(Import_Node &n)
     {
         Ast_Pretty_Printer pp;
         auto x = pp.to_strings(ast);
-        for (auto &&s : x) {
+        for (auto &&s : x)
+        {
             printf("%s\n", s.c_str());
         }
     }
@@ -281,9 +282,8 @@ void Ast_To_IR::visit(Decl_Node &n)
         n.src_loc.report("error", "Cannot declare variable because it has already been declared");
         abort();
     }
-    auto symbol = locality->current().symbols().make_symbol(n.variable_name, n.type->type, n.src_loc, cur_symbol_scope);
+    auto symbol = locality->current().symbols().make_symbol(n.src_loc, n.variable_name, n.type->type, n.is_readonly, cur_symbol_scope);
     assert(symbol);
-    symbol->is_readonly = n.is_readonly;
     if (cur_symbol_scope == Symbol_Scope::Local)
     {
         ++cur_locals_count;
@@ -314,30 +314,7 @@ void Ast_To_IR::visit(Decl_Assign_Node &n)
     }
     auto variable = get<IR_Symbol*>(*n.decl);
     assert(variable);
-    variable->is_readonly = false;
     variable->is_initialized = true;
-    auto assign = ir->alloc<IR_Assignment>(n.src_loc, variable, value, variable->scope);
-    _return(assign);
-}
-
-void Ast_To_IR::visit(Decl_Constant_Node &n)
-{
-    auto variable = get<IR_Symbol*>(*n.decl);
-    assert(variable);
-    variable->is_initialized = true;
-    variable->is_readonly = true;
-    auto value = get<IR_Value*>(*n.value);
-    assert(value);
-    auto val_ty = value->get_type();
-    if (!val_ty)
-    {
-        n.value->src_loc.report("error", "Could not deduce type.");
-        abort();
-    }
-    if (!n.decl->type)
-    {
-        n.decl->type = new Type_Node{n.src_loc, val_ty};
-    }
     auto assign = ir->alloc<IR_Assignment>(n.src_loc, variable, value, variable->scope);
     _return(assign);
 }
@@ -422,7 +399,7 @@ void Ast_To_IR::visit(Fn_Node &n)
                 is_extending->add_method(method);
             }
             // don't insert self reference to non-bound methods.
-            self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
+            self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}};
             assert(self_decl);
             params_copy.insert(params_copy.begin(), self_decl);
         }
@@ -879,6 +856,18 @@ void Ast_To_IR::visit(Member_Accessor_Node &n)
 {
     auto thing = get<IR_Value*>(*n.thing);
     assert(thing);
+    auto thing_ty = thing->get_type();
+    assert(thing_ty);
+
+    // @Hack: not sure how to better tie this together
+    if (is_extending != thing_ty->aliased_to_top()
+        && n.member->name()[0] == '_'/* private */)
+    {
+        n.src_loc.report("error", "`%s.%s' is not accessible here because it is marked as _private",
+                         thing_ty->name().c_str(), n.member->name().c_str());
+        abort();
+    }
+
     auto member_access = ir->alloc<IR_Member_Access>(n.src_loc, thing, n.member->name());
     _return(member_access);
 }
@@ -980,7 +969,8 @@ void Ast_To_IR::visit(Constructor_Node &n)
         auto ctor = new Constructor_Info(n.fn_type, ctor_body);
         is_extending->add_constructor(ctor);
     }
-    auto self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}, true};
+    auto self_decl = new Decl_Node{n.src_loc, "self", new Type_Node{n.src_loc, is_extending}};
+    self_decl->is_readonly = true;
 
     auto params_copy = n.params;
     params_copy.insert(params_copy.begin(), self_decl);
@@ -1125,14 +1115,10 @@ void Ast_To_IR::visit(Type_Def_Node &n)
         {
             auto assign = get<IR_Assignment*>(*decl_assign);
             field_to_add = new Field_Info{
-                decl_assign->decl->variable_name, assign->rhs->get_type(), false};
-            init->body().push_back(assign);
-        }
-        else if (auto decl_cons = dynamic_cast<Decl_Constant_Node*>(field))
-        {
-            auto assign = get<IR_Assignment*>(*decl_cons);
-            field_to_add = new Field_Info{
-                decl_cons->decl->variable_name, assign->rhs->get_type(), true};
+                decl_assign->decl->variable_name,
+                assign->rhs->get_type(),
+                decl_assign->decl->is_readonly,
+                decl_assign->decl->is_private};
             init->body().push_back(assign);
         }
         else if (dynamic_cast<Decl_Node*>(field))
@@ -1449,10 +1435,9 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
 
     // This allows us to create the iterator in the first step of the for loop and continue using it
     locality->push(false);
-    auto itr_sym = locality->current().symbols().make_symbol(".itr", itr_ty, itr->src_loc, cur_symbol_scope);
+    auto itr_sym = locality->current().symbols().make_symbol(itr->src_loc, ".itr", itr_ty, true, cur_symbol_scope);
     // @FIXME: this should be automatic
     cur_locals_count++;
-    itr_sym->is_readonly = true;
     auto assign_itr = ir->alloc<IR_Assignment>(itr->src_loc, itr_sym, itr, cur_symbol_scope);
     block.push_back(assign_itr);
     auto condition = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, move_next, std::vector<IR_Value*>());
@@ -1462,9 +1447,8 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     auto branch_if_cond_false = ir->alloc<IR_Pop_Branch_If_False>(n.src_loc, loop_block->end());
     block.push_back(branch_if_cond_false);
     {
-        auto it_sym = locality->current().symbols().make_symbol(n.it, current->return_type(), itr->src_loc, cur_symbol_scope);
+        auto it_sym = locality->current().symbols().make_symbol(itr->src_loc, n.it, current->return_type(), true, cur_symbol_scope);
         cur_locals_count++;
-        it_sym->is_readonly = true;
         auto call_current = ir->alloc<IR_Call_Method>(itr->src_loc, itr_sym, current, std::vector<IR_Value*>());
         auto assign_it = ir->alloc<IR_Assignment>(itr->src_loc, it_sym, call_current, cur_symbol_scope);
         loop_block->body().push_back(assign_it);
@@ -1618,11 +1602,11 @@ void Ast_To_IR::visit(struct Array_Literal_Node &n)
     auto array_type = ir->types->get_array_type(of_type);
     auto size = ir->alloc<IR_Fixnum>(n.src_loc, ir->types->get_int(), values.size());
     auto new_array = ir->alloc<IR_New_Array>(n.src_loc, array_type, of_type, size);
-    auto arr_tmp = locality->current().symbols().make_symbol(".array_lit",
+    auto arr_tmp = locality->current().symbols().make_symbol(n.src_loc,
+                                                             ".array_lit",
                                                              array_type,
-                                                             n.src_loc,
+                                                             true,
                                                              cur_symbol_scope);
-    arr_tmp->is_readonly = true;
     auto assign_arr = ir->alloc<IR_Assignment>(n.src_loc, arr_tmp, new_array, cur_symbol_scope);
 
     // Create the array
