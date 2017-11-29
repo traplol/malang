@@ -1,0 +1,6 @@
+error: examples/tests/private.bad3.ma:4:16
+
+	`_CONST' is constant and cannot be reassigned
+	        _CONST = 111
+	               -
+
