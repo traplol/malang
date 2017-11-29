@@ -16,6 +16,7 @@ enum class Token_Id : size_t
     Equals,             // =
     Dollar,             // $
     Colon,              // :
+    ColonColon,         // ::
     StmtTerminator,     // ;
     Open_Paren,         // (
     Close_Paren,        // )

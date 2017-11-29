@@ -16,7 +16,7 @@ const std::string &Variable_Node::name()
     std::stringstream ss;
     for (auto &&q : m_qualifiers)
     {
-        ss << q << "$";
+        ss << q << "::";
     }
     ss << m_name;
     m_full_name = ss.str();

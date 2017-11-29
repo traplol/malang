@@ -1,4 +1,4 @@
-import lib$string
+import lib::string
 
 println("hello world")
 

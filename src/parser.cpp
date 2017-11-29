@@ -833,7 +833,7 @@ static uptr<Variable_Node> parse_qualified_name(Parser &parser)
     ACCEPT_OR_FAIL(name, {Token_Id::Identifier});
     first = name;
     Variable_Node::Name_Qualifiers qualifiers;
-    while (parser.accept({Token_Id::Dollar}))
+    while (parser.accept({Token_Id::ColonColon}))
     {
         qualifiers.push_back(name.to_string());
         CHECK_OR_FAIL(parser.expect(name, Token_Id::Identifier));

@@ -33,7 +33,7 @@ void Module::add_child(Module *module)
     auto exists = m_children.find(module->m_name);
     if (exists != m_children.end())
     {
-        printf("module name conflict: `%s$%s' already exists\n",
+        printf("module name conflict: `%s::%s' already exists\n",
                fully_qualified_name().c_str(), module->name().c_str());
         abort();
     }
@@ -120,7 +120,7 @@ const std::string &Module::fully_qualified_name()
         return m_fully_qualified_name;
     }
 
-    m_fully_qualified_name = build_name("$");
+    m_fully_qualified_name = build_name("::");
     return m_fully_qualified_name;
 }
 

@@ -167,8 +167,8 @@ void parse_tests()
          "fn () -> void {\n"
          "}"},
 
-        { "PI :: 3.14159",
-          "PI : double : 3.14159" },
+        { "PI := 3.14159",
+          "PI : double = 3.14159" },
 
         {"y : fn()->xxx = fn () -> xxx {}",
          "y : fn () -> xxx = fn () -> xxx {\n"
@@ -185,8 +185,8 @@ void parse_tests()
         {"x : fn () -> int ",
          "x : fn () -> int"},
 
-        {"x :: fn () -> int {}",
-         "x : fn () -> int : fn () -> int {\n"
+        {"x := fn () -> int {}",
+         "x : fn () -> int = fn () -> int {\n"
          "}"},
 
         {"a[0] = 5", "a[0] = 5"},
@@ -334,10 +334,10 @@ void parse_tests()
          "type Greeter = {\n"
          "}"},
         {"type Math = {\n"
-         "    PI :: 3.14159\n"
+         "    PI := 3.14159\n"
          "}",
          "type Math = {\n"
-         "    PI : double : 3.14159\n"
+         "    PI : double = 3.14159\n"
          "}"},
 
         {"type Vec3 = {\n"
@@ -414,14 +414,14 @@ void parse_tests()
         {"import x",
          "import x"},
 
-        {"import x$y",
-         "import x$y"},
+        {"import x::y",
+         "import x::y"},
 
-        {"import x $ y $ z",
-         "import x$y$z"},
+        {"import x :: y :: z",
+         "import x::y::z"},
 
-        {"import std $foo$ bar$ baz",
-         "import std$foo$bar$baz"},
+        {"import std ::foo:: bar:: baz",
+         "import std::foo::bar::baz"},
 
         {"import x\n"
          "import x\n"
@@ -434,11 +434,11 @@ void parse_tests()
           "import x",
           "import x"}},
 
-        {"a := x$ y$ z", "a : = x$y$z"},
+        {"a := x:: y:: z", "a : = x::y::z"},
 
-        {"a :: x$ y$ z()", "a : : x$y$z()"},
+        {"A := x:: y:: z()", "A : = x::y::z()"},
 
-        {"x $y $z()", "x$y$z()"},
+        {"x ::y ::z()", "x::y::z()"},
 
         {"unalias x", "unalias x"},
         {"unalias(x)", "unalias x"},

@@ -55,6 +55,7 @@ static void init_tk_type_map()
         SET_TK_TYPE_MAP(String);
         SET_TK_TYPE_MAP(Character);
         SET_TK_TYPE_MAP(Equals);
+        SET_TK_TYPE_MAP(ColonColon);
         SET_TK_TYPE_MAP(Colon);
         SET_TK_TYPE_MAP(Dollar);
         SET_TK_TYPE_MAP(StmtTerminator);
@@ -391,6 +392,7 @@ continue; \
         PUSH_TOKEN_2C("[]", Op_Index_Get);
 
 
+        PUSH_TOKEN_2C("::", ColonColon);
         PUSH_TOKEN_2C("+=", Plus_Equals);
         PUSH_TOKEN_2C("-=", Minus_Equals);
         PUSH_TOKEN_2C("*=", Star_Equals);

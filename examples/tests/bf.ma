@@ -1,11 +1,11 @@
-import lib$string
-import lib$range
+import lib::string
+import lib::range
 
 # https://en.wikipedia.org/wiki/Brainfuck
 
 extend string {
     fn index_of(c: char) -> int {
-        for lib$range$Range(0, self.length) {
+        for lib::range::Range(0, self.length) {
             if self[it] == c {
                 return it
             }
@@ -18,7 +18,7 @@ extend string {
 
     fn to_b() -> buffer {
         b := buffer(self.length)
-        for lib$range$Range(0, self.length) {
+        for lib::range::Range(0, self.length) {
             b[it] = self[it]
         }
         return b
@@ -50,7 +50,7 @@ type Vector = {
     fn resize(new_size: int) {
         tmp := [new_size]int
         n := if _length < new_size _length else new_size
-        for lib$range$Range(0, n)
+        for lib::range::Range(0, n)
             tmp[it] = _array[it]
         _array = tmp
     }
@@ -72,7 +72,7 @@ type BfMachine = {
     good := true
 
     new () {
-        for lib$range$Range(0, data.length) {
+        for lib::range::Range(0, data.length) {
             data[it] = char(0)
         }
     }
@@ -80,9 +80,9 @@ type BfMachine = {
     fn read(source: string) {
         jmp_stack := Vector()
         jmps := Vector()
-        code := lib$string$StringBuilder()
+        code := lib::string::StringBuilder()
         i := 0
-        for lib$string$Iterator(source) {
+        for lib::string::Iterator(source) {
             if "<>+-.,[]".contains(it) {
                 code.append(it)
                 jmps.push_back(0)

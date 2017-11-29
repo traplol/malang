@@ -83,11 +83,11 @@ void Type_Map::module(Module *mod)
 static
 std::string qualify_name(Module *mod, const std::string &name)
 {
-    if (!mod || name.find('$') != std::string::npos)
+    if (!mod || name.find("::") != std::string::npos)
     {
         return name;
     }
-    return mod->fully_qualified_name() + "$" + name;
+    return mod->fully_qualified_name() + "::" + name;
 }
 
 Type_Info *Type_Map::declare_type(const std::string &name, Type_Info *parent, bool is_builtin, bool is_gc_managed)
