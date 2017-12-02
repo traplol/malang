@@ -13,9 +13,7 @@ void IR_To_Code::visit(IR_Noop &)
 
 void IR_To_Code::visit(IR_Discard_Result &n)
 {
-    if (!skip_next_drop)
-        cg->push_back_drop(n.num);
-    skip_next_drop = false;
+    cg->push_back_drop(n.num);
 }
 
 void IR_To_Code::visit(IR_Duplicate_Result &)
@@ -106,11 +104,6 @@ void IR_To_Code::visit(IR_Callable &n)
     {
         assert(n.u.label->is_resolved());
         cg->push_back_literal_32(n.u.label->address());
-    }
-    else
-    {   // @FixMe: this is a hack to omit a Literal_32 followed by a Drop_1 in the case
-        // of a function being hard-bound to a variable.
-        skip_next_drop = true;
     }
 }
 
@@ -915,7 +908,6 @@ Codegen *IR_To_Code::convert(Malang_IR &ir)
 {
     cg = new Codegen;
     this->ir = &ir;
-    skip_next_drop = false;
     convert_many(ir.first);
     convert_many(ir.second);
     cg->push_back_halt();
