@@ -1475,10 +1475,12 @@ void Ast_To_IR::visit(For_Node &n)
     if (itr_ty == ir->types->get_buffer())
     {
         itr->src_loc.report("NYI", "iterators not yet implemented for buffers");
+        abort();
     }
     else if (dynamic_cast<Array_Type_Info*>(itr_ty))
     {
         itr->src_loc.report("NYI", "iterators not yet implemented for arrays");
+        abort();
     }
     else
     {
