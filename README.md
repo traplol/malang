@@ -45,7 +45,8 @@ There are plans to support and move towards CMake, but [tup](http://gittup.org/t
   $ cd malang
   $ tup init
   $ tup
-  $ ./mal examples/hello-world.ma
+  $ ./mal -q examples/hello-world.ma
+    hello world!
   ```
 
 ## Crash course
