@@ -384,7 +384,7 @@ void Ast_To_IR::visit(Fn_Node &n)
                 }
                 else
                 {
-                    n.src_loc.report("error", "Method `%s %s' already defined for type `%s'",
+                    n.src_loc.report("error", "Method `%s' `%s' already defined for type `%s'",
                                      n.bound_name.c_str(),
                                      n.fn_type->name().c_str(),
                                      is_extending->name().c_str());
