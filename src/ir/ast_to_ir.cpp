@@ -937,8 +937,8 @@ void Ast_To_IR::visit(Constructor_Node &n)
     // decide whether or not we use the Return_Fast instruction
     std::vector<IR_Return*> returns_this_fn;
     all_returns_this_fn = &returns_this_fn;
-    const bool is_void_return = n.fn_type->return_type() == ir->types->get_void();
-    assert(is_void_return); // constructor must be void return.
+    // constructor must be void return.
+    assert(n.fn_type->return_type() == ir->types->get_void()); 
     assert(is_extending);
     locality->push(true);
     auto ctor_body =

@@ -8,7 +8,6 @@ struct Scope
 {
     Scope(Scope *parent, Malang_IR *alloc, size_t index_start, bool can_see_parent_scope)
         : m_parent(parent)
-        , m_alloc(alloc)
         , m_can_see_parent_scope(can_see_parent_scope)
         , m_symbol_map(alloc, index_start)
         {}
@@ -23,7 +22,6 @@ struct Scope
 private:
     friend struct Scope_Lookup;
     Scope *m_parent;
-    Malang_IR *m_alloc;
     bool m_can_see_parent_scope;
     Symbol_Map m_symbol_map;
     Bound_Function_Map m_bound_function_map;
@@ -40,9 +38,9 @@ struct Scope_Lookup
     void dump_symbols() const;
     void dump_funcs() const;
 private:
-    std::vector<bool> m_frame_stack;
     Malang_IR *m_alloc;
     Scope *m_current_scope;
+    std::vector<bool> m_frame_stack;
 };
 
 #endif /* MALANG_SCOPE_LOOKUP_HPP */

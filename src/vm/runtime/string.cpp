@@ -93,13 +93,13 @@ Char *Malang_Runtime::string_data(Malang_Object_Body *str)
 static
 void string_buffer_new(Malang_VM &vm)
 {
-    auto arg_1 = vm.pop_data().as_object();
-    assert(arg_1->object_tag == Buffer);
-    auto buffer = reinterpret_cast<Malang_Buffer*>(arg_1);
-    auto arg_0 = vm.pop_data().as_object();
-    auto str_ref = reinterpret_cast<Malang_Object_Body*>(arg_0);
-    assert(str_ref->header.type->type_token() == string_type_token);
-    string_construct_move_buf(arg_0, buffer);
+    auto buf = vm.pop_data().as_object();
+    assert(buf->object_tag == Buffer);
+    auto buffer = reinterpret_cast<Malang_Buffer*>(buf);
+    auto self = vm.pop_data().as_object();
+    assert(self);
+    IS_STR(reinterpret_cast<Malang_Object_Body*>(self));
+    string_construct_move_buf(self, buffer);
 }
 
 // string(buf: buffer, num_chars: int)
@@ -111,8 +111,8 @@ void string_buffer_int_new(Malang_VM &vm)
     assert(_buffer->object_tag == Buffer);
     auto buffer = reinterpret_cast<Malang_Buffer*>(_buffer);
     auto self = vm.pop_data().as_object();
-    auto self_str = reinterpret_cast<Malang_Object_Body*>(self);
-    assert(self_str->header.type->type_token() == string_type_token);
+    assert(self);
+    IS_STR(reinterpret_cast<Malang_Object_Body*>(self));
 
     auto copy = new Char[num_chars];
     auto n = std::min(num_chars, buffer->size);
