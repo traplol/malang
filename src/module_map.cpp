@@ -1,7 +1,7 @@
 #include <cassert>
 #include <sstream>
 #include "module_map.hpp"
-#include "platform.hpp"
+#include "platform/dir.hpp"
 #include "ir/scope_lookup.hpp"
 
 Module::~Module()

@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "platform.hpp"
+#include "dir.hpp"
 
 std::string plat::get_directory(const std::string &path)
 {

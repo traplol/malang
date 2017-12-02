@@ -15,6 +15,10 @@ extend string {
         return true
     }
 
+    fn != (other: string) -> bool {
+        return if self == other false else true
+    }
+
     fn * (n: int) -> string {
 
         # edge case

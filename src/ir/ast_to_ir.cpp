@@ -2,7 +2,7 @@
 #include "ast_to_ir.hpp"
 #include "nodes.hpp"
 #include "../defer.hpp"
-#include "../platform.hpp"
+#include "../platform/dir.hpp"
 #include "../parser.hpp"
 #include "../ast/nodes.hpp"
 #include "../vm/runtime/reflection.hpp"
@@ -41,8 +41,6 @@ void Ast_To_IR::visit(Import_Node &n)
     /*
      * Imports/modules are a mess. 
      */
-
-
     assert(n.mod_info);
     if (n.mod_info->color() != n.mod_info->white)
     {

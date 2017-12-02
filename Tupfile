@@ -17,6 +17,7 @@ srcs += src/visitors/*.cpp
 srcs += src/vm/*.cpp
 srcs += src/vm/runtime/*.cpp
 srcs += src/ir/*.cpp
+srcs += src/platform/*.cpp
 srcs += src/codegen/*.cpp
 : foreach $(srcs) |> $(CC) $(CFLAGS) -c %f -o %o |> build/%B.o
 : build/*.o |> $(CC) $(LDFLAGS) %f -o %o |> mal

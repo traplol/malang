@@ -4,7 +4,9 @@
 #include "runtime/string.hpp"
 #include "runtime/array_buffer.hpp"
 #include "runtime/builtins.hpp"
+
 #include "runtime/mod_file.hpp"
+#include "runtime/mod_socket.hpp"
 
 
 void Malang_Runtime::init_types(Bound_Function_Map &b, Type_Map &types)
@@ -23,4 +25,5 @@ void Malang_Runtime::init_builtins(Bound_Function_Map &b, Type_Map &types)
 void Malang_Runtime::init_modules(Bound_Function_Map &b, Type_Map &types, Module_Map &modules)
 {
     Malang_Runtime::runtime_mod_file_init(b, types, modules);
+    Malang_Runtime::runtime_mod_socket_init(b, types, modules);
 }

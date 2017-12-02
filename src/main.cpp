@@ -7,9 +7,9 @@
 #include <iostream>
 
 #include "system_args.hpp"
-#include "platform.hpp"
 #include "parser.hpp"
 #include "visitors/ast_pretty_printer.hpp"
+#include "platform/dir.hpp"
 #include "vm/vm.hpp"
 #include "vm/runtime.hpp"
 #include "codegen/codegen.hpp"
