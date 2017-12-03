@@ -92,8 +92,7 @@ private:
     IR_Symbol *find_symbol(const std::string &name);
     void convert_body(const std::vector<Ast_Node*> &src, std::vector<IR_Node*> &dst, struct IR_Value **last_node_as_value = nullptr);
     bool symbol_already_declared_here(const std::string &name);
-    void gen_for_iterator_buffer(For_Node &n, IR_Value *buffer);
-    void gen_for_iterator_array(For_Node &n, IR_Value *array);
+    void gen_for_iterator_len_idx(For_Node &n);
     void gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_next, Method_Info *current);
 
 

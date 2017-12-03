@@ -277,7 +277,8 @@ void Ast_To_IR::visit(Decl_Node &n)
     assert(n.type->type);
     if (symbol_already_declared_here(n.variable_name))
     {
-        n.src_loc.report("error", "Cannot declare variable because it has already been declared");
+        n.src_loc.report("error", "Cannot declare variable `%s' because it has already been declared",
+                         n.variable_name.c_str());
         abort();
     }
     auto symbol = locality->current().symbols().make_symbol(n.src_loc, n.variable_name, n.type->type, n.is_readonly, cur_symbol_scope);
@@ -1389,7 +1390,7 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     auto itr_ty = itr->get_type();
     if (!move_next)
     {
-        itr->src_loc.report("error", "type `%s' does no implement `fn move_next() -> bool'",
+        itr->src_loc.report("error", "type `%s' does not implement `fn move_next() -> bool'",
                             itr_ty->name().c_str());
         abort();
     }
@@ -1401,7 +1402,7 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     }
     if (!current)
     {
-        itr->src_loc.report("error", "type `%s' does no implement `fn current() -> T'",
+        itr->src_loc.report("error", "type `%s' does not implement `fn current() -> T'",
                             itr_ty->name().c_str());
         abort();
     }
@@ -1461,6 +1462,88 @@ void Ast_To_IR::gen_for_iterator(For_Node &n, IR_Value *itr, Method_Info *move_n
     _return(ret);
 }
 
+void Ast_To_IR::gen_for_iterator_len_idx(For_Node &n)
+{
+    /*
+     * # Malang
+     * for [1, 2, 3, 4] {
+     *     println(it)
+     * }
+     * 
+     * # Desugars into
+     * {
+     *     .itr = [1, 2, 3, 4]
+     *     it_index = 0
+     *     while it_index < .itr.length {
+     *         it := .itr[it_index]
+     *         ...usercode...
+     *         it_index += 1
+     *     }
+     * }
+     */
+
+    
+    // Trying something alternative to hand-assembling the desugared result.
+
+    // @Leak: this AST is intentionally being leaked because:
+    // @Bug: We're creating a variable named ".itr" and assigning n.iterable to it which will
+    //       be freed when n gets freed.
+    // @Bug: We're copying n.body into this but that will be freed when n gets freed.
+    std::vector<Ast_Node*> desugar;
+    auto _itr = new Decl_Assign_Node{n.src_loc,
+                                     new Decl_Node{n.src_loc, ".itr", nullptr},
+                                     n.iterable};
+    desugar.push_back(_itr);
+    auto it_index_name = n.it + "_index";
+    auto it_index = new Decl_Assign_Node{n.src_loc,
+                                         new Decl_Node{n.src_loc, it_index_name, nullptr},
+                                         new Integer_Node{n.src_loc, 0, ir->types->get_int()}};
+    desugar.push_back(it_index);
+    auto _itr_length = new Member_Accessor_Node{n.src_loc,
+                                                new Variable_Node{n.src_loc, ".itr", {}},
+                                                new Variable_Node{n.src_loc, "length", {}}};
+                                                
+    auto cond = new Less_Than_Node{n.src_loc,
+                                   new Variable_Node{n.src_loc, it_index_name, {}}
+                                   , _itr_length};
+    auto v = new Index_Node{n.src_loc,
+                            new Variable_Node{n.src_loc, ".itr", {}},
+                            new List_Node{n.src_loc,
+                                          {new Variable_Node{n.src_loc, it_index_name, {}}}}};
+    auto it = new Decl_Assign_Node{n.src_loc,
+                                   new Decl_Node{n.src_loc, n.it, nullptr},
+                                   v};
+                                   
+    std::vector<Ast_Node*> while_body;
+    while_body.push_back(it);
+    while_body.insert(while_body.end(), n.body.begin(), n.body.end());
+    auto inc = new Add_Node{n.src_loc,
+                            new Variable_Node{n.src_loc, it_index_name, {}},
+                            new Integer_Node{n.src_loc, 1, ir->types->get_int()}};
+    auto step = new Assign_Node{n.src_loc,
+                                new Variable_Node{n.src_loc, it_index_name, {}},
+                                inc};
+    while_body.push_back(step);
+    
+    auto while_node = new While_Node {n.src_loc, cond, while_body};
+    desugar.push_back(while_node);
+
+    locality->push(false);
+    std::vector<IR_Node*> block;
+    for (auto &&n : desugar)
+    {
+        auto irn = get(*n);
+        if (irn)
+        {
+            block.push_back(irn);
+        }
+    }
+    locality->pop();
+    
+    auto ret = ir->alloc<IR_Block>(n.src_loc, block, ir->types->get_void());
+    _return(ret);
+}
+
 void Ast_To_IR::visit(For_Node &n)
 {
     assert(n.iterable);
@@ -1472,21 +1555,33 @@ void Ast_To_IR::visit(For_Node &n)
     // Something "iterable" is an array, a buffer, or has both of:
     //    fn move_next() -> bool
     //    fn current() -> T
-    if (itr_ty == ir->types->get_buffer())
+    // OR
+    //    it is an array or a buffer.
+    //if (itr_ty == ir->types->get_buffer())
+    //{
+    //    gen_for_iterator_len_idx(n);
+    //}
+    //else if (dynamic_cast<Array_Type_Info*>(itr_ty))
+    //{
+    //    gen_for_iterator_len_idx(n);
+    //}
+    //else
+    //{
+    //    auto move_next = itr_ty->get_method("move_next", {});
+    //    auto current = itr_ty->get_method("current", {});
+    //    gen_for_iterator(n, itr, move_next, current);
+    //}
+
+    // Experimental...
+    auto move_next = itr_ty->get_method("move_next", {});
+    auto current = itr_ty->get_method("current", {});
+    if (move_next && current)
     {
-        itr->src_loc.report("NYI", "iterators not yet implemented for buffers");
-        abort();
-    }
-    else if (dynamic_cast<Array_Type_Info*>(itr_ty))
-    {
-        itr->src_loc.report("NYI", "iterators not yet implemented for arrays");
-        abort();
+        gen_for_iterator(n, itr, move_next, current);
     }
     else
     {
-        auto move_next = itr_ty->get_method("move_next", {});
-        auto current = itr_ty->get_method("current", {});
-        gen_for_iterator(n, itr, move_next, current);
+        gen_for_iterator_len_idx(n);
     }
 }
 
