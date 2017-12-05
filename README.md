@@ -58,8 +58,8 @@ x : int
 x = 42
 y : double = 123.45
 
-PI :: 3.14159
-PI = 3.0             # compile error because :: signifies it is a constant
+PI := 3.14159
+PI = 3.0             # compile error because ALL_CAPS signifies it is a constant
 
 z := "hello world"
 
@@ -73,11 +73,12 @@ c := if true "yep" else "nope"
 ### Flow control
 An if/else block may be used as a value if the last expression for both legs is not ```void```
 ```
+# `and` and `&&` are the same and `or` and `||` are also the same
 if one
     println("hello world")
-else if two or three
+else if two or three and four
     println("wat")
-else if four or five
+else if five || size && seven
     println("woo!")
 else
     println("hmm")
@@ -181,6 +182,12 @@ while i < a_buf.length {
 ```
 type D = {
     e := 0
+    
+    _private_var := "hello world"     # starts with _ so this is private in this context
+    CONST_VAR := 99                   # ALL_CAPS so this is constant/readonly in this context
+    public_var := true                # not _private or CONST to this is public
+    _ANOTHER_CONST := 111             # _private and CONST
+    
     new (e: int) {
         self.e = e
     }
