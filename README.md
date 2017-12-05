@@ -15,7 +15,7 @@ in development but already it features:
 + extend any type with operators and methods
 + user-defined structures
 + strong type aliasing
-+ a (buggy) module system
++ a file-based module system
 
 Planned features:
 
