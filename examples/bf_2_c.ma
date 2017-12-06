@@ -37,7 +37,7 @@ out("int main() {")
 ind += 1
 out("char *ptr = array;")
 
-for string::Iterator(src) {
+for src {
     if it == ?>
         out("++ptr;")
     else if it == ?<

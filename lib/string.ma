@@ -1,6 +1,12 @@
 
 extend string {
 
+    fn + (c: char) -> string {
+        b := buffer(1)
+        b[0] = c
+        return self + string(b, 1)
+    }
+
     fn == (other: string) -> bool {
         if self.length != other.length {
             return false
@@ -98,6 +104,28 @@ extend string {
         }
         return string(tmp, i)
     }
+
+    fn to_i() -> int {
+        if self.length == 0 return 0
+
+        n := 0
+
+        i := 0
+        sign := 1
+        if self[i] == ?+ or self[i] == ?- {
+            sign = if self[i] == ?- {-1} else {1}
+            i += 1
+        }
+        while i < self.length {
+            if self[i] < ?0 or self[i] > ?9 {
+                break
+            }
+            n += self[i] - ?0
+            n *= 10
+            i += 1
+        }
+        return (n/10) * sign
+    }
 }
 
 extend int {
@@ -106,7 +134,7 @@ extend int {
             return "0"
         }
         tmp := buffer(32)
-        negative := if self < 0 true else false
+        negative := self < 0
         n := if negative {-self} else {self}
         i := 0
         chars := "0123456789"

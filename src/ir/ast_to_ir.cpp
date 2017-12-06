@@ -1482,9 +1482,7 @@ void Ast_To_IR::gen_for_iterator_len_idx(For_Node &n)
      * }
      */
 
-    
     // Trying something alternative to hand-assembling the desugared result.
-
     // @Leak: this AST is intentionally being leaked because:
     // @Bug: We're creating a variable named ".itr" and assigning n.iterable to it which will
     //       be freed when n gets freed.
@@ -1585,27 +1583,6 @@ void Ast_To_IR::visit(For_Node &n)
     }
 }
 
-static inline
-Type_Info *deduce_type(Type_Info *default_type, IR_Value *cons, IR_Value *alt)
-{
-    if (!cons || !alt)
-    {
-        return default_type;
-    }
-    auto cons_ty = cons->get_type();
-    assert(cons_ty);
-    auto alt_ty = alt->get_type();
-    assert(alt_ty);
-    if (alt_ty->is_assignable_to(cons_ty))
-    {
-        return cons_ty;
-    }
-
-    alt->src_loc.report("error", "Cannot convert from type `%s' to `%s'",
-                        alt_ty->name().c_str(), cons_ty->name().c_str());
-    abort();
-}
-
 void Ast_To_IR::visit(If_Else_Node &n)
 {
     auto old_cur_false_label = cur_false_label;
@@ -1653,7 +1630,19 @@ void Ast_To_IR::visit(If_Else_Node &n)
         block.push_back(alt_begin_label);
     }
 
-    auto if_else_type = deduce_type(ir->types->get_void(), last_conseq, last_altern);
+    auto if_else_type = ir->types->get_void();
+    if (last_conseq && last_altern)
+    {
+        auto cons_ty = last_conseq->get_type();
+        assert(cons_ty);
+        auto alt_ty = last_altern->get_type();
+        assert(alt_ty);
+        if (alt_ty->is_assignable_to(cons_ty))
+        {
+            if_else_type = cons_ty;
+        }
+    }
+
     auto ret = ir->alloc<IR_Block>(n.src_loc, block, if_else_type);
     _return(ret);
 }
