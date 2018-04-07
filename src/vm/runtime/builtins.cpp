@@ -208,6 +208,14 @@ void make_builtin(Bound_Function_Map &b, Type_Map &t, const std::string &name, N
     b.add(name, fn, native_code);
 }
 
+
+static
+void mal_exit(Malang_VM &vm)
+{
+    auto code = vm.pop_data().as_fixnum();
+    exit(code);
+}
+
 void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
 {
     // fn get_char() -> char
@@ -251,6 +259,9 @@ void Malang_Runtime::runtime_builtins_init(Bound_Function_Map &b, Type_Map &t)
     make_builtin(b, t, "print", print_buffer, {t.get_buffer()}, t.get_void());
     // fn print(string) -> void
     make_builtin(b, t, "print", print_string, {t.get_string()}, t.get_void());
+
+    // fn exit(int) -> void
+    make_builtin(b, t, "exit",  mal_exit,  {t.get_int()}, t.get_void());
 
     // fn stack_trace() -> void
     make_builtin(b, t, "stack_trace", stack_trace, {}, t.get_void());

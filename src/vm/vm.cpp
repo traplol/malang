@@ -174,8 +174,8 @@ void Malang_VM::stack_trace() const
         print("%d: %s\n", i-this_frame_ends_at, to_string(local).c_str());
         if (i == this_frame_ends_at)
         {
-            tmp_locals_frames_top--;
             print("~~~~~~~~~\n");
+            tmp_locals_frames_top--;
         }
     }
 
@@ -356,6 +356,10 @@ void debugger(Malang_VM &vm, byte *ip)
                 print("se(cond)           prints second of stack\n");
                 print("th(ird)            prints third of stack\n");
                 print("fo(urth)           prints fourth of stack\n");
+                print("hex n=0            prints hexadecimal value of the n'th local\n");
+                print("fixnum n=0         prints hexadecimal value of the n'th local without the fixnum tag\n");
+                print("pointer n=0        prints hexadecimal value of the n'th local without the pointer tag\n");
+                print("object n=0         prints hexadecimal value of the n'th local without the object tag\n");
             }
             else if (cmd_str == "s" || cmd_str == "step")
             {
@@ -387,6 +391,25 @@ void debugger(Malang_VM &vm, byte *ip)
                 {
                     dbg_dis(vm, ip, n);
                 }
+            }
+            else if (cmd_str == "hex")
+            {
+                print("LOCAL %x: %p\n", arg0, vm.get_local(arg0));
+            }
+            else if (cmd_str == "fixnum")
+            {
+                print("LOCAL %x: %p\n", arg0,
+                      vm.get_local(arg0).bits() & (~Malang_Value::fixnum_tag));
+            }
+            else if (cmd_str == "pointer")
+            {
+                print("LOCAL %x: %p\n", arg0,
+                      vm.get_local(arg0).bits() & (~Malang_Value::pointer_tag));
+            }
+            else if (cmd_str == "object")
+            {
+                print("LOCAL %x: %p\n", arg0,
+                      vm.get_local(arg0).bits() & (~Malang_Value::object_tag));
             }
             else if (cmd_str == "local")
             {

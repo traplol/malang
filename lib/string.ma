@@ -86,6 +86,21 @@ extend string {
             }
             e += 1
         }
+        if e-s > 0 {
+            if matches >= tmp.length {
+                # Resize
+                tmp2 := [tmp.length*2]string
+                ii := 0
+                while ii < tmp.length {
+                    tmp2[ii] = tmp[ii]
+                    ii += 1
+                }
+                tmp = tmp2
+            }
+            tmp[matches] = self.substr(s, e)
+            matches += 1
+        }
+    
         res := [matches]string
         i := 0
         while i < matches {
@@ -94,6 +109,27 @@ extend string {
         }
         return res
     }
+
+    fn first_of(c: char) -> int {
+        for self {
+            if it == c {
+                return it_index
+            }
+        }
+        return -1
+    }
+
+    fn last_of(c: char) -> int {
+        i := self.length - 1
+        while i >= 0 {
+            if self[i] == c {
+                return i
+            }
+            i -= 1
+        }
+        return -1
+    }
+    
 
     fn reverse() -> string {
         tmp := buffer(self.length)
@@ -125,6 +161,18 @@ extend string {
             i += 1
         }
         return (n/10) * sign
+    }
+
+    fn start_with(str: string) -> bool {
+        if str.length > self.length {
+            return false
+        }
+        for str {
+            if self[it_index] != it {
+                return false
+            }
+        }
+        return true
     }
 }
 

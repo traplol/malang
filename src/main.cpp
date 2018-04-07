@@ -445,6 +445,13 @@ void parse_tests()
         {"unalias (1 + 2)", "unalias (1 + 2)"},
         {"unalias 1 + 2", "(unalias 1 + 2)"},
 
+        {"([1,2,3]).length", "[1, 2, 3].length"},
+        {"([1,2,3]).test()", "[1, 2, 3].test()"},
+        {"[1,2,3].length", "[1, 2, 3].length"},
+        {"[1,2,3].test()", "[1, 2, 3].test()"},
+        {"[1,2,3][0].test()", "[1, 2, 3][0].test()"},
+        {"[10]int.length", "[10]int.length"},
+
     };
     int total_run = 0;
     int errors = 0;

@@ -10,11 +10,24 @@ type Random = {
         reset(seed)
     }
 
+    new (seed: []int) {
+        reset(seed)
+    }
+
     fn reset(seed: int) {
         state = [seed,
                 (1 << 24) - 1,
                 (1 << 16) - 1,
                 (1 << 8) - 1]
+    }
+
+    fn reset(seed: []int) {
+        s := [0,0,0,0]
+        for seed {
+            s[it_index % 4] ^= it
+            s[it_index % 4] <<= 1
+        }
+        state = s
     }
 
     fn next() -> int {

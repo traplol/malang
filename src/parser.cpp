@@ -827,7 +827,7 @@ static uptr<Ast_Value> parse_postfix_exp(Parser &parser)
 static uptr<Variable_Node> parse_qualified_name(Parser &parser)
 {   // qualified_name :=
     //     ident
-    //     ident $ qualified_name
+    //     ident :: qualified_name
     SAVE;
     Token name, first;
     ACCEPT_OR_FAIL(name, {Token_Id::Identifier});

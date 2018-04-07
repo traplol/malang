@@ -796,9 +796,9 @@ void Ast_To_IR::visit(Index_Node &n)
             abort();
         }
         std::vector<IR_Value*> args;
-        for (auto &&n : n.subscript->contents)
+        for (auto &&c : n.subscript->contents)
         {
-            auto a = get<IR_Value*>(*n);
+            auto a = get<IR_Value*>(*c);
             assert(a);
             args.push_back(a);
         }
@@ -814,9 +814,9 @@ void Ast_To_IR::visit(Index_Node &n)
             abort();
         }
         std::vector<IR_Value*> args;
-        for (auto &&n : n.subscript->contents)
+        for (auto &&c : n.subscript->contents)
         {
-            auto a = get<IR_Value*>(*n);
+            auto a = get<IR_Value*>(*c);
             assert(a);
             args.push_back(a);
         }
@@ -827,9 +827,9 @@ void Ast_To_IR::visit(Index_Node &n)
     {
         std::vector<IR_Value*> args;
         std::vector<Type_Info*> arg_types;
-        for (auto &&n : n.subscript->contents)
+        for (auto &&c : n.subscript->contents)
         {
-            auto a = get<IR_Value*>(*n);
+            auto a = get<IR_Value*>(*c);
             assert(a);
             auto t = a->get_type();
             assert(t);
@@ -921,12 +921,9 @@ void Ast_To_IR::visit(Invert_Node &n)
 
 void Ast_To_IR::visit(Constructor_Node &n)
 {
-
     /*
      * FixMe: Alot of this code is shared with Fn_Node and severely needs to be factored.
      */
-
-
 
     // Use the stack to save state becaue functions can be nested
     auto old_scope = cur_symbol_scope;
